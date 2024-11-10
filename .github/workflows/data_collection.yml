@@ -1,0 +1,44 @@
+name: Data Collection and Processing
+
+on:
+  schedule:
+    - cron: "0 13 * * *" # Runs daily at 13:00 UTC (8:00 AM EST)
+  workflow_dispatch:
+
+jobs:
+  collect_and_process_data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> $GITHUB_ENV
+          source $GITHUB_ENV
+
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run data collection script
+        env:
+          TOKEN: ${{ secrets.BALLCHASING_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          poetry run python scripts/data_collection.py
+
+      - name: Run data processing script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          poetry run python scripts/data_processing.py
+
+      - name: Generate reports
+        run: |
+          poetry run python scripts/generate_reports.py
