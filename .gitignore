@@ -43,3 +43,5 @@ rust_predictions/target/
 # IDEs
 .vscode/
 .idea/
+/.github/workflows/predictions.yml
+/.github/workflows/send_updates.yml

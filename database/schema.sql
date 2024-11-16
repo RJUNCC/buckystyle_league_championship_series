@@ -30,14 +30,5 @@ CREATE TABLE IF NOT EXISTS players (
     Demos_Taken_Per_Game FLOAT,
     Big_Boost_Stolen FLOAT,
     Small_Boost_Stolen FLOAT,
-    Avg_Score_Zscore FLOAT,
-    Goals_Per_Game_Zscore FLOAT,
-    Assists_Per_Game_Zscore FLOAT,
-    Saves_Per_Game_Zscore FLOAT,
-    Shots_Per_Game_Zscore FLOAT,
-    Demos_Inf_Per_Game_Zscore FLOAT,
-    Demos_Taken_Per_Game_Zscore FLOAT,
-    Big_Boost_Stolen_Zscore FLOAT,
-    Small_Boost_Stolen_Zscore FLOAT,
     Dominance_Quotient FLOAT
 );

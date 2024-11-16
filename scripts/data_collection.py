@@ -1,49 +1,45 @@
 # scripts/data_collection.py
-import os
-import pandas as pd
 import requests
-from dotenv import load_dotenv
-from config.config import Config
 import logging
+from config.config import Config
+from pathlib import Path
+import pandas as pd
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def fetch_replays():
-    """
-    Fetch replay data from BallChasing API.
-    """
+    logging.info("Fetching replay data from Ballchasing API...")
+    replay_url = "https://ballchasing.com/api/replays"
+    config = Config()
+    headers = {"Authorization": config._ballchasing_token}
+    params = {'group': "all-blcs-2-games-12x79igbdo"}
+
     try:
-        url = "https://ballchasing.com/api/replays"
-        headers = {"Authorization": Config.BALLCHASING_TOKEN}
-        params = {'group': "all-blcs-2-games-12x79igbdo"}
-
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(replay_url, headers=headers, params=params)
         response.raise_for_status()
-        logging.info("Successfully fetched replay data.")
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching replays: {e}")
-        return None
+        replay_data = response.json()
 
-def save_replay_data(data):
-    """
-    Save replay data to a Parquet file.
-    """
-    if data and 'list' in data:
-        replay_df = pd.json_normalize(data, record_path=["list"])
-        os.makedirs("data/parquet", exist_ok=True)
+        # Normalize JSON data
+        replay_df = pd.json_normalize(replay_data, record_path=["list"])
         replay_df.to_parquet("data/parquet/replay_df.parquet")
-        logging.info("Replay data saved to data/parquet/replay_df.parquet")
-    else:
-        logging.warning("No replay data to save.")
+        logging.info("Replay data saved to parquet.")
+
+        return replay_df
+    except requests.exceptions.HTTPError as errh:
+        logger.error(f"HTTP Error: {errh}")
+    except requests.exceptions.ConnectionError as errc:
+        logger.error(f"Error Connecting: {errc}")
+    except requests.exceptions.Timeout as errt:
+        logger.error(f"Timeout Error: {errt}")
+    except requests.exceptions.RequestException as err:
+        logger.error(f"OOps: Something Else: {err}")
+
+    return None
 
 def main():
-    """
-    Main function to fetch and save replay data.
-    """
-    load_dotenv()
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-    data = fetch_replays()
-    save_replay_data(data)
+    fetch_replays()
 
 if __name__ == "__main__":
     main()

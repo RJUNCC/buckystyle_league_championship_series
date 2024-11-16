@@ -1,0 +1,11 @@
+/* src/css/styles.css */
+
+/* Example: Change the background color */
+body {
+    background-color: #f0f2f6;
+}
+
+/* Customize headers */
+h1, h2, h3, h4, h5, h6 {
+    color: #333333;
+}

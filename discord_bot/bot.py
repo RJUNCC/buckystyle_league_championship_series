@@ -1,32 +1,38 @@
-# discord_bot/bot.py
+# bot.py
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from config.config import Config
-from utils.database import get_team_stats, get_player_stats
-from utils.visualization import create_radar_chart, create_kpi_panel
-import pandas as pd
-import io
-import os
+from cogs.commands import Commands
+import logging
 
-intents = discord.Intents.default()
-intents.message_content = True
+# Setup Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s:%(levelname)s:%(name)s: %(message)s'
+)
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+def main():
+    config = Config()
 
-# Load cogs
-initial_extensions = [
-    'cogs.draft_odds', 
-    'cogs.predictions',
-    'cogs.team_stats'
-]
+    # Define the bot with intents
+    intents = discord.Intents.default()
+    intents.message_content = True  # Required for reading message content
+    bot = commands.Bot(command_prefix='!', intents=intents)
 
-if __name__ == '__main__':
-    for extension in initial_extensions:
-        try:
-            bot.load_extension(extension)
-            print(f'Loaded extension {extension}')
-        except Exception as e:
-            print(f'Failed to load extension {extension}.')
-            print(e)
+    # Add cogs
+    bot.add_cog(Commands(bot, config))
 
-    bot.run(Config.DISCORD_BOT_TOKEN)
+    # Event: on_ready
+    @bot.event
+    async def on_ready():
+        logging.info(f'Logged in as {bot.user} (ID: {bot.user.id})')
+        logging.info('------')
+
+    # Run the bot
+    try:
+        bot.run(config.discord_token)
+    except Exception as e:
+        logging.error(f"Failed to run the bot: {e}")
+
+if __name__ == "__main__":
+    main()

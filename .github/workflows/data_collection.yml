@@ -1,4 +1,5 @@
-name: Data Collection and Processing
+# .github/workflows/data_collection.yml
+name: Data Collection, Processing, and Discord Update
 
 on:
   schedule:
@@ -6,10 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  collect_and_process_data:
+  collect_process_and_update:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
       - name: Install Poetry
         run: |
@@ -26,19 +29,31 @@ jobs:
         run: |
           poetry install
 
-      - name: Run data collection script
-        env:
-          TOKEN: ${{ secrets.BALLCHASING_API_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Playoffs stats
         run: |
-          poetry run python scripts/data_collection.py
+          poetry run python scripts/playoff_stats.py
 
-      - name: Run data processing script
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          poetry run python scripts/data_processing.py
+      # Uncomment and configure these steps if needed
+      # - name: Run data collection script
+      #   env:
+      #     BALLCHASING_API_KEY: ${{ secrets.BALLCHASING_API_KEY }}
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      #   run: |
+      #     poetry run python scripts/data_collection.py
+
+      # - name: Run data processing script
+      #   env:
+      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      #   run: |
+      #     poetry run python scripts/data_processing.py
 
       - name: Generate reports
         run: |
           poetry run python scripts/generate_reports.py
+
+      - name: Send Images to Discord
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID3 }}
+        run: |
+          poetry run python send_images.py
