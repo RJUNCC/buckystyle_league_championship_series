@@ -1,59 +1,42 @@
-# .github/workflows/data_collection.yml
-name: Data Collection, Processing, and Discord Update
+name: Daily Bot Task
 
 on:
   schedule:
-    - cron: "0 13 * * *" # Runs daily at 13:00 UTC (8:00 AM EST)
-  workflow_dispatch:
+    - cron: "* 1 * * *" # Runs daily at 1:00 am UTC
+  workflow_dispatch: # Allows manual triggering if needed
 
 jobs:
-  collect_process_and_update:
+  run-scripts:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo 'export PATH="$HOME/.local/bin:$PATH"' >> $GITHUB_ENV
-          source $GITHUB_ENV
-
-      - name: Configure Poetry
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11" # or your preferred version
 
       - name: Install dependencies
         run: |
-          poetry install
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Playoffs stats
+      - name: Fetch data, filter data, and create images and stats
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          BALLCHASING_TOKEN: ${{ secrets.BALLCHASING_TOKEN }}
+          CHANNEL_ID3: ${{ secrets.CHANNEL_ID3 }}
+          PLAYOFF_GROUP_URL: ${{ secrets.PLAYOFF_GROUP_URL }}
         run: |
-          poetry run python scripts/playoff_stats.py
+          cd src
+          python playoff_stats.py
 
-      # Uncomment and configure these steps if needed
-      # - name: Run data collection script
-      #   env:
-      #     BALLCHASING_API_KEY: ${{ secrets.BALLCHASING_API_KEY }}
-      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      #   run: |
-      #     poetry run python scripts/data_collection.py
-
-      # - name: Run data processing script
-      #   env:
-      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      #   run: |
-      #     poetry run python scripts/data_processing.py
-
-      - name: Generate reports
-        run: |
-          poetry run python scripts/generate_reports.py
-
-      - name: Send Images to Discord
+      - name: Send images to discord channel
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID3 }}
+          TOKEN: ${{ secrets.TOKEN }} # Use your Discord token secret here
         run: |
-          poetry run python send_images.py
+          cd src
+          python send_images.py
