@@ -33,7 +33,7 @@ jobs:
 
         run: |
           cd scripts
-          poetry run python -m scripts.playoff_stats
+          poetry run python -m playoff_stats
 
       - name: Send images to discord channel
         env:
@@ -41,4 +41,4 @@ jobs:
           TOKEN: ${{ secrets.TOKEN }} # Use your Discord token secret here
         run: |
           cd scripts
-          poetry run python send_images
+          poetry run python -m send_images
