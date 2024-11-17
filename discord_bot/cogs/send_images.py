@@ -41,8 +41,8 @@ client = discord.Client(intents=intents)
 
 # ======= Define Image Paths =======
 IMAGE_PATHS = [
-    "images/playoff_team_data_season_2.png",
-    "images/playoff_player_data_season_2.png"
+    "../../images/playoff_team_data_season_2.png",
+    "../../images/playoff_player_data_season_2.png"
 ]
 
 # ======= Define Async Function to Remove Previous Messages =======
