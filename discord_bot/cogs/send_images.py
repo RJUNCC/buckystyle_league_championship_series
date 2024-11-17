@@ -16,7 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ======= Load Environment Variables =======
-dotenv_path = Path('.') / '.env'
+dotenv_path = "../../.env"
 load_dotenv(dotenv_path)
 
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
