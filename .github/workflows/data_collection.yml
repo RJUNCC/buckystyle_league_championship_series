@@ -32,11 +32,13 @@ jobs:
           PLAYOFF_GROUP_URL: ${{ secrets.PLAYOFF_GROUP_URL }}
 
         run: |
-          poetry run python scripts/playoff_stats.py
+          cd scripts
+          poetry run python -m scripts.playoff_stats
 
       - name: Send images to discord channel
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           TOKEN: ${{ secrets.TOKEN }} # Use your Discord token secret here
         run: |
-          poetry run python scripts/send_images.py
+          cd scripts
+          poetry run python send_images
