@@ -40,5 +40,5 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           TOKEN: ${{ secrets.TOKEN }} # Use your Discord token secret here
         run: |
-          cd scripts
+          cd discord_bot
           poetry run python -m send_images
