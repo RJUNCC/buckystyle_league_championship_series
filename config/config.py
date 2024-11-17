@@ -8,12 +8,12 @@ load_dotenv()
 class Config:
     def __init__(self):
         # Private attributes
-        self._database_name = os.getenv("DATABASE_NAME")
-        self._database_user = os.getenv("DATABASE_USER")
-        self._database_password = os.getenv("DATABASE_PASSWORD")
-        self._database_host = os.getenv("DATABASE_HOST")
-        self._database_port = os.getenv("DATABASE_PORT")
-        self._database_url  = os.getenv("DATABASE_URL")
+        # self._database_name = os.getenv("DATABASE_NAME")
+        # self._database_user = os.getenv("DATABASE_USER")
+        # self._database_password = os.getenv("DATABASE_PASSWORD")
+        # self._database_host = os.getenv("DATABASE_HOST")
+        # self._database_port = os.getenv("DATABASE_PORT")
+        # self._database_url  = os.getenv("DATABASE_URL")
         self._ballchasing_token = os.getenv("TOKEN")
         self._playoff_group_url = os.getenv("PLAYOFF_GROUP_URL")
 
