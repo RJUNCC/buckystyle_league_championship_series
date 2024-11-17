@@ -39,39 +39,39 @@ class Config:
         self.demo_diff_weight = 0.02
         self.strength_of_schedule = 0.10
         
-        # Validate that all required environment variables are set
-        missing_vars = []
-        if not self._database_name:
-            missing_vars.append("DATABASE_NAME")
-        if not self._database_user:
-            missing_vars.append("DATABASE_USER")
-        if not self._database_password:
-            missing_vars.append("DATABASE_PASSWORD")
-        if not self._database_host:
-            missing_vars.append("DATABASE_HOST")
-        if not self._database_port:
-            missing_vars.append("DATABASE_PORT")
+        # # Validate that all required environment variables are set
+        # missing_vars = []
+        # if not self._database_name:
+        #     missing_vars.append("DATABASE_NAME")
+        # if not self._database_user:
+        #     missing_vars.append("DATABASE_USER")
+        # if not self._database_password:
+        #     missing_vars.append("DATABASE_PASSWORD")
+        # if not self._database_host:
+        #     missing_vars.append("DATABASE_HOST")
+        # if not self._database_port:
+        #     missing_vars.append("DATABASE_PORT")
         
-        if missing_vars:
-            raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
+        # if missing_vars:
+        #     raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
-    # Properties to access the private attributes
-    @property
-    def database_name(self):
-        return self._database_name
+    # # Properties to access the private attributes
+    # @property
+    # def database_name(self):
+    #     return self._database_name
 
-    @property
-    def database_user(self):
-        return self._database_user
+    # @property
+    # def database_user(self):
+    #     return self._database_user
 
-    @property
-    def database_password(self):
-        return self._database_password
+    # @property
+    # def database_password(self):
+    #     return self._database_password
 
-    @property
-    def database_host(self):
-        return self._database_host
+    # @property
+    # def database_host(self):
+    #     return self._database_host
 
-    @property
-    def database_port(self):
-        return self._database_port
+    # @property
+    # def database_port(self):
+    #     return self._database_port
