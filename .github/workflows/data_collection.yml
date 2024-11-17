@@ -32,7 +32,7 @@ jobs:
           CHANNEL_ID3: ${{ secrets.CHANNEL_ID3 }}
           PLAYOFF_GROUP_URL: ${{ secrets.PLAYOFF_GROUP_URL }}
         run: |
-          cd src
+          cd scripts
           python playoff_stats.py
 
       - name: Send images to discord channel
@@ -40,5 +40,5 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           TOKEN: ${{ secrets.TOKEN }} # Use your Discord token secret here
         run: |
-          cd src
+          cd scripts
           python send_images.py
