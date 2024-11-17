@@ -116,7 +116,7 @@ def filter_player_data():
 
     # highlighted table
     styled_player_df = make_highlighted_table(df_final2)
-    image_player_path = Path("../images/player_data_blcs_season_2.png")
+    image_player_path = Path("../images/playoff_player_data_season_2.png")
     image_player_path.parent.mkdir(parents=True, exist_ok=True)
     dfi.export(styled_player_df, image_player_path)
     logging.info(f"Player DataFrame image exported to {image_player_path}")
