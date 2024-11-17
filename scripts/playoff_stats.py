@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 import logging
 import os
-from config.config import Config
+from ..config.config import Config
 from visualization.visualization import make_highlighted_table, team_styled_table
 from scipy.stats import zscore
 import dataframe_image as dfi
