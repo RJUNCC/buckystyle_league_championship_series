@@ -70,8 +70,8 @@ async def send_images():
     # Remove previous messages sent by the bot
     await remove_previous_messages(channel)
     await remove_previous_messages(channel)
-    await remove_previous_messages(channel)
-    await remove_previous_messages(channel)
+    # await remove_previous_messages(channel)
+    # await remove_previous_messages(channel)
 
     # Send each image
     for image_path in IMAGE_PATHS:
