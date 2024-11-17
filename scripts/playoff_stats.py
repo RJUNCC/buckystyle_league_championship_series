@@ -38,6 +38,7 @@ def fetch_playoff_team_stats(group_id, token=config._ballchasing_token):
     return df
 
 def process():
+    logging.info("Processing player data")
     df = fetch_playoff_player_stats(config._playoff_group_url)
     
     features_to_keep = [
@@ -86,6 +87,7 @@ def process():
 def filter_player_data():
     """Filter the data."""
     # Load the data
+    logging.info("Filtering player data...")
     df_final2, df_final = process()
 
     logging.info("Calculating Z-scores and Dominance Quotient for players...")
@@ -123,6 +125,7 @@ def filter_player_data():
 
 def filter_team_data():
     """Filter the data."""
+    logging.info("Fetching team data...")
     team_df = fetch_playoff_team_stats(group_id=config._playoff_group_url)
     styled_player_data, df_final2, df_final = filter_player_data()
     # Load the data
@@ -204,3 +207,4 @@ def filter_team_data():
 
 if __name__ == "__main__":
     filter_team_data()
+    logging.info("Executed playoff stats for player and team data!")

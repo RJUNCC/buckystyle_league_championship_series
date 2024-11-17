@@ -28,13 +28,12 @@ jobs:
       - name: Fetch data, filter data, and create images and stats
         env:
           TOKEN: ${{ secrets.TOKEN }}
-          BALLCHASING_TOKEN: ${{ secrets.BALLCHASING_TOKEN }}
           CHANNEL_ID3: ${{ secrets.CHANNEL_ID3 }}
           PLAYOFF_GROUP_URL: ${{ secrets.PLAYOFF_GROUP_URL }}
 
         run: |
           cd scripts
-          poetry run python -m playoff_stats
+          poetry run python playoff_stats.py
 
       - name: Send images to discord channel
         env:
@@ -42,4 +41,4 @@ jobs:
           TOKEN: ${{ secrets.TOKEN }} # Use your Discord token secret here
         run: |
           cd scripts
-          poetry run python -m send_images.
+          poetry run python send_images.py
