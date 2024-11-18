@@ -1,0 +1,26 @@
+<!-- src/templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Fantasy Points Predictor</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Fantasy Points Predictor</h1>
+      <form id="prediction-form">
+        <label for="player-name">Player Name:</label>
+        <input type="text" id="player-name" name="player_name" required />
+        <button type="submit">Predict</button>
+      </form>
+      <div id="result"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  </body>
+</html>

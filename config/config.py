@@ -38,6 +38,14 @@ class Config:
         self.shot_diff_weight = 0.06
         self.demo_diff_weight = 0.02
         self.strength_of_schedule = 0.10
+
+        # Fantasy Points
+        self.goals_pts = 5.0
+        self.assists_pts = 2.0
+        self.saves_pts = 3.0
+        self.shots_pts = 1.0
+        self.demos_inf_pts = 0.5
+        self.demos_taken_pts = -0.5
         
         # # Validate that all required environment variables are set
         # missing_vars = []

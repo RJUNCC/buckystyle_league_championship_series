@@ -7,7 +7,7 @@ import io
 import logging
 
 # Import visualization functions
-from visualization.visualization import create_radar_chart, create_draft_odds_table
+from visualization import create_radar_chart, create_draft_odds_table
 
 class Commands(commands.Cog):
     def __init__(self, bot, config: Config):

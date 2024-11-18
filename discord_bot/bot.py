@@ -1,8 +1,10 @@
 # bot.py
+
 import discord
 from discord.ext import commands
 from config.config import Config
-from cogs.commands import Commands
+from discord_bot.cogs.commands import Commands
+from discord_bot.cogs.predictions import Predictions
 import logging
 
 # Setup Logging
@@ -21,6 +23,7 @@ def main():
 
     # Add cogs
     bot.add_cog(Commands(bot, config))
+    bot.add_cog(Predictions(bot, config))
 
     # Event: on_ready
     @bot.event

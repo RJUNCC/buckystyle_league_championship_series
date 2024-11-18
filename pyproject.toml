@@ -37,6 +37,11 @@ discord-py = "^2.4.0"  # Corrected from 'discord-py' to 'discord.py'
 
 # Streamlit
 streamlit = "^1.25.0"
+scikit-learn = "^1.5.2"
+optuna = "^4.1.0"
+xgboost = "^2.1.2"
+lightgbm = "^4.5.0"
+flask = "^3.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
