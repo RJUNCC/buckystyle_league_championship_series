@@ -1,1 +1,0 @@
-worker: poetry run python discord_bot/bot.py
