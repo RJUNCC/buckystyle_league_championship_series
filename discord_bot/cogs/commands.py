@@ -5,9 +5,10 @@ from config.config import Config
 import pandas as pd
 import io
 import logging
+from io import BytesIO
 
 # Import visualization functions
-from visualization import create_radar_chart, create_draft_odds_table
+# from visualization import create_radar_chart, create_draft_odds_table
 
 class Commands(commands.Cog):
     def __init__(self, bot, config: Config):
@@ -206,7 +207,7 @@ def create_draft_odds_table(final_df):
     table.scale(1, 1.5)
 
     # Save to BytesIO
-    buffer = BytesIO()
+    buffer = io.BytesIO()
     plt.savefig(buffer, format='PNG', bbox_inches='tight')
     plt.close(fig)
     buffer.seek(0)
@@ -244,7 +245,7 @@ def create_radar_chart(player):
         title=f"Relative Skill Chart: {player['Player']}",
     )
     
-    buffer = BytesIO()
+    buffer = io.BytesIO()
     fig.write_image(buffer, format='PNG')
     buffer.seek(0)
     return buffer.read()

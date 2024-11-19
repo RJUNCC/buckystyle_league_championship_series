@@ -22,7 +22,7 @@ def main():
     bot = commands.Bot(command_prefix='!', intents=intents)
 
     # Add cogs
-    bot.add_cog(Commands(bot, config))
+    # bot.add_cog(Commands(bot, config))
     bot.add_cog(Predictions(bot, config))
 
     # Event: on_ready
