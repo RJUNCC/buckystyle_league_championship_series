@@ -22,8 +22,6 @@ venv.bak/
 
 .poetry/
 
-# poetry.lock
-
 # Env files
 
 .env
@@ -59,7 +57,9 @@ rust_predictions/target/
 /data
 /images
 /rust_predictions
-/database
+
+<!-- /database -->
+
 /notebooks
 /docs
 /models
