@@ -75,7 +75,7 @@ def process():
 
     # Calculate Dominance Quotient
     dq_summation = [i for i in df_final2.columns.tolist() if "Zscore" in i]
-    df_final2["Dominance Quotient"] = df_final2[dq_summation].sum(axis=1) * 50
+    df_final2["Dominance Quotient"] = (df_final2[dq_summation].sum(axis=1) + 2) * config.dominance_quotient_multiplier
 
     df_final2 = df_final2[["Player", "Dominance Quotient", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]]
 
@@ -106,7 +106,7 @@ def filter_player_data():
 
     # Calculate Dominance Quotient
     dq_summation = [i for i in df_final2.columns.tolist() if "Zscore" in i]
-    df_final2["Dominance Quotient"] = df_final2[dq_summation].sum(axis=1) * 50
+    df_final2["Dominance Quotient"] = (df_final2[dq_summation].sum(axis=1) + 2) * config.dominance_quotient_multiplierq
     df_final2 = df_final2[["Player", "Dominance Quotient", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]]
     df_final2 = df_final2.sort_values(by="Dominance Quotient", ascending=False).reset_index(drop=True)
     df_final2.index += 1

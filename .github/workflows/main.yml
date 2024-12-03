@@ -38,6 +38,7 @@ jobs:
       # - name: Train Fantasy points model with optuna
       #   run: |
       #     cd scripts
+      #     cd cogs
       #     poetry run python -m predictions
 
       - name: Send images to discord channel

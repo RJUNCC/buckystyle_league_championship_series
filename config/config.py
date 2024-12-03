@@ -46,6 +46,9 @@ class Config:
         self.shots_pts = 1.0
         self.demos_inf_pts = 0.5
         self.demos_taken_pts = -0.5
+
+        # Dominance Quotient
+        self.dominance_quotient_multiplier = 20
         
         # # Validate that all required environment variables are set
         # missing_vars = []
