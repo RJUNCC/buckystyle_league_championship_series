@@ -49,6 +49,17 @@ class Config:
 
         # Dominance Quotient
         self.dominance_quotient_multiplier = 20
+
+        # File for data
+        self.playoff_player_data = "playoff_player_data_season_2.parquet"
+        self.playoff_team_data = "playoff_team_data_season_2.parquet"
+        self.regular_player_data = "season_2_player_stats.parquet"
+        self.regular_team_data = "season_2_team_stats.parquet"
+        self.overall_player_data = "season_2_overall_player_data.parquet"
+
+        # PATHS TO GROUPS
+        self.all_blcs_season_2_matches_link = "all-blcs-2-matches-reg-playoffs-ajmebwvz3b"
+
         
         # # Validate that all required environment variables are set
         # missing_vars = []

@@ -11,6 +11,17 @@ from scipy.stats import zscore
 import dataframe_image as dfi
 import logging
 from pathlib import Path
+import sys
+
+current_dir = os.path.dirname(os.path.abspath("__file__"))
+parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
+
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+from config.config import Config
+from visualization.visualization import make_highlighted_table, team_styled_table
+
+config = Config()
 
 def setup_logging():
     """Configure logging for the script."""
@@ -218,20 +229,20 @@ def fetch_group_data(token):
     df["team"] = df["team"].str.replace("'", "", regex=True)
     
     os.makedirs("../data/excel_files", exist_ok=True)
-    final_df.to_parquet("../data/parquet/better_team_stats.parquet")
-    df.to_parquet("../data/parquet/player_data.parquet")
+    final_df.to_parquet("../data/parquet/season_2_team_stats.parquet")
+    df.to_parquet("../data/parquet/season_2_player_stats.parquet")
     logging.info("Team and player data saved to Parquet files.")
     
 def calculate_diffs_and_wins():
     """Calculate Goal Diff, Demo Diff, Shots Diff, and map Wins."""
     logging.info("Calculating diffs and mapping wins...")
-    bs_df = pd.read_parquet("../data/parquet/better_team_stats.parquet")
+    bs_df = pd.read_parquet("../data/parquet/season_2_team_stats.parquet")
     
     bs_df["Goal Diff"] = bs_df["Goals For"] - bs_df["Goals Against"]
     bs_df["Demo Diff"] = bs_df["Demos Inflicted"] - bs_df["Demos Taken"]
     bs_df["Shots Diff"] = bs_df["Shots For"] - bs_df["Shots Against"]
     
-    team_stats_df = pd.read_parquet("../data/parquet/better_team_stats.parquet")
+    team_stats_df = pd.read_parquet("../data/parquet/season_2_team_stats.parquet")
     team_wins = dict(zip(team_stats_df["Team"], team_stats_df["Wins"]))
     bs_df["Wins"] = bs_df["Team"].map(team_wins)
     
@@ -314,14 +325,14 @@ def save_final_data(final):
     logging.info(f"Final DataFrame saved to {final_parquet_path}")
     
     # Export to image using dataframe_image
-    image_path = Path("images/table.png")
+    image_path = Path("../images/table.png")
     dfi.export(final, image_path)
     logging.info(f"Final DataFrame image exported to {image_path}")
 
 def process_player_data():
     """Process player data and export styled DataFrame as an image."""
     logging.info("Processing player data...")
-    player_data_path = Path("../data/parquet/player_data.parquet")
+    player_data_path = Path("../data/parquet/season_2_player_stats.parquet")
     if not player_data_path.exists():
         logging.error(f"Player data file {player_data_path} does not exist.")
         raise FileNotFoundError(f"Player data file {player_data_path} does not exist.")
@@ -375,7 +386,7 @@ def process_player_data():
     
     # Calculate Dominance Quotient
     dq_summation = [i for i in df_filtered.columns.tolist() if "Zscore" in i]
-    df_filtered["Dominance Quotient"] = df_filtered[dq_summation].sum(axis=1) * 50
+    df_filtered["Dominance Quotient"] = (df_filtered[dq_summation].sum(axis=1) + 2) * config.dominance_quotient_multiplier
     
     # Calculate Roster Rating
     player_dq_summation = df_filtered.groupby("Team")["Dominance Quotient"].sum().reset_index()
@@ -422,7 +433,7 @@ def process_player_data():
         {'selector': 'td, th', 'props': 'border: none;'}
     ], overwrite=False)
     
-    image2_path = Path("images/table2.png")
+    image2_path = Path("../images/season_2_team_styled.png")
     image2_path.parent.mkdir(parents=True, exist_ok=True)
     dfi.export(team_df, image2_path)
     logging.info(f"Team DataFrame image exported to {image2_path}")
@@ -448,6 +459,8 @@ def process_player_data():
     
     # Calculate ranks for all numeric columns except "Player" and "Shooting %"
     ranked_df = actual_final.drop(columns=["Player", "Shooting %"]).rank(ascending=False).astype(int)
+
+    actual_final.to_parquet(f"../data/parquet/{config.regular_player_data}")
     
     def highlight_rank(s):
         if s.name in ["Player", "Dominance Quotient"]:
@@ -490,7 +503,7 @@ def process_player_data():
             {'selector': '.row_heading, .blank', 'props': 'color: #f8f8f2; background-color: #282a36;'}
         ], overwrite=False)
     
-    image_player_path = Path("images/player_data.png")
+    image_player_path = Path("../images/season_2_player_styled.png")
     image_player_path.parent.mkdir(parents=True, exist_ok=True)
     dfi.export(styled_df, image_player_path)
     logging.info(f"Player DataFrame image exported to {image_player_path}")
@@ -586,8 +599,8 @@ def main():
         df["team"] = df["team"].str.replace("'", "", regex=True)
         
         os.makedirs("../data/excel_files", exist_ok=True)
-        final_df.to_parquet("../data/parquet/better_team_stats.parquet")
-        df.to_parquet("../data/parquet/player_data.parquet")
+        final_df.to_parquet("../data/parquet/season_2_team_stats.parquet")
+        df.to_parquet("../data/parquet/season_2_player_stats.parquet")
         logging.info("Team and player data saved to Parquet files.")
         
         # Process diffs and wins
@@ -640,6 +653,12 @@ def main():
         
         # Process player data
         process_player_data()
+
+        # styled_team_df = team_styled_table(final_df)
+        # dfi.export(styled_team_df, "../images/season_2_team_styled.png")
+
+        # styled_player_df = make_highlighted_table(final)
+        # dfi.export(styled_team_df, "../images/season_2_player_styled.png")
         
         logging.info("Data processing pipeline completed successfully.")
     except Exception as e:
