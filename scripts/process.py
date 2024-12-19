@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pyarrow",
+# ]
+# ///
 import requests
 import pandas as pd
 from pathlib import Path

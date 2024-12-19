@@ -19,7 +19,7 @@ class Config:
         self.current_group_id   = os.getenv("CURRENT_GROUP_ID")
         self._player_channel_id = os.getenv("PLAYER_CHANNEL_ID")
         self._team_channel_id   = os.getenv("TEAM_CHANNEL_ID")
-        self._worlds_group_id   = "world-championship-md058mxx2x"
+        self._worlds_group_id   = "1-swiss-stage-4ws5jld17r"
 
         # Discord Configs
         self._discord_token = os.getenv("DISCORD_TOKEN")
