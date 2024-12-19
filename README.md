@@ -1,75 +1,49 @@
 # Buckystyle League Championship Series
 
-## Overview
+# Daily Bot Task Workflow
 
-Buckystyle League Championship Series is a comprehensive system for managing, analyzing, and visualizing data related to the Buckystyle League. It includes data collection, processing, storage, visualization, prediction models, and a Discord bot for real-time updates.
+This repository includes a **Daily Bot Task** GitHub Actions workflow designed to automate the execution of various bot-related tasks. The workflow is scheduled to run daily at 1:00 AM UTC and can also be triggered manually when needed.
 
-## Project Structure
+## Table of Contents
 
-## Setup Instructions
+- [Workflow Overview](#workflow-overview)
+- [Triggers](#triggers)
+  - [Scheduled Trigger](#scheduled-trigger)
+  - [Manual Trigger](#manual-trigger)
+- [Workflow Jobs and Steps](#workflow-jobs-and-steps)
+  - [1. Checkout Code](#1-checkout-code)
+  - [2. Install Astral UV](#2-install-astral-uv)
+  - [3. Setup Python](#3-setup-python)
+  - [4. Fetch and Process Data](#4-fetch-and-process-data)
+  - [5. Send Images to Discord](#5-send-images-to-discord)
+  - [6. (Optional) Train Fantasy Points Model](#6-optional-train-fantasy-points-model)
+- [Workflow YAML Configuration](#workflow-yaml-configuration)
+- [Setup Instructions](#setup-instructions)
+- [Notes](#notes)
+- [License](#license)
 
-### Prerequisites
+## Workflow Overview
 
-- Python 3.8+
-- PostgreSQL
-- Rust (for prediction models)
-- Git
+The **Daily Bot Task** workflow is designed to perform the following automated tasks:
 
-### Installation
+1. **Checkout the repository code.**
+2. **Set up the Python environment using Astral UV.**
+3. **Install necessary Python dependencies.**
+4. **Fetch and process data to create images and statistics.**
+5. **Send the generated images to a Discord channel.**
+6. **(Optional) Train a Fantasy Points model using Optuna.**
 
-1. **Clone the Repository**
+## Triggers
 
-   ```bash
-   git clone https://github.com/yourusername/buckystyle_league.git
-   cd buckystyle_league
-   ```
+The workflow is triggered in two ways:
 
-2. **Install Poetry**
+- **Scheduled Trigger:** Automatically runs every day at 1:00 AM UTC.
+- **Manual Trigger:** Can be manually initiated through the GitHub Actions interface.
 
-   ```bash
-   curl -sSL https://install.python-poetry.org | python3 -
-   export PATH="$HOME/.local/bin:$PATH"
-   ```
+### Scheduled Trigger
 
-3. **Initialize Poetry and Install Dependencies**
+The workflow is scheduled to run daily at 1:00 AM UTC using a cron expression.
 
-   ```bash
-   poetry install
-   ```
-
-4. **Set Up Environment Variables**
-
-   Create a `.env` file in the project root with the following variables:
-
-   ```env
-   TOKEN=your_ballchasing_api_token
-   DATABASE_URL=postgresql://league_user:secure_password@localhost:5432/buckystyle_league
-   DISCORD_BOT_TOKEN=your_discord_bot_token
-   CHANNEL_ID=123456789012345678
-   ```
-
-5. **Initialize the Database**
-
-   ```bash
-   poetry run python database/init_db.py
-   ```
-
-6. **Run Data Collection and Processing Scripts**
-
-   ```bash
-   poetry run python scripts/data_collection.py
-   poetry run python scripts/data_processing.py
-   poetry run python scripts/generate_reports.py
-   ```
-
-7. **Run the Discord Bot**
-
-   ```bash
-   poetry run python discord_bot/bot.py
-   ```
-
-### Running Tests
-
-```bash
-poetry run python -m unittest discover tests
-```
+```yaml
+schedule:
+  - cron: "0 1 * * *" # Runs daily at 1:00 AM UTC
