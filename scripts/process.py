@@ -42,9 +42,9 @@ class Process:
         df = pd.json_normalize(data, record_path=["teams"])
         return df
     
-    def process_player_data(self):
+    def process_player_data(self, group_id=config.current_group_id):
         logging.info("Processing player data")
-        df = self.fetch_player_data(config.current_group_id)
+        df = self.fetch_player_data(group_id=group_id)
         features_to_keep = [
             "name",
             "team",
@@ -88,9 +88,9 @@ class Process:
 
         return df_final, df_final0
     
-    def process_team_data(self):
+    def process_team_data(self, group_id=config.current_group_id):
         """Filter the data."""
-        team_df = self.fetch_team_data(group_id=config.current_group_id)
+        team_df = self.fetch_team_data(group_id=group_id)
         df_final2, df_final = self.process_player_data()
         # Load the data
         team_df = team_df.sort_values(by="name").reset_index(drop=True)
@@ -178,3 +178,8 @@ if __name__ == "__main__":
     team_df.to_parquet(f"../data/parquet/{config.all_team_data}.parquet")
     styled_team_df = team_styled_table(team_df)
     dfi.export(styled_team_df, f"../images/{config.all_team_data}.png")
+
+    # worlds_df, _ = p.process_player_data(group_id=config._worlds_group_id)
+    # styled_df = make_highlighted_table(worlds_df)
+    # dfi.export(styled_df, f"../images/worlds.png")
+    # logging.info(f"Player data saved as {config.all_player_data}.png")

@@ -62,10 +62,11 @@ client = discord.Client(intents=intents)
 # ======= Define Image Paths for Each Channel =======
 IMAGE_PATHS_PLAYER_CHANNEL = [
     f"../../images/{config.all_player_data}.png",
+    # "../../images/worlds.png",
 ]
 
 IMAGE_PATHS_TEAM_CHANNEL = [
-    f"../../images/{config.team_data}.png",
+    f"../../images/{config.all_team_data}.png",
 ]
 
 # ======= Define Async Function to Remove Previous Messages =======
