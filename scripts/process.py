@@ -1,7 +1,12 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
+#     "dataframe-image",
+#     "logging",
+#     "pandas",
 #     "pyarrow",
+#     "requests",
+#     "scipy",
 # ]
 # ///
 import requests
