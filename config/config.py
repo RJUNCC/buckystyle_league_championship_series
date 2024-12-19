@@ -16,6 +16,7 @@ class Config:
         # self._database_url  = os.getenv("DATABASE_URL")
         self._ballchasing_token = os.getenv("TOKEN")
         self._playoff_group_url = os.getenv("PLAYOFF_GROUP_URL")
+        self.current_group_id   = os.getenv("CURRENT_GROUP_ID")
 
         # Discord Configs
         self._discord_token = os.getenv("DISCORD_TOKEN")
@@ -55,7 +56,10 @@ class Config:
         self.playoff_team_data = "playoff_team_data_season_2.parquet"
         self.regular_player_data = "season_2_player_stats.parquet"
         self.regular_team_data = "season_2_team_stats.parquet"
-        self.overall_player_data = "season_2_overall_player_data.parquet"
+        self.overall_player_data = "season_3_overall_player_data.parquet"
+
+        self.all_player_data = "season_3_player_data"
+        self.all_team_data = "season_3_team_data"
 
         # PATHS TO GROUPS
         self.all_blcs_season_2_matches_link = "all-blcs-2-matches-reg-playoffs-ajmebwvz3b"

@@ -11,29 +11,25 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Install astral uv
+        uses: astral-sh/setup-uv@v4
         with:
           python-version: "3.11" # or your preferred version
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-
-      - name: Install dependencies
-        run: |
-          poetry install --no-interaction --no-root
+      - name: Setup python
+        run: uv python install
 
       - name: Fetch data, filter data, and create images and stats
         env:
           TOKEN: ${{ secrets.TOKEN }}
           CHANNEL_ID3: ${{ secrets.CHANNEL_ID3 }}
-          PLAYOFF_GROUP_URL: ${{ secrets.PLAYOFF_GROUP_URL }}
+          CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
 
         run: |
           cd scripts
-          poetry run python -m playoff_stats
+          uv run process.py
 
       # - name: Train Fantasy points model with optuna
       #   run: |
@@ -49,4 +45,4 @@ jobs:
         run: |
           cd discord_bot
           cd cogs
-          poetry run python -m send_images
+          uv run send_images.py

@@ -1,3 +1,12 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "discord",
+#     "logging",
+#     "pathlib",
+#     "python-dotenv",
+# ]
+# ///
 import os
 import discord
 from discord import File
@@ -5,6 +14,18 @@ from dotenv import load_dotenv
 from pathlib import Path
 import asyncio
 import logging
+import sys
+
+current_dir = os.path.dirname(os.path.abspath("__file__"))
+print(current_dir)
+parent_dir = os.path.abspath(os.path.join(current_dir, '../..'))
+print(parent_dir)
+
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+from config.config import Config
+
+config = Config()
 
 # ======= Setup Logging =======
 logging.basicConfig(
@@ -41,17 +62,8 @@ client = discord.Client(intents=intents)
 
 # ======= Define Image Paths for Each Channel =======
 IMAGE_PATHS_CHANNEL_ID3 = [
-    "../../images/playoff_team_data_season_2.png",
-    "../../images/playoff_player_data_season_2.png"
-]
-
-IMAGE_PATHS_NEW_CHANNEL = [
-    "../../images/season_2_team_styled.png",
-    "../../images/season_2_player_styled.png"
-]
-
-IMAGE_PATHS_S3_CHANNEL = [
-    "../../images/season_2_overall.png",
+    f"../../images/{config.all_player_data}.png",
+    f"../../images/{config.all_team_data}.png"
 ]
 
 # ======= Define Async Function to Remove Previous Messages =======
@@ -98,12 +110,6 @@ async def send_images():
 
     # Send images to the original channel
     await send_images_to_channel(CHANNEL_ID3, IMAGE_PATHS_CHANNEL_ID3)
-
-    # Send images to the new channel
-    await send_images_to_channel(NEW_CHANNEL_ID, IMAGE_PATHS_NEW_CHANNEL)
-
-    # Send images to S3 Channel
-    await send_images_to_channel(CHANNEL_S3, IMAGE_PATHS_S3_CHANNEL)
 
     # Disconnect the bot after sending images
     await client.close()
