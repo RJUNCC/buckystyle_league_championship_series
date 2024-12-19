@@ -5,6 +5,7 @@
 #     "logging",
 #     "pandas",
 #     "pyarrow",
+#     "pyton-dotenv",
 #     "requests",
 #     "scipy",
 # ]
