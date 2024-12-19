@@ -39,19 +39,18 @@ dotenv_path = "../../.env"
 load_dotenv(dotenv_path)
 
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-CHANNEL_ID3 = os.getenv('CHANNEL_ID3')  # Original channel from .env
-NEW_CHANNEL_ID = 1291250431619502184  # New channel to send season 2 stats
-CHANNEL_S3 = 1307167531173150730
+PLAYER_CHANNEL_ID = os.getenv('PLAYER_CHANNEL_ID')  # Original channel from .env
+TEAM_CHANNEL_ID = os.getenv('TEAM_CHANNEL_ID')
 
-if not DISCORD_TOKEN or not CHANNEL_ID3:
-    logger.error("DISCORD_TOKEN and CHANNEL_ID3 must be set in the .env file.")
+if not DISCORD_TOKEN or not PLAYER_CHANNEL_ID:
+    logger.error("DISCORD_TOKEN and PLAYER_CHANNEL_ID must be set in the .env file.")
     exit(1)
 
 try:
-    CHANNEL_ID3 = int(CHANNEL_ID3)
-    logger.info(f"Configured Original CHANNEL_ID: {CHANNEL_ID3}")
+    PLAYER_CHANNEL_ID = int(PLAYER_CHANNEL_ID)
+    logger.info(f"Configured Original CHANNEL_ID: {PLAYER_CHANNEL_ID}")
 except ValueError:
-    logger.error("CHANNEL_ID3 must be an integer.")
+    logger.error("PLAYER_CHANNEL_ID must be an integer.")
     exit(1)
 
 # ======= Initialize Discord Client =======
@@ -61,9 +60,12 @@ intents.message_content = True  # Required to read message content
 client = discord.Client(intents=intents)
 
 # ======= Define Image Paths for Each Channel =======
-IMAGE_PATHS_CHANNEL_ID3 = [
+IMAGE_PATHS_PLAYER_CHANNEL = [
     f"../../images/{config.all_player_data}.png",
-    f"../../images/{config.all_team_data}.png"
+]
+
+IMAGE_PATHS_TEAM_CHANNEL = [
+    f"../../images/{config.team_data}.png",
 ]
 
 # ======= Define Async Function to Remove Previous Messages =======
@@ -108,8 +110,11 @@ async def send_images_to_channel(channel_id, image_paths):
 async def send_images():
     await client.wait_until_ready()
 
-    # Send images to the original channel
-    await send_images_to_channel(CHANNEL_ID3, IMAGE_PATHS_CHANNEL_ID3)
+    # Send images to the player channel
+    await send_images_to_channel(PLAYER_CHANNEL_ID, IMAGE_PATHS_PLAYER_CHANNEL)
+
+    # Send images to the team channel
+    await send_images_to_channel(TEAM_CHANNEL_ID, IMAGE_PATHS_TEAM_CHANNEL)
 
     # Disconnect the bot after sending images
     await client.close()

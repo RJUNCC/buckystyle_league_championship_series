@@ -24,7 +24,6 @@ jobs:
       - name: Fetch data, filter data, and create images and stats
         env:
           TOKEN: ${{ secrets.TOKEN }}
-          CHANNEL_ID3: ${{ secrets.CHANNEL_ID3 }}
           CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
 
         run: |
@@ -41,7 +40,8 @@ jobs:
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           TOKEN: ${{ secrets.TOKEN }}
-          CHANNEL_ID3: ${{ secrets.CHANNEL_ID3 }} # Use your Discord token secret here
+          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }} # Use your Discord token secret here
+          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }} # Use your Discord token secret here
         run: |
           cd discord_bot
           cd cogs

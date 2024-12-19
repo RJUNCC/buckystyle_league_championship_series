@@ -17,6 +17,8 @@ class Config:
         self._ballchasing_token = os.getenv("TOKEN")
         self._playoff_group_url = os.getenv("PLAYOFF_GROUP_URL")
         self.current_group_id   = os.getenv("CURRENT_GROUP_ID")
+        self._player_channel_id = os.getenv("PLAYER_CHANNEL_ID")
+        self._team_channel_id   = os.getenv("TEAM_CHANNEL_ID")
 
         # Discord Configs
         self._discord_token = os.getenv("DISCORD_TOKEN")
