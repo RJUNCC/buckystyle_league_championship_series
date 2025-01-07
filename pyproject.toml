@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "dataframe-image>=0.2.6",
+    "db-sqlite3>=0.0.1",
     "ipykernel>=6.29.5",
+    "numpy>=2.2.0",
     "pandas>=2.2.3",
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
