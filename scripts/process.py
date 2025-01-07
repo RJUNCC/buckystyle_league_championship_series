@@ -18,6 +18,8 @@ import os
 import sys
 from scipy.stats import zscore
 import dataframe_image as dfi
+import numpy as np
+# from numpy import round
 
 current_dir = os.path.dirname(os.path.abspath("__file__"))
 print(current_dir)
@@ -78,15 +80,15 @@ class Process:
         df_final = df_final0.copy()
         df_final = df_final.drop("Team", axis=1)
         logging.info("Calculating Z-scores and Dominance Quotient for players...")
-        df_final["Avg Score Zscore"] = round(zscore(df_final["Avg Score"]) * config.avg_score, 2)
-        df_final["Goals Per Game Zscore"] = round(zscore(df_final["Goals Per Game"]) * config.goals_per_game, 2)
-        df_final["Assists Per Game Zscore"] = round(zscore(df_final["Assists Per Game"]) * config.assists_per_game, 2)
-        df_final["Saves Per Game Zscore"] = round(zscore(df_final["Saves Per Game"]) * config.saves_per_game, 2)
-        df_final["Shots Per Game Zscore"] = round(zscore(df_final["Shots Per Game"]) * config.shots_per_game, 2)
-        df_final["Demos Inf. Per Game Zscore"] = round(zscore(df_final["Demos Inf. Per Game"]) * config.demos_per_games, 2)
-        df_final["Demos Taken Per Game Zscore"] = round(zscore(df_final["Demos Taken Per Game"]) * config.demos_taken_per_game, 2)
-        df_final["Big Boost Stolen Zscore"] = round(zscore(df_final["Big Boost Stolen"]) * config.count_big_pads_stolen_per_game, 2)
-        df_final["Small Boost Stolen Zscore"] = round(zscore(df_final["Small Boost Stolen"]) * config.count_small_pads_stolen_per_game, 2)
+        df_final["Avg Score Zscore"] = np.round(zscore(df_final["Avg Score"]) * config.avg_score, 2)
+        df_final["Goals Per Game Zscore"] = np.round(zscore(df_final["Goals Per Game"]) * config.goals_per_game, 2)
+        df_final["Assists Per Game Zscore"] = np.round(zscore(df_final["Assists Per Game"]) * config.assists_per_game, 2)
+        df_final["Saves Per Game Zscore"] = np.round(zscore(df_final["Saves Per Game"]) * config.saves_per_game, 2)
+        df_final["Shots Per Game Zscore"] = np.round(zscore(df_final["Shots Per Game"]) * config.shots_per_game, 2)
+        df_final["Demos Inf. Per Game Zscore"] = np.round(zscore(df_final["Demos Inf. Per Game"]) * config.demos_per_games, 2)
+        df_final["Demos Taken Per Game Zscore"] = np.round(zscore(df_final["Demos Taken Per Game"]) * config.demos_taken_per_game, 2)
+        df_final["Big Boost Stolen Zscore"] = np.round(zscore(df_final["Big Boost Stolen"]) * config.count_big_pads_stolen_per_game, 2)
+        df_final["Small Boost Stolen Zscore"] = np.round(zscore(df_final["Small Boost Stolen"]) * config.count_small_pads_stolen_per_game, 2)
         df_final["Shooting %"] = df_final["Shooting %"] / 100
 
         # Calculate Dominance Quotient
