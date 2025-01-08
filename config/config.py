@@ -32,7 +32,7 @@ class Config:
         self.assists_per_game = 0.19
         self.shots_per_game = 0.10
         self.demos_per_games = 0.05
-        self.demos_taken_per_game = 0.05
+        self.demos_taken_per_game = -0.05
         self.count_big_pads_stolen_per_game = 0.04
         self.count_small_pads_stolen_per_game = 0.02
 

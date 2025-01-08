@@ -3,8 +3,10 @@
 import discord
 from discord.ext import commands
 from config.config import Config
-from discord_bot.cogs.commands import Commands
+# from discord_bot.cogs.commands import Commands
 from discord_bot.cogs.predictions import Predictions
+from discord_bot.cogs.schedule import Schedule
+
 import logging
 
 # Setup Logging
@@ -21,9 +23,12 @@ def main():
     intents.message_content = True  # Required for reading message content
     bot = commands.Bot(command_prefix='!', intents=intents)
 
+    # Add Schedule Cog
+    bot.add_cog(Schedule(bot))
+
     # Add cogs
     # bot.add_cog(Commands(bot, config))
-    bot.add_cog(Predictions(bot, config))
+    # bot.add_cog(Predictions(bot, config))
 
     # Event: on_ready
     @bot.event
@@ -33,7 +38,7 @@ def main():
 
     # Run the bot
     try:
-        bot.run(config.discord_token)
+        bot.run(config._discord_token)
     except Exception as e:
         logging.error(f"Failed to run the bot: {e}")
 

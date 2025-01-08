@@ -1,129 +1,130 @@
 import discord
-from discord.ext import tasks, commands
-from datetime import datetime, timedelta
-from collections import defaultdict
+from discord.ext import commands
+import sqlite3
+from scheduling.schedule_matches import schedule_match, retry_failed_scheduling, load_team_stats
+from scheduling.database import DB_NAME
 
-TOKEN = 'YOUR_BOT_TOKEN'
+class Schedule(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-intents = discord.Intents.default()
-intents.messages = True
-intents.guilds = True
-intents.message_content = True
-intents.members = True
+    @commands.command(name="add_availability")
+    async def add_availability(self, ctx, date: str, time_start: str, time_end: str):
+        """
+        Command for players to add their availability.
+        Usage: !add_availability YYYY-MM-DD HH:MM HH:MM
+        """
+        player_name = ctx.author.name
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
 
-# Store availability and match data
-player_availability = defaultdict(dict)  # {player_id: {day: [time1, time2, ...]}}
-team_last_played = defaultdict(datetime)  # {team_id: last_played_time}
-matches = []  # To track scheduled matches
+        try:
+            cursor.execute("""
+            UPDATE availability
+            SET date = ?, time_start = ?, time_end = ?
+            WHERE player_name = ?
+            """, (date, time_start, time_end, player_name))
+            conn.commit()
 
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user}')
-    weekly_prompt.start()
-    daily_reminder.start()
+            if cursor.rowcount > 0:
+                await ctx.send(f"✅ Availability updated for {player_name} on {date} from {time_start} to {time_end}.")
+            else:
+                await ctx.send(f"⚠️ No record found for {player_name}. Please ensure you are listed in the system.")
+        except Exception as e:
+            await ctx.send(f"❌ Failed to update availability: {e}")
+        finally:
+            conn.close()
 
-@tasks.loop(weeks=1)
-async def weekly_prompt():
-    """Prompt players weekly to enter their availability."""
-    for guild in bot.guilds:
-        for member in guild.members:
-            if not member.bot:
-                try:
-                    await member.send(
-                        "Please provide your availability for this week in the format `Day HH:MM AM/PM`. Example: `Monday 3:00 PM`. You can send multiple messages."
-                    )
-                except discord.Forbidden:
-                    print(f"Could not DM {member.name}")
 
-@tasks.loop(hours=24)
-async def daily_reminder():
-    """Remind players daily if they haven't entered availability."""
-    now = datetime.now()
-    for guild in bot.guilds:
-        for member in guild.members:
-            if not member.bot and member.id not in player_availability:
-                try:
-                    await member.send(
-                        "Hi! We noticed you haven't entered your availability for this week. Please send your times in the format `Day HH:MM AM/PM`."
-                    )
-                except discord.Forbidden:
-                    print(f"Could not DM {member.name}")
+    @commands.command(name="view_availability")
+    async def view_availability(self, ctx, player_name: str = None):
+        """
+        Command to view availability for a specific player or all players.
+        Usage: !view_availability [player_name]
+        """
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
 
-@bot.event
-async def on_message(message):
-    """Collect player availability."""
-    if message.author.bot:
-        return
+        try:
+            if player_name:
+                # Fetch availability for a specific player
+                cursor.execute("""
+                SELECT player_name, team, date, time_start, time_end
+                FROM availability
+                WHERE player_name = ?
+                """, (player_name,))
+            else:
+                # Fetch availability for all players
+                cursor.execute("""
+                SELECT player_name, team, date, time_start, time_end
+                FROM availability
+                """)
 
-    try:
-        # Parse day and time from the message
-        content = message.content.strip()
-        day, time = content.split(" ", 1)
-        player_availability[message.author.id][day] = player_availability[message.author.id].get(day, []) + [time]
-        await message.channel.send(f"Thanks, {message.author.mention}! Your availability has been recorded.")
-    except ValueError:
-        pass  # Ignore messages that don't match the expected format
+            rows = cursor.fetchall()
+            if rows:
+                availability = "\n".join(
+                    f"{row[0]} ({row[1]}) - {row[2]} from {row[3]} to {row[4]}" for row in rows
+                )
+                await ctx.send(f"📅 Player Availability:\n{availability}")
+            else:
+                await ctx.send("No availability records found.")
+        except Exception as e:
+            await ctx.send(f"❌ Failed to retrieve availability: {e}")
+        finally:
+            conn.close()
 
-async def find_and_schedule_matches():
-    """Match teams and schedule games based on availability."""
-    for team1, team2 in team_combinations():
-        # Check cooldowns
-        now = datetime.now()
-        if (team1 in team_last_played and now - team_last_played[team1] < timedelta(minutes=30)) or \
-           (team2 in team_last_played and now - team_last_played[team2] < timedelta(minutes=30)):
-            continue
 
-        # Find overlapping availability
-        overlap = find_overlap(team1, team2)
-        if overlap:
-            day, time = overlap
-            # Schedule the match
-            matches.append((team1, team2, day, time))
-            team_last_played[team1] = now
-            team_last_played[team2] = now
-            await create_match_channel(team1, team2, day, time)
-            break  # Avoid scheduling multiple matches at once
+    @commands.command(name="clear_availability")
+    async def clear_availability(self, ctx):
+        """
+        Command to clear a player's availability.
+        Usage: !clear_availability
+        """
+        player_name = ctx.author.name
 
-async def create_match_channel(team1, team2, day, time):
-    """Create a channel for the match and notify players."""
-    guild = bot.guilds[0]  # Assuming one guild
-    match_channel = await guild.create_text_channel(f"match-{team1}-{team2}")
-    await match_channel.send(
-        f"Match scheduled between Team {team1} and Team {team2} on {day} at {time}. Good luck!"
-    )
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
 
-def team_combinations():
-    """Generate team combinations (replace with actual team data)."""
-    teams = ["Team A", "Team B", "Team C", "Team D"]  # Example teams
-    for i in range(len(teams)):
-        for j in range(i + 1, len(teams)):
-            yield teams[i], teams[j]
+        try:
+            cursor.execute("""
+            UPDATE availability
+            SET date = NULL, time_start = NULL, time_end = NULL
+            WHERE player_name = ?
+            """, (player_name,))
+            conn.commit()
 
-def find_overlap(team1, team2):
-    """Find overlapping availability for two teams."""
-    team1_players = [1, 2, 3]  # Replace with actual player IDs
-    team2_players = [4, 5, 6]
+            if cursor.rowcount > 0:
+                await ctx.send(f"✅ Cleared availability for {player_name}.")
+            else:
+                await ctx.send(f"⚠️ No record found for {player_name}.")
+        except Exception as e:
+            await ctx.send(f"❌ Failed to clear availability: {e}")
+        finally:
+            conn.close()
 
-    team1_availability = get_combined_availability(team1_players)
-    team2_availability = get_combined_availability(team2_players)
 
-    for day, times in team1_availability.items():
-        if day in team2_availability:
-            for time in times:
-                if time in team2_availability[day]:
-                    return day, time
-    return None
+    @commands.command(name="view_team")
+    async def view_team(self, ctx, team_name: str):
+        """View availability for a specific team."""
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
 
-def get_combined_availability(players):
-    """Combine availability for a list of players."""
-    combined = defaultdict(list)
-    for player in players:
-        if player in player_availability:
-            for day, times in player_availability[player].items():
-                combined[day].extend(times)
-    return combined
-
-# Run the bot
-bot.run(TOKEN)
+        try:
+            cursor.execute("""
+            SELECT player_name, date, time_start, time_end
+            FROM availability
+            WHERE team = ?
+            """, (team_name,))
+            rows = cursor.fetchall()
+            if rows:
+                availability = "\n".join(
+                    f"{row[0]} - {row[1]} from {row[2]} to {row[3]}" for row in rows
+                )
+                await ctx.send(f"📅 Availability for team {team_name}:\n{availability}")
+            else:
+                await ctx.send(f"No availability records found for team {team_name}.")
+        except Exception as e:
+            await ctx.send(f"❌ Failed to retrieve team availability: {e}")
+        finally:
+            conn.close()
