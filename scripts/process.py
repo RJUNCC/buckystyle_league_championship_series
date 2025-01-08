@@ -95,7 +95,7 @@ class Process:
         dq_summation = [i for i in df_final.columns.tolist() if "Zscore" in i]
         df_final["Dominance Quotient"] = (df_final[dq_summation].sum(axis=1) + 2) * config.dominance_quotient_multiplier
 
-        df_final = df_final[["Player", "Team", "Dominance Quotient", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]]
+        df_final = df_final[["Player", "Dominance Quotient", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]]
 
         df_final = df_final.sort_values(by="Dominance Quotient", ascending=False).reset_index(drop=True)
         df_final.index += 1
