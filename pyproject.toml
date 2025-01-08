@@ -7,10 +7,16 @@ requires-python = ">=3.11"
 dependencies = [
     "dataframe-image>=0.2.6",
     "db-sqlite3>=0.0.1",
+    "discord-py>=2.4.0",
+    "discord>=2.3.2",
     "ipykernel>=6.29.5",
     "numpy>=2.2.0",
     "pandas>=2.2.3",
+    "py-cord>=2.6.1",
+    "pyarrow>=18.1.0",
+    "pytest>=8.3.4",
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
     "scipy>=1.14.1",
+    "joblib>=1.4.2",
 ]

@@ -78,7 +78,7 @@ class Process:
         df_final0.columns = ["Player", "Team", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]
 
         df_final = df_final0.copy()
-        df_final = df_final.drop("Team", axis=1)
+        # df_final = df_final.drop("Team", axis=1)
         logging.info("Calculating Z-scores and Dominance Quotient for players...")
         df_final["Avg Score Zscore"] = np.round(zscore(df_final["Avg Score"]) * config.avg_score, 2)
         df_final["Goals Per Game Zscore"] = np.round(zscore(df_final["Goals Per Game"]) * config.goals_per_game, 2)
@@ -95,7 +95,7 @@ class Process:
         dq_summation = [i for i in df_final.columns.tolist() if "Zscore" in i]
         df_final["Dominance Quotient"] = (df_final[dq_summation].sum(axis=1) + 2) * config.dominance_quotient_multiplier
 
-        df_final = df_final[["Player", "Dominance Quotient", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]]
+        df_final = df_final[["Player", "Team", "Dominance Quotient", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]]
 
         df_final = df_final.sort_values(by="Dominance Quotient", ascending=False).reset_index(drop=True)
         df_final.index += 1
