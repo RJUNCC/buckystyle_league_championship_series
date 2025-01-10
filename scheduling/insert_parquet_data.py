@@ -6,7 +6,7 @@ config = Config()
 
 # File paths
 team_file = f"data/parquet/{config.all_team_data}.parquet"
-player_file = f"data/parquet/{config.all_player_data}.parquet"
+player_file = f"data/parquet/{config.all_player_data}_with_team_name.parquet"
 DB_NAME = "schedule.db"
 
 def create_tables():

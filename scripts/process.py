@@ -86,7 +86,7 @@ class Process:
         df_final["Saves Per Game Zscore"] = np.round(zscore(df_final["Saves Per Game"]) * config.saves_per_game, 2)
         df_final["Shots Per Game Zscore"] = np.round(zscore(df_final["Shots Per Game"]) * config.shots_per_game, 2)
         df_final["Demos Inf. Per Game Zscore"] = np.round(zscore(df_final["Demos Inf. Per Game"]) * config.demos_per_games, 2)
-        df_final["Demos Taken Per Game Zscore"] = np.round(zscore(df_final["Demos Taken Per Game"]) * config.demos_taken_per_game, 2)
+        df_final["Demos Taken Per Game Zscore"] = -np.round(zscore(df_final["Demos Taken Per Game"]) * config.demos_taken_per_game, 2)
         df_final["Big Boost Stolen Zscore"] = np.round(zscore(df_final["Big Boost Stolen"]) * config.count_big_pads_stolen_per_game, 2)
         df_final["Small Boost Stolen Zscore"] = np.round(zscore(df_final["Small Boost Stolen"]) * config.count_small_pads_stolen_per_game, 2)
         df_final["Shooting %"] = df_final["Shooting %"] / 100

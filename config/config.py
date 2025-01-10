@@ -26,15 +26,15 @@ class Config:
         self.channel_id3 = os.getenv("CHANNEL_ID3")
 
         # Weights for player data
-        self.avg_score = 0.2
-        self.goals_per_game = 0.3
-        self.saves_per_game = 0.15
-        self.assists_per_game = 0.19
-        self.shots_per_game = 0.10
+        self.avg_score = 0.25
+        self.goals_per_game = 0.22
+        self.saves_per_game = 0.17
+        self.assists_per_game = 0.16
+        self.shots_per_game = 0.07
         self.demos_per_games = 0.05
-        self.demos_taken_per_game = -0.05
-        self.count_big_pads_stolen_per_game = 0.04
-        self.count_small_pads_stolen_per_game = 0.02
+        self.demos_taken_per_game = 0.05
+        self.count_big_pads_stolen_per_game = 0.02
+        self.count_small_pads_stolen_per_game = 0.01
 
         # Weights for team data
         self.win_perc_weight  = 0.6
