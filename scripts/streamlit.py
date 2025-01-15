@@ -57,7 +57,6 @@ if df is not None:
     if selected_player:
         player_stats = df[df['Player'] == selected_player].iloc[0]
         stats_values = [
-            player_stats['Avg Score'],
             player_stats['Goals Per Game'],
             player_stats['Assists Per Game'],
             player_stats['Saves Per Game'],
