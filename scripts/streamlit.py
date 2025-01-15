@@ -69,7 +69,7 @@ if df is not None:
             player_stats['Assists Per Game Zscore'],
             player_stats['Saves Per Game Zscore'],
             player_stats['Shots Per Game Zscore'],
-            minmax_scale(player_stats['Demos Inf. Per Game'] - player_stats['Demos Taken Per Game']),
+            minmax_scale(np.array(player_stats['Demos Inf. Per Game']) - np.array(player_stats['Demos Taken Per Game'])),
         ]
         
         radar_chart = create_radar_chart(stats_values)
