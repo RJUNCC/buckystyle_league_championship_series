@@ -9,8 +9,7 @@ st.title("Player Statistics Radar Chart")
 def create_radar_chart(player_data):
     categories = [
         'Avg Score', 'Goals Per Game', 'Assists Per Game',
-        'Saves Per Game', 'Shots Per Game', 'Demos Inf. Per Game',
-        'Demos Taken Per Game', 'Big Boost Stolen', 'Small Boost Stolen'
+        'Saves Per Game', 'Shots Per Game', 'Demo Differential'
     ]
     
     fig = go.Figure()
@@ -62,10 +61,7 @@ if df is not None:
             player_stats['Assists Per Game Zscore'],
             player_stats['Saves Per Game Zscore'],
             player_stats['Shots Per Game Zscore'],
-            player_stats['Demos Inf. Per Game Zscore'],
-            player_stats['Demos Taken Per Game Zscore'],
-            player_stats['Big Boost Stolen Zscore'],
-            player_stats['Small Boost Stolen Zscore']
+            player_stats['Demos Inf. Per Game Zscore'] - player_stats['Demos Taken Per Game Zscore'],
         ]
         
         radar_chart = create_radar_chart(stats_values)
