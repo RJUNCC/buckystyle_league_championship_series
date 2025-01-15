@@ -61,7 +61,7 @@ if df is not None:
             player_stats['Assists Per Game Zscore'],
             player_stats['Saves Per Game Zscore'],
             player_stats['Shots Per Game Zscore'],
-            player_stats['Demos Inf. Per Game'] - player_stats['Demos Taken Per Game'],
+            player_stats['Demos Inf. Per Game Zscore'] - player_stats['Demos Taken Per Game Zscore'],
         ]
         
         radar_chart = create_radar_chart(stats_values)
