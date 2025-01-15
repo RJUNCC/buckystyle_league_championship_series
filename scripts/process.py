@@ -91,6 +91,8 @@ class Process:
         df_final["Small Boost Stolen Zscore"] = np.round(zscore(df_final["Small Boost Stolen"]) * config.count_small_pads_stolen_per_game, 2)
         df_final["Shooting %"] = df_final["Shooting %"] / 100
 
+        df_final.to_parquet("../data/parquet/season_3_all_data.parquet")
+
         # Calculate Dominance Quotient
         dq_summation = [i for i in df_final.columns.tolist() if "Zscore" in i]
         df_final["Dominance Quotient"] = (df_final[dq_summation].sum(axis=1) + 2) * config.dominance_quotient_multiplier

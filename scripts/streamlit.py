@@ -8,7 +8,7 @@ st.title("Player Statistics Radar Chart")
 # Function to create radar chart
 def create_radar_chart(player_data):
     categories = [
-        'Goals Per Game', 'Assists Per Game',
+        'Avg Score', 'Goals Per Game', 'Assists Per Game',
         'Saves Per Game', 'Shots Per Game', 'Demos Inf. Per Game',
         'Demos Taken Per Game', 'Big Boost Stolen', 'Small Boost Stolen'
     ]
@@ -38,7 +38,7 @@ def create_radar_chart(player_data):
 @st.cache_data
 def load_data():
     try:
-        return pd.read_parquet('data/parquet/season_3_player_data.parquet')
+        return pd.read_parquet('data/parquet/season_3_all_data.parquet')
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None
@@ -57,14 +57,15 @@ if df is not None:
     if selected_player:
         player_stats = df[df['Player'] == selected_player].iloc[0]
         stats_values = [
-            player_stats['Goals Per Game'],
-            player_stats['Assists Per Game'],
-            player_stats['Saves Per Game'],
-            player_stats['Shots Per Game'],
-            player_stats['Demos Inf. Per Game'],
-            player_stats['Demos Taken Per Game'],
-            player_stats['Big Boost Stolen'],
-            player_stats['Small Boost Stolen']
+            player_stats['Avg Score Zscore'],
+            player_stats['Goals Per Game Zscore'],
+            player_stats['Assists Per Game Zscore'],
+            player_stats['Saves Per Game Zscore'],
+            player_stats['Shots Per Game Zscore'],
+            player_stats['Demos Inf. Per Game Zscore'],
+            player_stats['Demos Taken Per Game Zscore'],
+            player_stats['Big Boost Stolen Zscore'],
+            player_stats['Small Boost Stolen Zscore']
         ]
         
         radar_chart = create_radar_chart(stats_values)
