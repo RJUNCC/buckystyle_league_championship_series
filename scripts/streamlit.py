@@ -1,9 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import numpy as np
 
 # Set page title
 st.title("Player Statistics Radar Chart")
+
+
+def minmax_scale(data):
+        min_val = np.min(data)
+        max_val = np.max(data)
+        return (data - min_val) / (max_val - min_val)
+
 
 # Function to create radar chart
 def create_radar_chart(player_data):
@@ -61,7 +69,7 @@ if df is not None:
             player_stats['Assists Per Game Zscore'],
             player_stats['Saves Per Game Zscore'],
             player_stats['Shots Per Game Zscore'],
-            player_stats['Demos Inf. Per Game Zscore'] - player_stats['Demos Taken Per Game Zscore'],
+            minmax_scale(player_stats['Demos Inf. Per Game'] - player_stats['Demos Taken Per Game']),
         ]
         
         radar_chart = create_radar_chart(stats_values)
