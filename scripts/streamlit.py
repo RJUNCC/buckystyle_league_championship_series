@@ -59,7 +59,7 @@ if df is not None:
             player_stats['Avg Score Zscore'],
             player_stats['Goals Per Game Zscore'],
             player_stats['Assists Per Game Zscore'],
-            player_stats['Saves Per Game Zscore'],
+            player_stats['Saves Per Game'],
             player_stats['Shots Per Game Zscore'],
             player_stats['Demos Inf. Per Game'] - player_stats['Demos Taken Per Game'],
         ]
