@@ -6,12 +6,10 @@ import numpy as np
 # Set page title
 st.title("Player Statistics Radar Chart")
 
-
 def minmax_scale(data):
-        min_val = np.min(data)
-        max_val = np.max(data)
-        return (data - min_val) / (max_val - min_val)
-
+    min_val = np.min(data)
+    max_val = np.max(data)
+    return (data - min_val) / (max_val - min_val)
 
 # Function to create radar chart
 def create_radar_chart(player_data):
@@ -33,6 +31,9 @@ def create_radar_chart(player_data):
         polar=dict(
             radialaxis=dict(
                 visible=True,
+                showticklabels=False,  # Hide the number labels
+                showline=False,        # Hide the radial lines
+                ticks="",             # Remove tick marks
                 range=[0, max(player_data) * 1.2]
             )
         ),
