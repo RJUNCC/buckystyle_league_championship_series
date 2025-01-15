@@ -46,3 +46,10 @@ jobs:
           cd discord_bot
           cd cogs
           uv run send_images.py
+
+      - name: Run Streamlit app
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          cd streamlit_app
+          uv run streamlit.py
