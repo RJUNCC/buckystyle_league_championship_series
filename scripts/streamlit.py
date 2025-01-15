@@ -38,7 +38,7 @@ def create_radar_chart(player_data):
 @st.cache_data
 def load_data():
     try:
-        return pd.read_parquet('../data/parquet/season_3_player_data.parquet')
+        return pd.read_parquet('data/parquet/season_3_player_data.parquet')
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None
