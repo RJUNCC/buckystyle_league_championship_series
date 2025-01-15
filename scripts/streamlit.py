@@ -8,7 +8,7 @@ st.title("Player Statistics Radar Chart")
 # Function to create radar chart
 def create_radar_chart(player_data):
     categories = [
-        'Avg Score', 'Goals Per Game', 'Assists Per Game',
+        'Goals Per Game', 'Assists Per Game',
         'Saves Per Game', 'Shots Per Game', 'Demos Inf. Per Game',
         'Demos Taken Per Game', 'Big Boost Stolen', 'Small Boost Stolen'
     ]
