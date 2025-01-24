@@ -18,6 +18,12 @@ jobs:
         with:
           python-version: "3.11" # or your preferred version
 
+      - name: Install project
+        run: uv sync --all-extras --dev
+
+      - name: Install requirements
+        run: uv pip install -r requirements.txt
+
       - name: Setup python
         run: uv python install
 
