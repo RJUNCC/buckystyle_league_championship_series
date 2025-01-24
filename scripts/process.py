@@ -192,13 +192,13 @@ if __name__ == "__main__":
     player_df, _ = p.process_player_data()
     player_df.to_parquet(f"../data/parquet/{config.all_player_data}.parquet")
     styled_df = make_highlighted_table(player_df)
-    dfi.export(styled_df, f"../images/{config.all_player_data}.png")
+    dfi.export(styled_df, f"../images/{config.all_player_data}.png", table_conversion='matplotlib')
     logging.info(f"Player data saved as {config.all_player_data}.png")
 
     team_df = p.process_team_data()
     team_df.to_parquet(f"../data/parquet/{config.all_team_data}.parquet")
     styled_team_df = team_styled_table(team_df)
-    dfi.export(styled_team_df, f"../images/{config.all_team_data}.png")
+    dfi.export(styled_team_df, f"../images/{config.all_team_data}.png", table_conversion='matplotlib')
 
     # worlds_df, _ = p.process_player_data(group_id=config._worlds_group_id)
     # styled_df = make_highlighted_table(worlds_df)
