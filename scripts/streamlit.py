@@ -4,6 +4,9 @@ import plotly.graph_objects as go
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
+# Set page layout to wide
+st.set_page_config(layout="wide")
+
 # Set page title
 st.title("Player Statistics Dashboard")
 
@@ -115,80 +118,74 @@ if df is not None:
     df['Dominance Quotient_rank'] = df['Dominance Quotient'].rank(ascending=False)
     sorted_players = df.sort_values('Dominance Quotient', ascending=False)
     
-    # Create the rankings table
-    st.markdown("### Player Rankings")
-    cols = st.columns([1, 2, 2])
-    cols[0].markdown("**Rank**")
-    cols[1].markdown("**Player**")
-    cols[2].markdown("**DQ**")
+    # Create two columns with custom widths (1:3 ratio)
+    col1, col2 = st.columns([1, 3])
     
-    selected_player = None
-    
-    # Display each player in a table row format
-    for idx, row in sorted_players.iterrows():
-        player = row['Player']
-        dq = row['Dominance Quotient']
-        rank = int(row['Dominance Quotient_rank'])
-        
-        cols = st.columns([1, 2, 2])
-        cols[0].markdown(f"#{rank}")
-        if cols[1].button(f"{player}", key=f"player_{rank}_{player.replace(' ', '_')}"):
-            selected_player = player
-        cols[2].markdown(f"{dq:.2f}")
+    # Rankings table in the smaller left column
+    with col1:
+        st.markdown("### Player Rankings")
+        for idx, row in sorted_players.iterrows():
+            player = row['Player']
+            dq = row['Dominance Quotient']
+            rank = int(row['Dominance Quotient_rank'])
+            if st.button(f"#{rank} {player}\nDQ: {dq:.2f}", key=f"player_{rank}_{player.replace(' ', '_')}"):
+                selected_player = player
 
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
     
-    if selected_player:
-        # Get player's Dominance Quotient and rank
-        player_dq = df[df['Player'] == selected_player]['Dominance Quotient'].iloc[0]
-        player_dq_rank = int(df[df['Player'] == selected_player]['Dominance Quotient_rank'].iloc[0])
-        
-        # Display player name and Dominance Quotient at the top
-        st.markdown(f"""
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="margin: 0; font-weight: bold;">{selected_player}</h2>
-                <p style="margin: 0; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 0, 0.3); display: inline-block; padding: 5px 10px; border-radius: 5px;">Dominance Quotient: {player_dq:.2f} #{player_dq_rank}</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        metrics = {
-            'Avg Score': 'Avg Score',
-            'Goals': 'Goals Per Game',
-            'Assists': 'Assists Per Game',
-            'Saves': 'Saves Per Game',
-            'Shots': 'Shots Per Game',
-            'K/D Ratio': 'K/D'
-        }
-        
-        # Calculate rankings
-        rankings = {}
-        for name, col in metrics.items():
-            df[f'{col}_rank'] = df[col].rank(ascending=False)
-            rankings[name] = int(df[df['Player'] == selected_player][f'{col}_rank'].iloc[0])
-        
-        # Get player values (non-normalized)
-        player_values = df[df['Player'] == selected_player].iloc[0]
-        
-        # Normalize data for radar chart only
-        radar_columns = ['Avg Score', 'Goals Per Game', 
-                        'Assists Per Game', 'Saves Per Game', 
-                        'Shots Per Game', 'K/D']
-        df_radar = df[radar_columns].copy()
-        df_radar = pd.DataFrame(scaler.fit_transform(df_radar), columns=radar_columns, index=df.index)
-        
-        # Display Radar Chart
-        player_stats = df_radar.loc[df['Player'] == selected_player].iloc[0]
-        stats_values = [
-            player_stats['Avg Score'],
-            player_stats['Goals Per Game'],
-            player_stats['Assists Per Game'],
-            player_stats['Saves Per Game'],
-            player_stats['Shots Per Game'],
-            player_stats['K/D']
-        ]
-        
-        radar_chart = create_radar_chart(stats_values)
-        st.plotly_chart(radar_chart)
-        
-        # Display KPIs
-        display_kpi_boxes(player_values, rankings, metrics, df)
+    # Radar chart and stats in the larger right column
+    with col2:
+        if selected_player:
+            # Get player's Dominance Quotient and rank
+            player_dq = df[df['Player'] == selected_player]['Dominance Quotient'].iloc[0]
+            player_dq_rank = int(df[df['Player'] == selected_player]['Dominance Quotient_rank'].iloc[0])
+            
+            # Display player name and Dominance Quotient at the top
+            st.markdown(f"""
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; font-weight: bold;">{selected_player}</h2>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 0, 0.3); display: inline-block; padding: 5px 10px; border-radius: 5px;">Dominance Quotient: {player_dq:.2f} #{player_dq_rank}</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            metrics = {
+                'Avg Score': 'Avg Score',
+                'Goals': 'Goals Per Game',
+                'Assists': 'Assists Per Game',
+                'Saves': 'Saves Per Game',
+                'Shots': 'Shots Per Game',
+                'K/D Ratio': 'K/D'
+            }
+            
+            # Calculate rankings
+            rankings = {}
+            for name, col in metrics.items():
+                df[f'{col}_rank'] = df[col].rank(ascending=False)
+                rankings[name] = int(df[df['Player'] == selected_player][f'{col}_rank'].iloc[0])
+            
+            # Get player values (non-normalized)
+            player_values = df[df['Player'] == selected_player].iloc[0]
+            
+            # Normalize data for radar chart only
+            radar_columns = ['Avg Score', 'Goals Per Game', 
+                            'Assists Per Game', 'Saves Per Game', 
+                            'Shots Per Game', 'K/D']
+            df_radar = df[radar_columns].copy()
+            df_radar = pd.DataFrame(scaler.fit_transform(df_radar), columns=radar_columns, index=df.index)
+            
+            # Display Radar Chart
+            player_stats = df_radar.loc[df['Player'] == selected_player].iloc[0]
+            stats_values = [
+                player_stats['Avg Score'],
+                player_stats['Goals Per Game'],
+                player_stats['Assists Per Game'],
+                player_stats['Saves Per Game'],
+                player_stats['Shots Per Game'],
+                player_stats['K/D']
+            ]
+            
+            radar_chart = create_radar_chart(stats_values)
+            st.plotly_chart(radar_chart, use_container_width=True)
+            
+            # Display KPIs
+            display_kpi_boxes(player_values, rankings, metrics, df)
