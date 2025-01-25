@@ -136,7 +136,7 @@ if df is not None:
         if selected_player:
             # Get player's Dominance Quotient and rank
             player_dq = df[df['Player'] == selected_player]['Dominance Quotient'].iloc[0]
-            player_dq_rank = int(df[df['Player'] == selected_player]['Dominance_Quotient_rank'].iloc[0])
+            player_dq_rank = int(df[df['Player'] == selected_player]['Dominance Quotient_rank'].iloc[0])
             
             # Display player name and Dominance Quotient at the top
             st.markdown(f"""
@@ -195,7 +195,7 @@ if df is not None:
         for idx, row in sorted_players.iterrows():
             player = row['Player']
             dq = row['Dominance Quotient']
-            rank = int(row['Dominance_Quotient_rank'])
+            rank = int(row['Dominance Quotient_rank'])
             if st.button(f"#{rank} {player} - {dq:.2f}", key=f"player_{rank}_{player.replace(' ', '_')}"):
                 selected_player = player
         st.markdown('</div>', unsafe_allow_html=True)
