@@ -117,9 +117,10 @@ if df is not None:
     )
 
     # Calculate K/D ratio with games weighting
-    max_games = df['Games'].max()
-    df['games_weight'] = df['Games'] / max_games
-    df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game']) * df['games_weight']
+    # max_games = df['Games'].max()
+    # df['games_weight'] = df['Games'] / max_games
+    # df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game']) * df['games_weight']
+    df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
     
     if selected_player:
         # Get player's Dominance Quotient
