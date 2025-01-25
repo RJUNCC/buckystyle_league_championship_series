@@ -68,15 +68,15 @@ if df is not None:
     stats_columns = ['Avg Score Zscore', 'Goals Per Game Zscore', 
                     'Assists Per Game Zscore', 'Saves Per Game Zscore', 
                     'Shots Per Game Zscore']
-    
+
     global_min = df[stats_columns].min().min()
     global_max = df[stats_columns].max().max()
-    
-    # Handle demo differential separately
-    demo_diff = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
-    # demo_min = demo_diff.min()
-    # demo_max = demo_diff.max()
-    
+
+    # Calculate K/D ratio for all players
+    df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
+    kd_min = df['K/D'].min()
+    kd_max = df['K/D'].max()
+
     if selected_player:
         player_stats = df[df['Player'] == selected_player].iloc[0]
         stats_values = [
@@ -85,9 +85,11 @@ if df is not None:
             player_stats['Assists Per Game Zscore'],
             player_stats['Saves Per Game Zscore'],
             player_stats['Shots Per Game Zscore'],
-            (player_stats['Demos Inf. Per Game'] / player_stats['Demos Taken Per Game'] )
+            (player_stats['Demos Inf. Per Game'] / 
+            player_stats['Demos Taken Per Game'] - kd_min) / (kd_max - kd_min)
         ]
         
         radar_chart = create_radar_chart(stats_values, global_min, global_max)
         st.plotly_chart(radar_chart)
+
 
