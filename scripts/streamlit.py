@@ -111,31 +111,43 @@ df = load_data()
 scaler = MinMaxScaler()
 
 if df is not None:
-    selected_player = st.selectbox(
-        'Select Player:',
-        options=sorted(df['Player'].unique())
-    )
+    # Add a radio button to switch between player search and rankings
+    view_mode = st.radio("Select View Mode", ["Search Player", "View Rankings"])
+    
+    # Sort players by Dominance Quotient
+    df['Dominance Quotient_rank'] = df['Dominance Quotient'].rank(ascending=False)
+    sorted_players = df.sort_values('Dominance Quotient', ascending=False)
+    
+    if view_mode == "Search Player":
+        selected_player = st.selectbox(
+            'Search for a player:',
+            options=sorted(df['Player'].unique())
+        )
+    else:
+        # Display ranking list with clickable players
+        st.markdown("### Player Rankings")
+        selected_player = None
+        for idx, row in sorted_players.iterrows():
+            player = row['Player']
+            dq = row['Dominance Quotient']
+            rank = int(row['Dominance Quotient_rank'])
+            if st.button(f"#{rank} {player} - DQ: {dq:.2f}"):
+                selected_player = player
 
-    # Calculate K/D ratio with games weighting
-    # max_games = df['Games'].max()
-    # df['games_weight'] = df['Games'] / max_games
-    # df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game']) * df['games_weight']
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
     
     if selected_player:
         # Get player's Dominance Quotient and rank
         player_dq = df[df['Player'] == selected_player]['Dominance Quotient'].iloc[0]
-        df['Dominance Quotient_rank'] = df['Dominance Quotient'].rank(ascending=False)
         player_dq_rank = int(df[df['Player'] == selected_player]['Dominance Quotient_rank'].iloc[0])
         
-        # Display player name and Dominance Quotient with rank at the top
+        # Display player name and Dominance Quotient at the top
         st.markdown(f"""
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; font-weight: bold;">{selected_player}</h2>
-                <p style="margin: 0; font-size: 24px; font-weight: bold; display: inline-block; padding: 5px 10px; border-radius: 5px;">Dominance Quotient: <br> {player_dq:.2f} #{player_dq_rank}</p>
+                <p style="margin: 0; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 0, 0.3); display: inline-block; padding: 5px 10px; border-radius: 5px;">Dominance Quotient: {player_dq:.2f} #{player_dq_rank}</p>
             </div>
         """, unsafe_allow_html=True)
-
         
         metrics = {
             'Avg Score': 'Avg Score',
