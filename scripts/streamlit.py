@@ -7,7 +7,6 @@ from sklearn.preprocessing import MinMaxScaler
 # Set page title
 st.title("Player Statistics Dashboard")
 
-# Function to create radar chart
 def create_radar_chart(player_data):
     categories = [
         'Avg Score', 'Goals Per Game', 'Assists Per Game',
@@ -38,34 +37,30 @@ def create_radar_chart(player_data):
     
     return fig
 
-def calculate_kpis(player_df, player):
-    # Calculate rankings for each stat
-    player_df['Demo KD'] = player_df['Demos Inf. Per Game'] / player_df['Demos Taken Per Game']
-    
-    metrics = {
-        'Avg Score': 'Avg Score',
-        'Goals': 'Goals Per Game',
-        'Assists': 'Assists Per Game',
-        'Saves': 'Saves Per Game',
-        'Shots': 'Shots Per Game',
-        'K/D Ratio': 'Demo KD'
-    }
-    
-    # Calculate rankings
-    rankings = {}
-    for name, col in metrics.items():
-        player_df[f'{col}_rank'] = player_df[col].rank(ascending=False)
-        rankings[name] = int(player_df[player_df['Player'] == player][f'{col}_rank'].iloc[0])
-    
-    return rankings, metrics
+def display_kpi_boxes(player_values, rankings, metrics, player_df):
+    cols = st.columns(2)  # Create two columns
 
-def display_stat(value, rank, col, player_df):
-    # Color gradient from green (highest) to red (lowest)
-    normalized = (value - player_df[col].min()) / (player_df[col].max() - player_df[col].min())
-    color = f'rgb({int(255 * (1-normalized))}, {int(255 * normalized)}, 0)'
-    return f'<span style="color: {color}">{value:.2f}</span> (#{rank})'
+    for i, (stat, col) in enumerate(metrics.items()):
+        value = player_values[col]
+        rank = rankings[stat]
+        
+        # Calculate color based on value
+        normalized = (value - player_df[col].min()) / (player_df[col].max() - player_df[col].min())
+        color = f'rgb({int(255 * (1-normalized))}, {int(255 * normalized)}, 0)'
+        
+        # Alternate between columns
+        with cols[i % 2]:
+            st.markdown(
+                f"""
+                <div style="background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                    <h4 style="margin: 0;">{stat}</h4>
+                    <p style="margin: 0; font-size: 16px;">Value: {value:.2f}</p>
+                    <p style="margin: 0; font-size: 14px;">Rank: #{rank}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-# Load the parquet data
 @st.cache_data
 def load_data():
     try:
@@ -107,15 +102,29 @@ if df is not None and player_df is not None:
     df[stats_columns] = scaler.fit_transform(df[stats_columns])
     
     if selected_player:
-        # Display Rankings
-        st.markdown("## Player Rankings")
-        rankings, metrics = calculate_kpis(player_df, selected_player)
+        # Calculate K/D ratio
+        player_df['Demo KD'] = player_df['Demos Inf. Per Game'] / player_df['Demos Taken Per Game']
+        
+        metrics = {
+            'Avg Score': 'Avg Score',
+            'Goals': 'Goals Per Game',
+            'Assists': 'Assists Per Game',
+            'Saves': 'Saves Per Game',
+            'Shots': 'Shots Per Game',
+            'K/D Ratio': 'Demo KD'
+        }
+        
+        # Calculate rankings
+        rankings = {}
+        for name, col in metrics.items():
+            player_df[f'{col}_rank'] = player_df[col].rank(ascending=False)
+            rankings[name] = int(player_df[player_df['Player'] == selected_player][f'{col}_rank'].iloc[0])
+        
+        # Get player values
         player_values = player_df[player_df['Player'] == selected_player].iloc[0]
         
-        for stat, col in metrics.items():
-            value = player_values[col]
-            rank = rankings[stat]
-            st.markdown(f"**{stat}**: {display_stat(value, rank, col, player_df)}", unsafe_allow_html=True)
+        # Display KPIs in boxes
+        display_kpi_boxes(player_values, rankings, metrics, player_df)
         
         # Display Radar Chart
         st.markdown("## Radar Chart")
