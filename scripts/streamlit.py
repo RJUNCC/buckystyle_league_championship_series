@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 # Set page title
-st.title("Player Statistics Radar Chart")
+st.title("Player Statistics Dashboard")
 
 # Function to create radar chart
 def create_radar_chart(player_data):
@@ -38,6 +38,32 @@ def create_radar_chart(player_data):
     
     return fig
 
+def calculate_kpis(player_df, player):
+    # Calculate rankings for each stat
+    player_df['Demo KD'] = player_df['Demos Inf. Per Game'] / player_df['Demos Taken Per Game']
+    
+    metrics = {
+        'Avg Score': 'Avg Score',
+        'Goals': 'Goals Per Game',
+        'Assists': 'Assists Per Game',
+        'Saves': 'Saves Per Game',
+        'Shots': 'Shots Per Game',
+        'K/D Ratio': 'Demo KD'
+    }
+    
+    # Calculate rankings
+    rankings = {}
+    for name, col in metrics.items():
+        player_df[f'{col}_rank'] = player_df[col].rank(ascending=False)
+        rankings[name] = int(player_df[player_df['Player'] == player][f'{col}_rank'].iloc[0])
+    
+    return rankings
+
+def display_ranking(rank, total=30):
+    normalized = (rank - 1) / (total - 1)
+    color = f'rgb({int(255 * normalized)}, {int(255 * (1-normalized))}, 0)'
+    return f'<span style="color: {color}">#{rank}</span>'
+
 # Load the parquet data
 @st.cache_data
 def load_data():
@@ -47,15 +73,24 @@ def load_data():
         st.error(f"Error loading data: {str(e)}")
         return None
 
-# Load the data
+@st.cache_data
+def load_player_data():
+    try:
+        return pd.read_parquet('data/parquet/season_3_player_data.parquet')
+    except Exception as e:
+        st.error(f"Error loading player data: {str(e)}")
+        return None
+
+# Load both datasets
 df = load_data()
+player_df = load_player_data()
 
 # Create the scaler object
 scaler = MinMaxScaler()
 
-if df is not None:
+if df is not None and player_df is not None:
     selected_player = st.selectbox(
-        'Search for a player:',
+        'Select Player:',
         options=df['Player'].unique()
     )
 
@@ -71,6 +106,14 @@ if df is not None:
     df[stats_columns] = scaler.fit_transform(df[stats_columns])
     
     if selected_player:
+        # Display Rankings
+        st.markdown("## Player Rankings")
+        rankings = calculate_kpis(player_df, selected_player)
+        for stat, rank in rankings.items():
+            st.markdown(f"**{stat}**: {display_ranking(rank)}", unsafe_allow_html=True)
+        
+        # Display Radar Chart
+        st.markdown("## Radar Chart")
         player_stats = df[df['Player'] == selected_player].iloc[0]
         stats_values = [
             player_stats['Avg Score'],
