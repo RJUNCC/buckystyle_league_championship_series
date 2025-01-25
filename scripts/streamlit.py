@@ -117,8 +117,8 @@ if df is not None:
     )
 
     # Calculate K/D ratio with games weighting
-    max_games = df['cumulative.games'].max()
-    df['games_weight'] = df['cumulative.games'] / max_games
+    max_games = df['Games'].max()
+    df['games_weight'] = df['Games'] / max_games
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game']) * df['games_weight']
     
     if selected_player:
