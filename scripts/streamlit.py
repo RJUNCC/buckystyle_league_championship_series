@@ -102,18 +102,18 @@ def load_data():
         
         # Merge the dataframes
         df = df1.merge(df2[['Player', 'Dominance Quotient']], on='Player', how='left')
-        return df
+        return df, df1, df2
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None
 
 # Load data
-df = load_data()
+df, df1, df2 = load_data()
 scaler = MinMaxScaler()
 
 if df is not None:
     # Calculate games played weight using correct column name
-    st.table(df)
+    st.table(df1)
     max_games = df['Games'].max()
     df['games_weight'] = df['Games'] / max_games
 
