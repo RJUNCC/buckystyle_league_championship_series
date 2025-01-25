@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -48,7 +49,7 @@ def create_radar_chart(player_data):
 
 def display_kpi_boxes(player_values, rankings, metrics, df):
     # First display games played in a centered box above the KPIs
-    games_played = player_values['Games Played']
+    games_played = player_values['cumulative.games']
     st.markdown(f"""
         <div style="text-align: center; margin-bottom: 15px;">
             <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: inline-block;">
@@ -111,9 +112,9 @@ df = load_data()
 scaler = MinMaxScaler()
 
 if df is not None:
-    # Calculate games played weight
-    max_games = df['Games Played'].max()
-    df['games_weight'] = df['Games Played'] / max_games
+    # Calculate games played weight using correct column name
+    max_games = df['cumulative.games'].max()
+    df['games_weight'] = df['cumulative.games'] / max_games
 
     # Apply weight to all relevant metrics
     metrics_columns = ['Avg Score', 'Goals Per Game', 'Assists Per Game', 

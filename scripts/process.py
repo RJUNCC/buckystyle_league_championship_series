@@ -67,6 +67,7 @@ class Process:
         features_to_keep = [
             "name",
             "team",
+            "cumulative.games",
             "game_average.core.score",
             "game_average.core.goals",
             "game_average.core.assists",
@@ -79,7 +80,7 @@ class Process:
             "game_average.boost.amount_stolen_small",
         ]
 
-        df_final0 = df[features_to_keep].copy()
+        df_final0 = df[features_to_keep].copy().drop("cumulative.games", axis=1)
         df_final0.columns = ["Player", "Team", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]
 
         df_final = df_final0.copy()
