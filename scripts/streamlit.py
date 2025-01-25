@@ -41,7 +41,7 @@ def create_radar_chart(player_data):
                 range=[0, 1]
             )
         ),
-        showlegend=True
+        showlegend=False
     )
     
     return fig
@@ -116,10 +116,7 @@ if df is not None:
         # Get player values
         player_values = df[df['Player'] == selected_player].iloc[0]
         
-        # Display KPIs in boxes
-        display_kpi_boxes(player_values, rankings, metrics, df)
-        
-        # Display Radar Chart
+        # Display Radar Chart first
         st.markdown("## Radar Chart")
         player_stats = df[df['Player'] == selected_player].iloc[0]
         stats_values = [
@@ -133,3 +130,7 @@ if df is not None:
         
         radar_chart = create_radar_chart(stats_values)
         st.plotly_chart(radar_chart)
+        
+        # Display KPIs below the radar chart
+        st.markdown("## Player KPIs")
+        display_kpi_boxes(player_values, rankings, metrics, df)
