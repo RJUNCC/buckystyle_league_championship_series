@@ -10,16 +10,11 @@ st.set_page_config(layout="wide")
 # Set page title
 st.title("Player Statistics Dashboard")
 
-# Add CSS to remove anchor links and add scrollable list
+# Add CSS to remove anchor links
 st.markdown("""
     <style>
         .stMarkdown a {
             display: none;
-        }
-        .scrollable-list {
-            max-height: 400px;
-            overflow-y: scroll;
-            padding-right: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -123,13 +118,21 @@ if df is not None:
     df['Dominance Quotient_rank'] = df['Dominance Quotient'].rank(ascending=False)
     sorted_players = df.sort_values('Dominance Quotient', ascending=False)
     
-    # Initialize selected_player
-    selected_player = None
+    # Create ordered list for dropdown
+    ranked_player_list = [f"#{int(row['Dominance Quotient_rank'])} {row['Player']} - DQ: {row['Dominance Quotient']:.2f}" 
+                         for _, row in sorted_players.iterrows()]
     
     # Create two columns with custom widths (3:1 ratio)
     col1, col2 = st.columns([3, 1])
-    
+
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
+    
+    # Dropdown in the right column
+    with col2:
+        st.markdown("### Rankings")
+        selected_option = st.selectbox('Select Player:', ranked_player_list)
+        if selected_option:
+            selected_player = selected_option.split(' - ')[0].split(' ', 1)[1]
     
     # Radar chart and stats in the larger left column
     with col1:
@@ -187,15 +190,3 @@ if df is not None:
             
             # Display KPIs
             display_kpi_boxes(player_values, rankings, metrics, df)
-    
-    # Rankings list in the smaller right column with scrollbar
-    with col2:
-        st.markdown("### Rankings")
-        st.markdown('<div class="scrollable-list">', unsafe_allow_html=True)
-        for idx, row in sorted_players.iterrows():
-            player = row['Player']
-            dq = row['Dominance Quotient']
-            rank = int(row['Dominance Quotient_rank'])
-            if st.button(f"#{rank} {player} - {dq:.2f}", key=f"player_{rank}_{player.replace(' ', '_')}"):
-                selected_player = player
-        st.markdown('</div>', unsafe_allow_html=True)
