@@ -109,8 +109,18 @@ if df is not None:
     df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
     
     if selected_player:
+        # Get player's Dominance Quotient
+        player_dq = df[df['Player'] == selected_player]['Dominance Quotient'].iloc[0]
+        
+        # Display player name and Dominance Quotient at the top
+        st.markdown(f"""
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-weight: bold;">{selected_player}</h2>
+                <p style="margin: 0; font-size: 20px;">Overall Score: {player_dq:.2f}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
         metrics = {
-            'Dominance Quotient': 'Dominance Quotient',
             'Avg Score': 'Avg Score',
             'Goals': 'Goals Per Game',
             'Assists': 'Assists Per Game',
@@ -135,8 +145,7 @@ if df is not None:
         df_radar = df[radar_columns].copy()
         df_radar = pd.DataFrame(scaler.fit_transform(df_radar), columns=radar_columns, index=df.index)
         
-        # Display Radar Chart first
-        st.markdown("## Radar Chart")
+        # Display Radar Chart
         player_stats = df_radar.loc[df['Player'] == selected_player].iloc[0]
         stats_values = [
             player_stats['Avg Score'],
@@ -150,6 +159,5 @@ if df is not None:
         radar_chart = create_radar_chart(stats_values)
         st.plotly_chart(radar_chart)
         
-        # Display KPIs below the radar chart
-        st.markdown("## Player KPIs")
+        # Display KPIs
         display_kpi_boxes(player_values, rankings, metrics, df)
