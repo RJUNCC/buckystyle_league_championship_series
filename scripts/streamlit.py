@@ -52,14 +52,15 @@ def display_kpi_boxes(player_values, rankings, metrics, player_df):
         with cols[i % 2]:
             st.markdown(
                 f"""
-                <div style="background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
-                    <h3 style="margin: 0; font-weight: bold;">{stat}</h3>
-                    <p style="margin: 0; font-size: 24px; font-weight: bold;">{value:.2f}</p>
-                    <p style="margin: 0; font-size: 20px; font-weight: bold;">#{rank}</p>
+                <div style="background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center;">
+                    <h3 style="margin: 0; font-weight: bold; text-align: center;">{stat}</h3>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold; text-align: center;">{value:.2f}</p>
+                    <p style="margin: 0; font-size: 20px; font-weight: bold; text-align: center;">#{rank}</p>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+
 
 
 @st.cache_data
