@@ -37,7 +37,7 @@ def create_radar_chart(player_data, global_min, global_max):
                 showticklabels=False,
                 showline=False,
                 ticks="",
-                range=[0, 1]  # Fixed range from 0 to 1
+                range=[0, 2]  # Fixed range from 0 to 1
             )
         ),
         showlegend=True
