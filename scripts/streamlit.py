@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 # Set page title
 st.title("Player Statistics Radar Chart")
@@ -57,40 +58,38 @@ def load_data():
 # Load the data
 df = load_data()
 
-# In your main code, calculate global min and max
+# Create the scaler object
+scaler = MinMaxScaler()
+
 if df is not None:
     selected_player = st.selectbox(
         'Search for a player:',
         options=df['Player'].unique()
     )
 
-    # Calculate global min and max for all stats
-    stats_columns = ['Avg Score Zscore', 'Goals Per Game Zscore', 
-                    'Assists Per Game Zscore', 'Saves Per Game Zscore', 
-                    'Shots Per Game Zscore']
-
-    global_min = df[stats_columns].min().min()
-    global_max = df[stats_columns].max().max()
-
-    # Calculate K/D ratio for all players
-    df['K/D'] = (abs(df['Demos Inf. Per Game']) / abs(df['Demos Taken Per Game'])) / 10
-    kd_min = df['K/D'].min()
-    kd_max = df['K/D'].max()
-
+    # Calculate K/D ratio first
+    df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
+    
+    # Columns to normalize
+    stats_columns = ['Avg Score', 'Goals Per Game', 
+                    'Assists Per Game', 'Saves Per Game', 
+                    'Shots Per Game', 'K/D']
+    
+    # Fit and transform all stats at once
+    df[stats_columns] = scaler.fit_transform(df[stats_columns])
+    
     if selected_player:
         player_stats = df[df['Player'] == selected_player].iloc[0]
         stats_values = [
-            player_stats['Avg Score Zscore'],
-            player_stats['Goals Per Game Zscore'],
-            player_stats['Assists Per Game Zscore'],
-            player_stats['Saves Per Game Zscore'],
-            player_stats['Shots Per Game Zscore'],
-            (abs(player_stats['Demos Inf. Per Game'] / abs(player_stats['Demos Taken Per Game'] - kd_min)) / (abs(kd_max - kd_min) * 10))
+            player_stats['Avg Score'],
+            player_stats['Goals Per Game'],
+            player_stats['Assists Per Game'],
+            player_stats['Saves Per Game'],
+            player_stats['Shots Per Game'],
+            player_stats['K/D']
         ]
-
-        st.table(data=player_stats)
         
-        radar_chart = create_radar_chart(stats_values, global_min, global_max)
+        radar_chart = create_radar_chart(stats_values, 0, 1)
         st.plotly_chart(radar_chart)
 
 

@@ -23,4 +23,5 @@ dependencies = [
     "matplotlib>=3.10.0",
     "selenium>=4.28.1",
     "playwright>=1.49.1",
+    "scikit-learn>=1.6.1",
 ]
