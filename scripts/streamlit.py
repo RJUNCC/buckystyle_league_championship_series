@@ -123,16 +123,19 @@ if df is not None:
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
     
     if selected_player:
-        # Get player's Dominance Quotient
+        # Get player's Dominance Quotient and rank
         player_dq = df[df['Player'] == selected_player]['Dominance Quotient'].iloc[0]
+        df['Dominance Quotient_rank'] = df['Dominance Quotient'].rank(ascending=False)
+        player_dq_rank = int(df[df['Player'] == selected_player]['Dominance Quotient_rank'].iloc[0])
         
-        # Display player name and Dominance Quotient at the top
+        # Display player name and Dominance Quotient with rank at the top
         st.markdown(f"""
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; font-weight: bold;">{selected_player}</h2>
-                <p style="margin: 0; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 0, 0.3); display: inline-block; padding: 5px 10px; border-radius: 5px;">Dominance Quotient: {player_dq:.2f}</p>
+                <p style="margin: 0; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 0, 0.3); display: inline-block; padding: 5px 10px; border-radius: 5px;">Dominance Quotient: {player_dq:.2f} #{player_dq_rank}</p>
             </div>
         """, unsafe_allow_html=True)
+
         
         metrics = {
             'Avg Score': 'Avg Score',
