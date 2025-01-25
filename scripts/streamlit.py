@@ -88,6 +88,8 @@ if df is not None:
             (player_stats['Demos Inf. Per Game'] / 
             player_stats['Demos Taken Per Game'] - kd_min) / (kd_max - kd_min)
         ]
+
+        st.table(data=player_stats)
         
         radar_chart = create_radar_chart(stats_values, global_min, global_max)
         st.plotly_chart(radar_chart)
