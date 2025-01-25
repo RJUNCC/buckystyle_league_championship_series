@@ -113,7 +113,7 @@ scaler = MinMaxScaler()
 
 if df is not None:
     # Calculate games played weight using correct column name
-    st.table(df1)
+    # st.table(df1)
     max_games = df['Games'].max()
     df['games_weight'] = df['Games'] / max_games
 
