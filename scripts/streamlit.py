@@ -4,6 +4,15 @@ import plotly.graph_objects as go
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
+# Add this CSS at the beginning of your app
+st.markdown("""
+    <style>
+        .stMarkdown a {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Set page title
 st.title("Player Statistics Dashboard")
 
@@ -38,28 +47,27 @@ def create_radar_chart(player_data):
     return fig
 
 def display_kpi_boxes(player_values, rankings, metrics, player_df):
-    cols = st.columns(2)  # Create two columns
+    cols = st.columns(2)
 
     for i, (stat, col) in enumerate(metrics.items()):
         value = player_values[col]
         rank = rankings[stat]
         
-        # Calculate color based on value
         normalized = (value - player_df[col].min()) / (player_df[col].max() - player_df[col].min())
         color = f'rgb({int(255 * (1-normalized))}, {int(255 * normalized)}, 0)'
         
-        # Alternate between columns
         with cols[i % 2]:
             st.markdown(
                 f"""
                 <div style="background-color: {color}; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center;">
-                    <h3 style="margin: 0; font-weight: bold; text-align: center;">{stat}</h3>
+                    <h3 style="margin: 0; font-weight: bold; text-align: center;" id="no-anchor">{stat}</h3>
                     <p style="margin: 0; font-size: 24px; font-weight: bold; text-align: center;">{value:.2f}</p>
                     <p style="margin: 0; font-size: 20px; font-weight: bold; text-align: center;">#{rank}</p>
                 </div>
-                """,
+                """, 
                 unsafe_allow_html=True
             )
+
 
 
 
