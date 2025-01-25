@@ -116,7 +116,7 @@ if df is not None:
         st.markdown(f"""
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; font-weight: bold;">{selected_player}</h2>
-                <p style="margin: 0; font-size: 20px;">Overall Score: {player_dq:.2f}</p>
+                <p style="margin: 0; font-size: 20px;">Dominance Quotient: {player_dq:.2f}</p>
             </div>
         """, unsafe_allow_html=True)
         
