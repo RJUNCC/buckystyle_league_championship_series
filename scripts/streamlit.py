@@ -47,6 +47,16 @@ def create_radar_chart(player_data):
     return fig
 
 def display_kpi_boxes(player_values, rankings, metrics, df):
+    # First display games played in a centered box above the KPIs
+    games_played = player_values['Games Played']
+    st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 15px;">
+            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: inline-block;">
+                <h3 style="margin: 0; font-weight: bold;">Games Played: {int(games_played)}</h3>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
     cols = st.columns(2)
 
     for i, (stat, col) in enumerate(metrics.items()):
@@ -78,6 +88,7 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
                 """, 
                 unsafe_allow_html=True
             )
+
 
 @st.cache_data
 def load_data():
