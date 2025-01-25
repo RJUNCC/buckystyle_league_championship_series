@@ -73,7 +73,7 @@ if df is not None:
     global_max = df[stats_columns].max().max()
 
     # Calculate K/D ratio for all players
-    df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
+    df['K/D'] = abs(df['Demos Inf. Per Game']) / abs(df['Demos Taken Per Game'])
     kd_min = df['K/D'].min()
     kd_max = df['K/D'].max()
 
