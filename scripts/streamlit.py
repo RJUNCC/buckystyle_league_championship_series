@@ -117,7 +117,6 @@ if df is not None:
         player_values = df[df['Player'] == selected_player].iloc[0]
         
         # Display Radar Chart first
-        st.markdown("## Radar Chart")
         player_stats = df[df['Player'] == selected_player].iloc[0]
         stats_values = [
             player_stats['Avg Score'],
@@ -132,5 +131,4 @@ if df is not None:
         st.plotly_chart(radar_chart)
         
         # Display KPIs below the radar chart
-        st.markdown("## Player KPIs")
         display_kpi_boxes(player_values, rankings, metrics, df)
