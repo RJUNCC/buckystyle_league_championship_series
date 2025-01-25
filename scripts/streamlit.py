@@ -54,17 +54,10 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
         rank = rankings[stat]
         
         normalized = (value - df[col].min()) / (df[col].max() - df[col].min())
-        # Create RGB values for blue to green
-        if normalized < 0.5:
-            # Red to Blue
-            red = int(255 * (1 - normalized * 2))
-            green = int(255 * (1 - normalized * 2))
-            blue = 255
-        else:
-            # Blue to Green
-            red = 0
-            green = int(255 * (normalized * 2 - 1))
-            blue = int(255 * (2 - normalized * 2))
+        # Create RGB values for red to blue
+        red = int(255 * (1 - normalized))
+        green = 0
+        blue = int(255 * normalized)
         
         color = f'rgb({red}, {green}, {blue})'
         
@@ -79,6 +72,7 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
                 """, 
                 unsafe_allow_html=True
             )
+
 
 @st.cache_data
 def load_data():
