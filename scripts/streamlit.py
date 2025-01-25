@@ -4,7 +4,10 @@ import plotly.graph_objects as go
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-# Add this CSS at the beginning of your app
+# Set page title
+st.title("Player Statistics Dashboard")
+
+# Add CSS to remove anchor links
 st.markdown("""
     <style>
         .stMarkdown a {
@@ -12,9 +15,6 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
-
-# Set page title
-st.title("Player Statistics Dashboard")
 
 def create_radar_chart(player_data):
     categories = [
@@ -46,14 +46,14 @@ def create_radar_chart(player_data):
     
     return fig
 
-def display_kpi_boxes(player_values, rankings, metrics, player_df):
+def display_kpi_boxes(player_values, rankings, metrics, df):
     cols = st.columns(2)
 
     for i, (stat, col) in enumerate(metrics.items()):
         value = player_values[col]
         rank = rankings[stat]
         
-        normalized = (value - player_df[col].min()) / (player_df[col].max() - player_df[col].min())
+        normalized = (value - df[col].min()) / (df[col].max() - df[col].min())
         color = f'rgb({int(255 * (1-normalized))}, {int(255 * normalized)}, 0)'
         
         with cols[i % 2]:
@@ -68,9 +68,6 @@ def display_kpi_boxes(player_values, rankings, metrics, player_df):
                 unsafe_allow_html=True
             )
 
-
-
-
 @st.cache_data
 def load_data():
     try:
@@ -79,28 +76,17 @@ def load_data():
         st.error(f"Error loading data: {str(e)}")
         return None
 
-@st.cache_data
-def load_player_data():
-    try:
-        return pd.read_parquet('data/parquet/season_3_player_data.parquet')
-    except Exception as e:
-        st.error(f"Error loading player data: {str(e)}")
-        return None
-
-# Load both datasets
+# Load data
 df = load_data()
-player_df = load_player_data()
-
-# Create the scaler object
 scaler = MinMaxScaler()
 
-if df is not None and player_df is not None:
+if df is not None:
     selected_player = st.selectbox(
         'Select Player:',
         options=df['Player'].unique()
     )
 
-    # Calculate K/D ratio first
+    # Calculate K/D ratio
     df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
     
     # Columns to normalize
@@ -112,29 +98,26 @@ if df is not None and player_df is not None:
     df[stats_columns] = scaler.fit_transform(df[stats_columns])
     
     if selected_player:
-        # Calculate K/D ratio
-        player_df['Demo KD'] = player_df['Demos Inf. Per Game'] / player_df['Demos Taken Per Game']
-        
         metrics = {
             'Avg Score': 'Avg Score',
             'Goals': 'Goals Per Game',
             'Assists': 'Assists Per Game',
             'Saves': 'Saves Per Game',
             'Shots': 'Shots Per Game',
-            'K/D Ratio': 'Demo KD'
+            'K/D Ratio': 'K/D'
         }
         
         # Calculate rankings
         rankings = {}
         for name, col in metrics.items():
-            player_df[f'{col}_rank'] = player_df[col].rank(ascending=False)
-            rankings[name] = int(player_df[player_df['Player'] == selected_player][f'{col}_rank'].iloc[0])
+            df[f'{col}_rank'] = df[col].rank(ascending=False)
+            rankings[name] = int(df[df['Player'] == selected_player][f'{col}_rank'].iloc[0])
         
         # Get player values
-        player_values = player_df[player_df['Player'] == selected_player].iloc[0]
+        player_values = df[df['Player'] == selected_player].iloc[0]
         
         # Display KPIs in boxes
-        display_kpi_boxes(player_values, rankings, metrics, player_df)
+        display_kpi_boxes(player_values, rankings, metrics, df)
         
         # Display Radar Chart
         st.markdown("## Radar Chart")
