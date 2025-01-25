@@ -101,7 +101,7 @@ def load_data():
         df2['Player'] = df2['Player'].str.title()
         
         # Merge the dataframes
-        df = df1.merge(df2[['Player', 'Dominance Quotient']], on='Player', how='left')
+        df = df1.merge(df2[['Player', 'Dominance Quotient']], on='Player', how='inner')
         return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
