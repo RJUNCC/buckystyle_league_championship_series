@@ -21,8 +21,8 @@ jobs:
       - name: Install project
         run: uv sync --all-extras --dev
 
-      - name: Install requirements
-        run: uv pip install -r requirements.txt
+      # - name: Install requirements
+      #   run: uv pip install -r requirements.txt
 
       - name: Setup python
         run: uv python install
