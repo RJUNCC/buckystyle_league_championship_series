@@ -52,20 +52,17 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
     for i, (stat, col) in enumerate(metrics.items()):
         value = player_values[col]
         rank = rankings[stat]
-        
-        # Normalize rank (rank 1 is best, rank 30 is worst)
-        normalized = (rank - 1) / 29  # Assuming 30 total ranks
-        
-        if normalized < 0.5:
-            # Light blue (150, 200, 255) to dark blue (0, 100, 255)
-            intensity = normalized * 2
-            blue = 255
-            red = int(150 * (1 - intensity))
-            green = int(200 * (1 - intensity))
+
+        if rank <= 15:
+            # Dark blue (0, 0, 139) to light blue (173, 216, 230)
+            intensity = (rank - 1) / 14  # 0 for rank 1 (darkest), 1 for rank 15 (lightest)
+            red = int(173 * intensity)
+            green = int(216 * intensity)
+            blue = int(139 + (230 - 139) * intensity)
         else:
-            # Dark red (139, 0, 0) to light red (255, 200, 200)
-            intensity = (normalized - 0.5) * 2
-            red = 255
+            # Light red (255, 200, 200) to dark red (139, 0, 0)
+            intensity = (rank - 16) / 14  # 0 for rank 16 (lightest), 1 for rank 30 (darkest)
+            red = int(255 - (255 - 139) * intensity)
             green = blue = int(200 * (1 - intensity))
 
         color = f'rgb({red}, {green}, {blue})'
@@ -81,10 +78,6 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
                 """, 
                 unsafe_allow_html=True
             )
-
-
-
-
 
 @st.cache_data
 def load_data():
