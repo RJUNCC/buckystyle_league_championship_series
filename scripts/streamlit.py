@@ -113,10 +113,9 @@ scaler = MinMaxScaler()
 
 if df is not None:
     # Calculate games played weight using correct column name
+    st.table(df)
     max_games = df['Games'].max()
     df['games_weight'] = df['Games'] / max_games
-
-    st.table(df)
 
     # Apply weight to all relevant metrics
     metrics_columns = ['Avg Score', 'Goals Per Game', 'Assists Per Game', 
