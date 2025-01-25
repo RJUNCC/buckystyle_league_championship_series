@@ -54,7 +54,17 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
         rank = rankings[stat]
         
         normalized = (value - df[col].min()) / (df[col].max() - df[col].min())
-        color = f'rgb({int(255 * (1-normalized))}, {int(255 * normalized)}, 0)'
+        # Create RGB values for red to yellow to green
+        if normalized < 0.5:
+            # Red to Yellow
+            red = 255
+            green = int(255 * (normalized * 2))
+        else:
+            # Yellow to Green
+            red = int(255 * (2 - normalized * 2))
+            green = 255
+        
+        color = f'rgb({red}, {green}, 0)'
         
         with cols[i % 2]:
             st.markdown(
@@ -71,7 +81,16 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
 @st.cache_data
 def load_data():
     try:
-        return pd.read_parquet('data/parquet/season_3_all_data.parquet')
+        df1 = pd.read_parquet('data/parquet/season_3_all_data.parquet')
+        df2 = pd.read_parquet('data/parquet/season_3_player_data.parquet')
+        
+        # Capitalize player names
+        df1['Player'] = df1['Player'].str.title()
+        df2['Player'] = df2['Player'].str.title()
+        
+        # Merge the dataframes
+        df = df1.merge(df2[['Player', 'Dominance Quotient']], on='Player', how='left')
+        return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None
@@ -83,22 +102,15 @@ scaler = MinMaxScaler()
 if df is not None:
     selected_player = st.selectbox(
         'Select Player:',
-        options=df['Player'].unique()
+        options=sorted(df['Player'].unique())
     )
 
     # Calculate K/D ratio
     df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
     
-    # Columns to normalize
-    stats_columns = ['Avg Score', 'Goals Per Game', 
-                    'Assists Per Game', 'Saves Per Game', 
-                    'Shots Per Game', 'K/D']
-    
-    # Fit and transform all stats at once
-    df[stats_columns] = scaler.fit_transform(df[stats_columns])
-    
     if selected_player:
         metrics = {
+            'Dominance Quotient': 'Dominance Quotient',
             'Avg Score': 'Avg Score',
             'Goals': 'Goals Per Game',
             'Assists': 'Assists Per Game',
@@ -113,11 +125,19 @@ if df is not None:
             df[f'{col}_rank'] = df[col].rank(ascending=False)
             rankings[name] = int(df[df['Player'] == selected_player][f'{col}_rank'].iloc[0])
         
-        # Get player values
+        # Get player values (non-normalized)
         player_values = df[df['Player'] == selected_player].iloc[0]
         
+        # Normalize data for radar chart only
+        radar_columns = ['Avg Score', 'Goals Per Game', 
+                        'Assists Per Game', 'Saves Per Game', 
+                        'Shots Per Game', 'K/D']
+        df_radar = df[radar_columns].copy()
+        df_radar = pd.DataFrame(scaler.fit_transform(df_radar), columns=radar_columns, index=df.index)
+        
         # Display Radar Chart first
-        player_stats = df[df['Player'] == selected_player].iloc[0]
+        st.markdown("## Radar Chart")
+        player_stats = df_radar.loc[df['Player'] == selected_player].iloc[0]
         stats_values = [
             player_stats['Avg Score'],
             player_stats['Goals Per Game'],
@@ -131,4 +151,5 @@ if df is not None:
         st.plotly_chart(radar_chart)
         
         # Display KPIs below the radar chart
+        st.markdown("## Player KPIs")
         display_kpi_boxes(player_values, rankings, metrics, df)
