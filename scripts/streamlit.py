@@ -85,7 +85,7 @@ if df is not None:
             player_stats['Assists Per Game Zscore'],
             player_stats['Saves Per Game Zscore'],
             player_stats['Shots Per Game Zscore'],
-            (abs(player_stats['Demos Inf. Per Game'] / abs(player_stats['Demos Taken Per Game'] - kd_min)) / abs(kd_max - kd_min)) / 10
+            (abs(player_stats['Demos Inf. Per Game'] / abs(player_stats['Demos Taken Per Game'] - kd_min)) / (abs(kd_max - kd_min) * 10))
         ]
 
         st.table(data=player_stats)
