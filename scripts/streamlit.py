@@ -116,6 +116,8 @@ if df is not None:
     max_games = df['Games'].max()
     df['games_weight'] = df['Games'] / max_games
 
+    st.table(df)
+
     # Apply weight to all relevant metrics
     metrics_columns = ['Avg Score', 'Goals Per Game', 'Assists Per Game', 
                       'Saves Per Game', 'Shots Per Game']
