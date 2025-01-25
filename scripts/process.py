@@ -80,8 +80,8 @@ class Process:
             "game_average.boost.amount_stolen_small",
         ]
 
-        df_final0 = df[features_to_keep].copy().drop("cumulative.games", axis=1)
-        df_final0.columns = ["Player", "Team", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]
+        df_final0 = df[features_to_keep].copy()
+        df_final0.columns = ["Player", "Team", "Games", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]
 
         df_final = df_final0.copy()
         # df_final = df_final.drop("Team", axis=1)
@@ -97,7 +97,11 @@ class Process:
         df_final["Small Boost Stolen Zscore"] = np.round(self.minmax_scale(df_final["Small Boost Stolen"]) * config.count_small_pads_stolen_per_game, 2)
         df_final["Shooting %"] = df_final["Shooting %"] / 100
 
+        logging.info("Saving to parquet file...")
+        print("Saving to parquet file...")
         df_final.to_parquet("../data/parquet/season_3_all_data.parquet")
+
+        df_final = df_final.drop("Team", axis=1)
 
         # Calculate Dominance Quotient
         dq_summation = [i for i in df_final.columns.tolist() if "Zscore" in i]
