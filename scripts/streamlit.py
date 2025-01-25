@@ -57,12 +57,13 @@ def calculate_kpis(player_df, player):
         player_df[f'{col}_rank'] = player_df[col].rank(ascending=False)
         rankings[name] = int(player_df[player_df['Player'] == player][f'{col}_rank'].iloc[0])
     
-    return rankings
+    return rankings, metrics
 
-def display_ranking(rank, total=30):
-    normalized = (rank - 1) / (total - 1)
-    color = f'rgb({int(255 * normalized)}, {int(255 * (1-normalized))}, 0)'
-    return f'<span style="color: {color}">#{rank}</span>'
+def display_stat(value, rank, col, player_df):
+    # Color gradient from green (highest) to red (lowest)
+    normalized = (value - player_df[col].min()) / (player_df[col].max() - player_df[col].min())
+    color = f'rgb({int(255 * (1-normalized))}, {int(255 * normalized)}, 0)'
+    return f'<span style="color: {color}">{value:.2f}</span> (#{rank})'
 
 # Load the parquet data
 @st.cache_data
@@ -108,9 +109,13 @@ if df is not None and player_df is not None:
     if selected_player:
         # Display Rankings
         st.markdown("## Player Rankings")
-        rankings = calculate_kpis(player_df, selected_player)
-        for stat, rank in rankings.items():
-            st.markdown(f"**{stat}**: {display_ranking(rank)}", unsafe_allow_html=True)
+        rankings, metrics = calculate_kpis(player_df, selected_player)
+        player_values = player_df[player_df['Player'] == selected_player].iloc[0]
+        
+        for stat, col in metrics.items():
+            value = player_values[col]
+            rank = rankings[stat]
+            st.markdown(f"**{stat}**: {display_stat(value, rank, col, player_df)}", unsafe_allow_html=True)
         
         # Display Radar Chart
         st.markdown("## Radar Chart")
