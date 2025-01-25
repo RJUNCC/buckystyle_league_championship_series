@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -49,7 +48,7 @@ def create_radar_chart(player_data):
 
 def display_kpi_boxes(player_values, rankings, metrics, df):
     # First display games played in a centered box above the KPIs
-    games_played = player_values['Games']
+    games_played = player_values['cumulative.games']
     st.markdown(f"""
         <div style="text-align: center; margin-bottom: 15px;">
             <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: inline-block;">
@@ -102,36 +101,23 @@ def load_data():
         
         # Merge the dataframes
         df = df1.merge(df2[['Player', 'Dominance Quotient']], on='Player', how='left')
-        return df, df1, df2
+        return df
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None
 
 # Load data
-df, df1, df2 = load_data()
+df = load_data()
 scaler = MinMaxScaler()
 
 if df is not None:
-    # Calculate games played weight using correct column name
-    # st.table(df1)
-    max_games = df['Games'].max()
-    df['games_weight'] = df['Games'] / max_games
-
-    # Apply weight to all relevant metrics
-    metrics_columns = ['Avg Score', 'Goals Per Game', 'Assists Per Game', 
-                      'Saves Per Game', 'Shots Per Game']
-    
-    # Apply weights to the metrics
-    for col in metrics_columns:
-        df[col] = df[col] * df['games_weight']
-
     selected_player = st.selectbox(
         'Select Player:',
         options=sorted(df['Player'].unique())
     )
 
-    # Calculate K/D ratio with weight
-    df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game']) * df['games_weight']
+    # Calculate K/D ratio
+    df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
     
     if selected_player:
         # Get player's Dominance Quotient
