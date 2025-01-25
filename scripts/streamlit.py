@@ -132,7 +132,7 @@ if df is not None:
         
         cols = st.columns([1, 2, 2])
         cols[0].markdown(f"#{rank}")
-        if cols[1].button(f"{player}", key=f"player_{rank}"):
+        if cols[1].button(f"{player}", key=f"player_{rank}_{player.replace(' ', '_')}"):
             selected_player = player
         cols[2].markdown(f"{dq:.2f}")
 
