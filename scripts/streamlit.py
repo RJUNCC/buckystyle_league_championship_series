@@ -90,7 +90,7 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
                 unsafe_allow_html=True
             )
 
-@st.cache_data(ttl=0)
+@st.cache_data
 def load_data():
     try:
         df1 = pd.read_parquet('data/parquet/season_3_all_data.parquet')
