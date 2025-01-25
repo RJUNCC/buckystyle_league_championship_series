@@ -121,14 +121,14 @@ if df is not None:
     # Create two columns with custom widths (1:3 ratio)
     col1, col2 = st.columns([1, 3])
     
-    # Rankings table in the smaller left column
+    # Rankings list in the smaller left column
     with col1:
-        st.markdown("### Player Rankings")
+        st.markdown("### Rankings")
         for idx, row in sorted_players.iterrows():
             player = row['Player']
             dq = row['Dominance Quotient']
             rank = int(row['Dominance Quotient_rank'])
-            if st.button(f"#{rank} {player}\nDQ: {dq:.2f}", key=f"player_{rank}_{player.replace(' ', '_')}"):
+            if st.button(f"#{rank} {player} - {dq:.2f}", key=f"player_{rank}_{player.replace(' ', '_')}"):
                 selected_player = player
 
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
