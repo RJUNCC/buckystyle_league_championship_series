@@ -111,28 +111,30 @@ df = load_data()
 scaler = MinMaxScaler()
 
 if df is not None:
-    # Add a radio button to switch between player search and rankings
-    view_mode = st.radio("Select View Mode", ["Search Player", "View Rankings"])
-    
     # Sort players by Dominance Quotient
     df['Dominance Quotient_rank'] = df['Dominance Quotient'].rank(ascending=False)
     sorted_players = df.sort_values('Dominance Quotient', ascending=False)
     
-    if view_mode == "Search Player":
-        selected_player = st.selectbox(
-            'Search for a player:',
-            options=sorted(df['Player'].unique())
-        )
-    else:
-        # Display ranking list with clickable players
-        st.markdown("### Player Rankings")
-        selected_player = None
-        for idx, row in sorted_players.iterrows():
-            player = row['Player']
-            dq = row['Dominance Quotient']
-            rank = int(row['Dominance Quotient_rank'])
-            if st.button(f"#{rank} {player} - DQ: {dq:.2f}"):
-                selected_player = player
+    # Create the rankings table
+    st.markdown("### Player Rankings")
+    cols = st.columns([1, 2, 2])
+    cols[0].markdown("**Rank**")
+    cols[1].markdown("**Player**")
+    cols[2].markdown("**DQ**")
+    
+    selected_player = None
+    
+    # Display each player in a table row format
+    for idx, row in sorted_players.iterrows():
+        player = row['Player']
+        dq = row['Dominance Quotient']
+        rank = int(row['Dominance Quotient_rank'])
+        
+        cols = st.columns([1, 2, 2])
+        cols[0].markdown(f"#{rank}")
+        if cols[1].button(f"{player}", key=f"player_{rank}"):
+            selected_player = player
+        cols[2].markdown(f"{dq:.2f}")
 
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
     
