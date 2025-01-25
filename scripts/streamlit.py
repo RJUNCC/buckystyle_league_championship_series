@@ -10,11 +10,16 @@ st.set_page_config(layout="wide")
 # Set page title
 st.title("Player Statistics Dashboard")
 
-# Add CSS to remove anchor links
+# Add CSS to remove anchor links and add scrollable list
 st.markdown("""
     <style>
         .stMarkdown a {
             display: none;
+        }
+        .scrollable-list {
+            max-height: 400px;
+            overflow-y: scroll;
+            padding-right: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -121,27 +126,17 @@ if df is not None:
     # Initialize selected_player
     selected_player = None
     
-    # Create two columns with custom widths (1:3 ratio)
-    col1, col2 = st.columns([1, 3])
+    # Create two columns with custom widths (3:1 ratio)
+    col1, col2 = st.columns([3, 1])
     
-    # Rankings list in the smaller left column
-    with col1:
-        st.markdown("### Rankings")
-        for idx, row in sorted_players.iterrows():
-            player = row['Player']
-            dq = row['Dominance Quotient']
-            rank = int(row['Dominance Quotient_rank'])
-            if st.button(f"#{rank} {player} - {dq:.2f}", key=f"player_{rank}_{player.replace(' ', '_')}"):
-                selected_player = player
-
     df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game'])
     
-    # Radar chart and stats in the larger right column
-    with col2:
+    # Radar chart and stats in the larger left column
+    with col1:
         if selected_player:
             # Get player's Dominance Quotient and rank
             player_dq = df[df['Player'] == selected_player]['Dominance Quotient'].iloc[0]
-            player_dq_rank = int(df[df['Player'] == selected_player]['Dominance Quotient_rank'].iloc[0])
+            player_dq_rank = int(df[df['Player'] == selected_player]['Dominance_Quotient_rank'].iloc[0])
             
             # Display player name and Dominance Quotient at the top
             st.markdown(f"""
@@ -192,3 +187,15 @@ if df is not None:
             
             # Display KPIs
             display_kpi_boxes(player_values, rankings, metrics, df)
+    
+    # Rankings list in the smaller right column with scrollbar
+    with col2:
+        st.markdown("### Rankings")
+        st.markdown('<div class="scrollable-list">', unsafe_allow_html=True)
+        for idx, row in sorted_players.iterrows():
+            player = row['Player']
+            dq = row['Dominance Quotient']
+            rank = int(row['Dominance_Quotient_rank'])
+            if st.button(f"#{rank} {player} - {dq:.2f}", key=f"player_{rank}_{player.replace(' ', '_')}"):
+                selected_player = player
+        st.markdown('</div>', unsafe_allow_html=True)
