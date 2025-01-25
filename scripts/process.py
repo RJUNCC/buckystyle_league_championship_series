@@ -116,7 +116,7 @@ class Process:
         # Load the data
         team_df = team_df.sort_values(by="name").reset_index(drop=True)
         team_df["Goal Diff"] = team_df["cumulative.core.goals"] - team_df["cumulative.core.goals_against"]
-        team_df["Demo Diff"] = team_df["cumulative.demo.inflicted"] - team_df["cumulative.demo.taken"]
+        team_df["Demo Diff"] = team_df["cumulative.demo.inflicted"] / team_df["cumulative.demo.taken"]
         team_df["Shots Diff"] = team_df["cumulative.core.shots"] - team_df["cumulative.core.shots_against"]
         team_df["Win % Zscore"] = zscore(team_df["cumulative.win_percentage"]) * config.win_perc_weight
         team_df["Goal Diff Zscore"] = zscore(team_df["Goal Diff"]) * config.goal_diff_weight

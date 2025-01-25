@@ -15,7 +15,7 @@ def minmax_scale(data):
 def create_radar_chart(player_data, global_min, global_max):
     categories = [
         'Avg Score', 'Goals Per Game', 'Assists Per Game',
-        'Saves Per Game', 'Shots Per Game', 'Demo Differential'
+        'Saves Per Game', 'Shots Per Game', 'K/D'
     ]
     
     # Scale the data using global min and max
@@ -73,9 +73,9 @@ if df is not None:
     global_max = df[stats_columns].max().max()
     
     # Handle demo differential separately
-    demo_diff = df['Demos Inf. Per Game'] - df['Demos Taken Per Game']
-    demo_min = demo_diff.min()
-    demo_max = demo_diff.max()
+    demo_diff = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
+    # demo_min = demo_diff.min()
+    # demo_max = demo_diff.max()
     
     if selected_player:
         player_stats = df[df['Player'] == selected_player].iloc[0]
@@ -85,8 +85,7 @@ if df is not None:
             player_stats['Assists Per Game Zscore'],
             player_stats['Saves Per Game Zscore'],
             player_stats['Shots Per Game Zscore'],
-            (player_stats['Demos Inf. Per Game'] - 
-             player_stats['Demos Taken Per Game'] - demo_min) / (demo_max - demo_min)
+            (player_stats['Demos Inf. Per Game'] / player_stats['Demos Taken Per Game'] )
         ]
         
         radar_chart = create_radar_chart(stats_values, global_min, global_max)
