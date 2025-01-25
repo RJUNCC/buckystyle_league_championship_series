@@ -54,17 +54,19 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
         rank = rankings[stat]
         
         normalized = (value - df[col].min()) / (df[col].max() - df[col].min())
-        # Create RGB values for red to yellow to green
+        # Create RGB values for blue to green
         if normalized < 0.5:
-            # Red to Yellow
-            red = 255
-            green = int(255 * (normalized * 2))
+            # Red to Blue
+            red = int(255 * (1 - normalized * 2))
+            green = int(255 * (1 - normalized * 2))
+            blue = 255
         else:
-            # Yellow to Green
-            red = int(255 * (2 - normalized * 2))
-            green = 255
+            # Blue to Green
+            red = 0
+            green = int(255 * (normalized * 2 - 1))
+            blue = int(255 * (2 - normalized * 2))
         
-        color = f'rgb({red}, {green}, 0)'
+        color = f'rgb({red}, {green}, {blue})'
         
         with cols[i % 2]:
             st.markdown(
@@ -116,7 +118,7 @@ if df is not None:
         st.markdown(f"""
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; font-weight: bold;">{selected_player}</h2>
-                <p style="margin: 0; font-size: 20px;">Dominance Quotient: {player_dq:.2f}</p>
+                <p style="margin: 0; font-size: 24px; font-weight: bold; background-color: rgba(255, 255, 0, 0.3); display: inline-block; padding: 5px 10px; border-radius: 5px;">Dominance Quotient: {player_dq:.2f}</p>
             </div>
         """, unsafe_allow_html=True)
         
