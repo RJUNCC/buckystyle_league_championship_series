@@ -17,7 +17,9 @@ attrs==24.3.0
     # via
     #   aiohttp
     #   jsonschema
+    #   outcome
     #   referencing
+    #   trio
 beautifulsoup4==4.12.3
     # via
     #   dataframe-image
@@ -25,7 +27,11 @@ beautifulsoup4==4.12.3
 bleach==6.2.0
     # via nbconvert
 certifi==2024.12.14
-    # via requests
+    # via
+    #   requests
+    #   selenium
+cffi==1.17.1
+    # via trio
 charset-normalizer==3.4.0
     # via requests
 colorama==0.4.6
@@ -34,10 +40,14 @@ colorama==0.4.6
     #   pytest
 comm==0.2.2
     # via ipykernel
+contourpy==1.3.1
+    # via matplotlib
 cssselect==1.2.0
     # via dataframe-image
 cssutils==2.11.1
     # via dataframe-image
+cycler==0.12.1
+    # via matplotlib
 dataframe-image==0.2.6
     # via buckystyle-league-championship-series (pyproject.toml)
 db==0.1.1
@@ -60,15 +70,22 @@ executing==2.1.0
     # via stack-data
 fastjsonschema==2.21.1
     # via nbformat
+fonttools==4.55.6
+    # via matplotlib
 frozenlist==1.5.0
     # via
     #   aiohttp
     #   aiosignal
+greenlet==3.1.1
+    # via playwright
+h11==0.14.0
+    # via wsproto
 html2image==2.0.5
     # via dataframe-image
 idna==3.10
     # via
     #   requests
+    #   trio
     #   yarl
 iniconfig==2.0.0
     # via pytest
@@ -81,7 +98,9 @@ jedi==0.19.2
 jinja2==3.1.4
     # via nbconvert
 joblib==1.4.2
-    # via buckystyle-league-championship-series (pyproject.toml)
+    # via
+    #   buckystyle-league-championship-series (pyproject.toml)
+    #   scikit-learn
 jsonschema==4.23.0
     # via nbformat
 jsonschema-specifications==2024.10.1
@@ -99,12 +118,16 @@ jupyter-core==5.7.2
     #   nbformat
 jupyterlab-pygments==0.3.0
     # via nbconvert
+kiwisolver==1.4.8
+    # via matplotlib
 lxml==5.3.0
     # via dataframe-image
 markupsafe==3.0.2
     # via
     #   jinja2
     #   nbconvert
+matplotlib==3.10.0
+    # via buckystyle-league-championship-series (pyproject.toml)
 matplotlib-inline==0.1.7
     # via
     #   ipykernel
@@ -132,12 +155,18 @@ nest-asyncio==1.6.0
 numpy==2.2.0
     # via
     #   buckystyle-league-championship-series (pyproject.toml)
+    #   contourpy
+    #   matplotlib
     #   pandas
+    #   scikit-learn
     #   scipy
+outcome==1.3.0.post0
+    # via trio
 packaging==24.2
     # via
     #   dataframe-image
     #   ipykernel
+    #   matplotlib
     #   nbconvert
     #   plotly
     #   pytest
@@ -150,9 +179,13 @@ pandocfilters==1.5.1
 parso==0.8.4
     # via jedi
 pillow==11.0.0
-    # via dataframe-image
+    # via
+    #   dataframe-image
+    #   matplotlib
 platformdirs==4.3.6
     # via jupyter-core
+playwright==1.49.1
+    # via buckystyle-league-championship-series (pyproject.toml)
 plotly==5.24.1
     # via buckystyle-league-championship-series (pyproject.toml)
 pluggy==1.5.0
@@ -171,15 +204,24 @@ py-cord==2.6.1
     # via buckystyle-league-championship-series (pyproject.toml)
 pyarrow==18.1.0
     # via buckystyle-league-championship-series (pyproject.toml)
+pycparser==2.22
+    # via cffi
+pyee==12.0.0
+    # via playwright
 pygments==2.18.0
     # via
     #   ipython
     #   nbconvert
+pyparsing==3.2.1
+    # via matplotlib
+pysocks==1.7.1
+    # via urllib3
 pytest==8.3.4
     # via buckystyle-league-championship-series (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
     #   jupyter-client
+    #   matplotlib
     #   pandas
 python-dotenv==1.0.1
     # via buckystyle-league-championship-series (pyproject.toml)
@@ -204,16 +246,28 @@ rpds-py==0.22.3
     # via
     #   jsonschema
     #   referencing
+scikit-learn==1.6.1
+    # via buckystyle-league-championship-series (pyproject.toml)
 scipy==1.14.1
+    # via
+    #   buckystyle-league-championship-series (pyproject.toml)
+    #   scikit-learn
+selenium==4.28.1
     # via buckystyle-league-championship-series (pyproject.toml)
 six==1.17.0
     # via python-dateutil
+sniffio==1.3.1
+    # via trio
+sortedcontainers==2.4.0
+    # via trio
 soupsieve==2.6
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
 tenacity==9.0.0
     # via plotly
+threadpoolctl==3.5.0
+    # via scikit-learn
 tinycss2==1.4.0
     # via nbconvert
 tornado==6.4.2
@@ -231,12 +285,23 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
+trio==0.28.0
+    # via
+    #   selenium
+    #   trio-websocket
+trio-websocket==0.11.1
+    # via selenium
 typing-extensions==4.12.2
-    # via ipython
+    # via
+    #   ipython
+    #   pyee
+    #   selenium
 tzdata==2024.2
     # via pandas
 urllib3==2.2.3
-    # via requests
+    # via
+    #   requests
+    #   selenium
 wcwidth==0.2.13
     # via prompt-toolkit
 webencodings==0.5.1
@@ -244,6 +309,10 @@ webencodings==0.5.1
     #   bleach
     #   tinycss2
 websocket-client==1.8.0
-    # via html2image
+    # via
+    #   html2image
+    #   selenium
+wsproto==1.2.0
+    # via trio-websocket
 yarl==1.18.3
     # via aiohttp
