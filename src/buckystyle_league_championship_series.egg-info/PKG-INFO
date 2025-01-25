@@ -1,0 +1,75 @@
+Metadata-Version: 2.2
+Name: buckystyle-league-championship-series
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: dataframe-image>=0.1.5
+Requires-Dist: db-sqlite3>=0.0.1
+Requires-Dist: discord-py>=2.4.0
+Requires-Dist: discord>=2.3.2
+Requires-Dist: ipykernel>=6.29.5
+Requires-Dist: numpy>=2.2.0
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: py-cord>=2.6.1
+Requires-Dist: pyarrow>=18.1.0
+Requires-Dist: pytest>=8.3.4
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: requests>=2.32.3
+Requires-Dist: scipy>=1.14.1
+Requires-Dist: joblib>=1.4.2
+Requires-Dist: plotly>=5.24.1
+Requires-Dist: matplotlib>=3.10.0
+Requires-Dist: selenium>=4.28.1
+Requires-Dist: playwright>=1.49.1
+Requires-Dist: scikit-learn>=1.6.1
+
+# Buckystyle League Championship Series
+
+# Daily Bot Task Workflow
+
+This repository includes a **Daily Bot Task** GitHub Actions workflow designed to automate the execution of various bot-related tasks. The workflow is scheduled to run daily at 1:00 AM UTC and can also be triggered manually when needed.
+
+## Table of Contents
+
+- [Workflow Overview](#workflow-overview)
+- [Triggers](#triggers)
+  - [Scheduled Trigger](#scheduled-trigger)
+  - [Manual Trigger](#manual-trigger)
+- [Workflow Jobs and Steps](#workflow-jobs-and-steps)
+  - [1. Checkout Code](#1-checkout-code)
+  - [2. Install Astral UV](#2-install-astral-uv)
+  - [3. Setup Python](#3-setup-python)
+  - [4. Fetch and Process Data](#4-fetch-and-process-data)
+  - [5. Send Images to Discord](#5-send-images-to-discord)
+  - [6. (Optional) Train Fantasy Points Model](#6-optional-train-fantasy-points-model)
+- [Workflow YAML Configuration](#workflow-yaml-configuration)
+- [Setup Instructions](#setup-instructions)
+- [Notes](#notes)
+- [License](#license)
+
+## Workflow Overview
+
+The **Daily Bot Task** workflow is designed to perform the following automated tasks:
+
+1. **Checkout the repository code.**
+2. **Set up the Python environment using Astral UV.**
+3. **Install necessary Python dependencies.**
+4. **Fetch and process data to create images and statistics.**
+5. **Send the generated images to a Discord channel.**
+6. **(Optional) Train a Fantasy Points model using Optuna.**
+
+## Triggers
+
+The workflow is triggered in two ways:
+
+- **Scheduled Trigger:** Automatically runs every day at 1:00 AM UTC.
+- **Manual Trigger:** Can be manually initiated through the GitHub Actions interface.
+
+### Scheduled Trigger
+
+The workflow is scheduled to run daily at 1:00 AM UTC using a cron expression.
+
+```yaml
+schedule:
+  - cron: "0 1 * * *" # Runs daily at 1:00 AM UTC

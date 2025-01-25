@@ -51,7 +51,7 @@ def display_kpi_boxes(player_values, rankings, metrics, df):
     games_played = player_values['Games']
     st.markdown(f"""
         <div style="text-align: center; margin-bottom: 15px;">
-            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: inline-block;">
+            <div style="background-color: #c9a0e; padding: 10px; border-radius: 5px; display: inline-block;">
                 <h3 style="margin: 0; font-weight: bold;">Games Played: {int(games_played)}</h3>
             </div>
         </div>
