@@ -48,7 +48,7 @@ def create_radar_chart(player_data):
 
 def display_kpi_boxes(player_values, rankings, metrics, df):
     # First display games played in a centered box above the KPIs
-    games_played = player_values['Games']
+    games_played = player_values['cumulative.games']
     st.markdown(f"""
         <div style="text-align: center; margin-bottom: 15px;">
             <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: inline-block;">
@@ -116,8 +116,10 @@ if df is not None:
         options=sorted(df['Player'].unique())
     )
 
-    # Calculate K/D ratio
-    df['K/D'] = df['Demos Inf. Per Game'] / df['Demos Taken Per Game']
+    # Calculate K/D ratio with games weighting
+    max_games = df['cumulative.games'].max()
+    df['games_weight'] = df['cumulative.games'] / max_games
+    df['K/D'] = (df['Demos Inf. Per Game'] / df['Demos Taken Per Game']) * df['games_weight']
     
     if selected_player:
         # Get player's Dominance Quotient
