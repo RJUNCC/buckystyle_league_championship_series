@@ -19,7 +19,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-def create_radar_chart(player_data):
+def create_radar_chart(player_data, selected_player):
     categories = [
         'Avg Score', 'Goals Per Game', 'Assists Per Game',
         'Saves Per Game', 'Shots Per Game', 'K/D'
@@ -118,6 +118,9 @@ if df is not None:
     df['Dominance Quotient_rank'] = df['Dominance Quotient'].rank(ascending=False)
     sorted_players = df.sort_values('Dominance Quotient', ascending=False)
     
+    # Initialize selected_player
+    selected_player = None
+    
     # Create two columns with custom widths (1:3 ratio)
     col1, col2 = st.columns([1, 3])
     
@@ -184,7 +187,7 @@ if df is not None:
                 player_stats['K/D']
             ]
             
-            radar_chart = create_radar_chart(stats_values)
+            radar_chart = create_radar_chart(stats_values, selected_player)
             st.plotly_chart(radar_chart, use_container_width=True)
             
             # Display KPIs
