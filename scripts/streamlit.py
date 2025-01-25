@@ -7,25 +7,17 @@ from sklearn.preprocessing import MinMaxScaler
 # Set page title
 st.title("Player Statistics Radar Chart")
 
-def minmax_scale(data):
-    min_val = np.min(data)
-    max_val = np.max(data)
-    return (data - min_val) / (max_val - min_val)
-
 # Function to create radar chart
-def create_radar_chart(player_data, global_min, global_max):
+def create_radar_chart(player_data):
     categories = [
         'Avg Score', 'Goals Per Game', 'Assists Per Game',
         'Saves Per Game', 'Shots Per Game', 'K/D'
     ]
     
-    # Scale the data using global min and max
-    scaled_data = (player_data - global_min) / (global_max - global_min)
-    
     fig = go.Figure()
     
     fig.add_trace(go.Scatterpolar(
-        r=scaled_data,
+        r=player_data,
         theta=categories,
         fill='toself',
         name=selected_player
@@ -38,7 +30,7 @@ def create_radar_chart(player_data, global_min, global_max):
                 showticklabels=False,
                 showline=False,
                 ticks="",
-                range=[0, 2]  # Fixed range from 0 to 1
+                range=[0, 1]
             )
         ),
         showlegend=True
@@ -89,7 +81,5 @@ if df is not None:
             player_stats['K/D']
         ]
         
-        radar_chart = create_radar_chart(stats_values, 0, 1)
+        radar_chart = create_radar_chart(stats_values)
         st.plotly_chart(radar_chart)
-
-
