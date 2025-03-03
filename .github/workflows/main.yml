@@ -2,14 +2,12 @@ name: Daily Bot Task
 
 on:
   schedule:
-    - cron: "0 1 * * *" # Fixed cron syntax (runs at 1:00 AM UTC daily)
+    - cron: "0 1 * * *"
   workflow_dispatch:
 
 jobs:
   run-scripts:
     runs-on: ubuntu-latest
-    # Removed matrix since you're only using 3.11
-    environment: production # Add environment protection
 
     steps:
       - name: Checkout code
@@ -18,25 +16,30 @@ jobs:
       - name: Restore .env from secret
         run: |
           echo "${{ secrets.DOTENV_CONTENT }}" | base64 --decode > .env
-          # Verify .env was created (without exposing secrets)
-          [ -s .env ] && echo ".env file restored" || exit 1
+          [ -s .env ] || exit 1
+
+      - name: Load environment variables
+        run: |
+          echo "Loading .env file"
+          while IFS= read -r line; do
+            if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+              echo "$line" >> $GITHUB_ENV
+            fi
+          done < .env
 
       - name: Set up Python environment
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          uv pip install -r requirements.txt --all-extras
-          uv pip install matplotlib  # Explicit installation
+      - name: Install project
+        run: uv sync --all-extras --dev
+
+      - name: Setup python
+        run: uv python install
 
       - name: Run processing
-        run: uv run scripts/process.py
-        env:
-          # Load all variables from .env automatically
-          $(cat .env | xargs)
+        run: uv run --with 'matplotlib' scripts/process.py
 
       - name: Send Discord images
         run: uv run discord_bot/cogs/send_images.py
-        env: $(cat .env | xargs)
