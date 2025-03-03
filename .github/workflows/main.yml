@@ -2,37 +2,28 @@ name: Daily Bot Task
 
 on:
   schedule:
-    - cron: "0 1 * * *" # 1:00 AM UTC
-  workflow_dispatch:
+    - cron: "* 1 * * *" # Runs daily at 1:00 am UTC
+  workflow_dispatch: # Allows manual triggering if needed
 
 jobs:
   run-scripts:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          # - "3.9"
+          # - "3.10"
+          - "3.11"
+          # - "3.12"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create .env file
-        uses: SpicyPizza/create-envfile@v2
-        with:
-          # Map secrets to .env variables
-          envkey_DEBUG: "false" # Optional example
-          envkey_TOKEN: ${{ secrets.TOKEN }}
-          envkey_DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          envkey_CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
-          envkey_PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }}
-          envkey_TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }}
-          # Action configuration
-          file_name: .env
-          directory: discord_bot
-          fail_on_empty: true
-          sort_keys: true
-
-      - name: Set up Python environment
+      - name: Install astral uv
         uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version}}
 
       - name: Install project
         run: uv sync --all-extras --dev
@@ -40,8 +31,19 @@ jobs:
       - name: Setup python
         run: uv python install
 
-      - name: Run processing
-        run: uv run --with 'matplotlib' scripts/process.py
+      - name: Fetch data, filter data, and create images and stats
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
 
-      - name: Send Discord images
-        run: uv run discord_bot/cogs/send_images.py
+        run: |
+          uv run --with 'matplotlib' scripts/process.py
+
+      - name: Send images to discord channel
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
+          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }} # Use your Discord token secret here
+          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }} # Use your Discord token secret here
+        run: |
+          uv run discord_bot/cogs/send_images.py

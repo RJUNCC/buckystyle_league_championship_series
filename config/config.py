@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+TOKEN = os.getenv("TOKEN")
+
 class Config:
     def __init__(self):
         # Private attributes
