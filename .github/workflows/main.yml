@@ -11,10 +11,10 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.9"
-          - "3.10"
+          # - "3.9"
+          # - "3.10"
           - "3.11"
-          - "3.12"
+          # - "3.12"
 
     steps:
       - name: Checkout code
@@ -37,7 +37,7 @@ jobs:
           CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
 
         run: |
-          uv run scripts/process.py
+          uv run --with 'matplotlib' scripts/process.py
 
       - name: Send images to discord channel
         env:
