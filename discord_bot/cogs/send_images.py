@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 # ======= Load Environment Variables =======
 dotenv_path = ".env"
 load_dotenv(dotenv_path)
+print(f"LOADING{load_dotenv(dotenv_path)}")
 
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 PLAYER_CHANNEL_ID = os.getenv('PLAYER_CHANNEL_ID')  # Original channel from .env
