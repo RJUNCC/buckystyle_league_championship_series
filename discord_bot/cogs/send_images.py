@@ -35,13 +35,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ======= Load Environment Variables =======
-dotenv_path = ".env"
-load_dotenv(dotenv_path)
-print(f"LOADING{load_dotenv(dotenv_path)}")
+# dotenv_path = ".env"
+# load_dotenv(dotenv_path)
+# print(f"LOADING{load_dotenv(dotenv_path)}")
 
-DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-PLAYER_CHANNEL_ID = os.getenv('PLAYER_CHANNEL_ID')  # Original channel from .env
-TEAM_CHANNEL_ID = os.getenv('TEAM_CHANNEL_ID')
+DISCORD_TOKEN = config._discord_token
+PLAYER_CHANNEL_ID = config._player_channel_id # Original channel from .env
+TEAM_CHANNEL_ID = config._team_channel_id
 PLAYOFF_CHANNEL_ID = os.getenv('PLAYOFF_CHANNEL_ID')
 
 if not DISCORD_TOKEN or not PLAYER_CHANNEL_ID or not TEAM_CHANNEL_ID:
