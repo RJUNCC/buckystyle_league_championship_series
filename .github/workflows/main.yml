@@ -8,21 +8,25 @@ on:
 jobs:
   run-scripts:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install astral uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11" # or your preferred version
+          python-version: ${{ matrix.python-version}}
 
       - name: Install project
         run: uv sync --all-extras --dev
-
-      # - name: Install requirements
-      #   run: uv pip install -r requirements.txt
 
       - name: Setup python
         run: uv python install
@@ -35,12 +39,6 @@ jobs:
         run: |
           uv run scripts/process.py
 
-      # - name: Train Fantasy points model with optuna
-      #   run: |
-      #     cd scripts
-      #     cd cogs
-      #     poetry run python -m predictions
-
       - name: Send images to discord channel
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
@@ -49,10 +47,3 @@ jobs:
           TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }} # Use your Discord token secret here
         run: |
           uv run discord_bot/cogs/send_images.py
-
-      # - name: Run Streamlit app
-      #   env:
-      #     TOKEN: ${{ secrets.TOKEN }}
-      #   run: |
-      #     cd streamlit_app
-      #     uv run streamlit.py
