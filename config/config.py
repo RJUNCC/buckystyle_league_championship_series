@@ -19,11 +19,11 @@ class Config:
         self.current_group_id   = os.getenv("CURRENT_GROUP_ID")
         self._player_channel_id = os.getenv("PLAYER_CHANNEL_ID")
         self._team_channel_id   = os.getenv("TEAM_CHANNEL_ID")
-        self._worlds_group_id   = "1-swiss-stage-4ws5jld17r"
 
         # Discord Configs
         self._discord_token = os.getenv("DISCORD_TOKEN")
         self.channel_id3 = os.getenv("CHANNEL_ID3")
+        self._server_id  = os.getenv("SERVER_ID")
 
         # Weights for player data
         self.avg_score = 0.25
@@ -55,14 +55,16 @@ class Config:
         self.dominance_quotient_multiplier = 20
 
         # File for data
-        self.playoff_player_data = "playoff_player_data_season_2.parquet"
-        self.playoff_team_data = "playoff_team_data_season_2.parquet"
-        self.regular_player_data = "season_2_player_stats.parquet"
-        self.regular_team_data = "season_2_team_stats.parquet"
+        self.playoff_player_data = "playoff_player_data_season_4.parquet"
+        self.playoff_team_data = "playoff_team_data_season_4.parquet"
+        self.regular_player_data = "season_4_player_stats.parquet"
+        self.regular_team_data = "season_4_team_stats.parquet"
         self.overall_player_data = "season_3_overall_player_data.parquet"
 
-        self.all_player_data = "season_3_player_data"
-        self.all_team_data = "season_3_team_data"
+        self.all_player_data = "season_4_player_data"
+        self.all_team_data = "season_4_team_data"
+        self.playoff_player_path = "playoff_player_data_season_3"
+        self.playoff_team_path = "playoff_team_data_season_3"
 
         # PATHS TO GROUPS
         self.all_blcs_season_2_matches_link = "all-blcs-2-matches-reg-playoffs-ajmebwvz3b"

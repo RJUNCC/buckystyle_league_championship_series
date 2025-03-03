@@ -33,8 +33,7 @@ jobs:
           CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
 
         run: |
-          cd scripts
-          uv run process.py
+          uv run scripts/process.py
 
       # - name: Train Fantasy points model with optuna
       #   run: |
@@ -49,9 +48,7 @@ jobs:
           PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }} # Use your Discord token secret here
           TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }} # Use your Discord token secret here
         run: |
-          cd discord_bot
-          cd cogs
-          uv run send_images.py
+          uv run discord_bot/cogs/send_images.py
 
       # - name: Run Streamlit app
       #   env:

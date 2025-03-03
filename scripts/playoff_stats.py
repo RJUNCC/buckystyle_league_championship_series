@@ -6,6 +6,7 @@ import os
 import sys
 from scipy.stats import zscore
 import dataframe_image as dfi
+from numpy import round
 
 current_dir = os.path.dirname(os.path.abspath("__file__"))
 parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -112,13 +113,13 @@ def filter_player_data():
     df_final2.index += 1
 
     # Save the cleaned data to a parquet file
-    df_final2.to_parquet("../data/parquet/playoff_player_data_season_2.parquet")
+    df_final2.to_parquet("../data/parquet/playoff_player_data_season_3.parquet")
 
     # highlighted table
     styled_player_df = make_highlighted_table(df_final2)
-    image_player_path = Path("../images/playoff_player_data_season_2.png")
+    image_player_path = Path("../images/playoff_player_data_season_3.png")
     image_player_path.parent.mkdir(parents=True, exist_ok=True)
-    dfi.export(styled_player_df, image_player_path)
+    dfi.export(styled_player_df, image_player_path, table_conversion="playwright")
     logging.info(f"Player DataFrame image exported to {image_player_path}")
 
     return styled_player_df, df_final2, df_final
@@ -197,11 +198,11 @@ def filter_team_data():
     team_df = team_df.sort_values(by="EPI Score", ascending=False).reset_index(drop=True)
     team_df.index += 1
 
-    team_df.to_parquet("../data/parquet/playoff_team_data_season_2.parquet")
+    team_df.to_parquet("../data/parquet/playoff_team_data_season_3.parquet")
     # team_df.to_csv("../data/parquet/playoff_team_data_season_2.csv")
 
     styled_team_df = team_styled_table(team_df)
-    dfi.export(styled_team_df, "../images/playoff_team_data_season_2.png")
+    dfi.export(styled_team_df, "../images/playoff_team_data_season_3.png", table_conversion="playwright")
 
     # df_final2.to_parquet(f"../data/parquet/{config.playoff_player_data}")
 

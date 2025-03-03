@@ -18,7 +18,7 @@ import sys
 
 current_dir = os.path.dirname(os.path.abspath("__file__"))
 print(current_dir)
-parent_dir = os.path.abspath(os.path.join(current_dir, '../..'))
+parent_dir = os.path.abspath(os.path.join(current_dir, '.'))
 print(parent_dir)
 
 if parent_dir not in sys.path:
@@ -35,12 +35,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ======= Load Environment Variables =======
-dotenv_path = "../../.env"
+dotenv_path = ".env"
 load_dotenv(dotenv_path)
 
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 PLAYER_CHANNEL_ID = os.getenv('PLAYER_CHANNEL_ID')  # Original channel from .env
 TEAM_CHANNEL_ID = os.getenv('TEAM_CHANNEL_ID')
+PLAYOFF_CHANNEL_ID = os.getenv('PLAYOFF_CHANNEL_ID')
 
 if not DISCORD_TOKEN or not PLAYER_CHANNEL_ID or not TEAM_CHANNEL_ID:
     logger.error("DISCORD_TOKEN, PLAYER_CHANNEL_ID, and TEAM_CHANNEL_ID must be set in the .env file.")
@@ -64,12 +65,17 @@ client = discord.Client(intents=intents)
 
 # ======= Define Image Paths for Each Channel =======
 IMAGE_PATHS_PLAYER_CHANNEL = [
-    f"../../images/{config.all_player_data}.png",
+    f"images/{config.all_player_data}.png",
     # "../../images/worlds.png",
 ]
 
 IMAGE_PATHS_TEAM_CHANNEL = [
-    f"../../images/{config.all_team_data}.png",
+    f"images/{config.all_team_data}.png",
+]
+
+IMAGE_PATHS_PLAYOFF_STATS = [
+    f"images/{config.playoff_player_path}.png",
+    f"images/{config.playoff_team_path}.png",
 ]
 
 # ======= Define Async Function to Remove Previous Messages =======
@@ -134,6 +140,10 @@ async def send_images():
     # Send images to the team channel
     logging.info("Sending images to Team Channel...")
     await send_images_to_channel(TEAM_CHANNEL_ID, IMAGE_PATHS_TEAM_CHANNEL)
+
+    # Send images to playoff chnanel
+    # logging.info("Sending images to playoff channel")
+    # await send_images_to_channel(PLAYOFF_CHANNEL_ID, IMAGE_PATHS_PLAYOFF_STATS)
 
     # Disconnect the bot after sending images
     await client.close()

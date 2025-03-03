@@ -23,7 +23,7 @@ import numpy as np
 
 current_dir = os.path.dirname(os.path.abspath("__file__"))
 print(current_dir)
-parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
+parent_dir = os.path.abspath(os.path.join(current_dir, '.'))
 print(parent_dir)
 
 if parent_dir not in sys.path:
@@ -99,7 +99,7 @@ class Process:
 
         logging.info("Saving to parquet file...")
         print("Saving to parquet file...")
-        df_final.to_parquet("../data/parquet/season_3_all_data.parquet")
+        df_final.to_parquet("data/parquet/season_3_all_data.parquet")
 
         df_final = df_final.drop("Team", axis=1)
 
@@ -195,19 +195,14 @@ if __name__ == "__main__":
     p = Process()
 
     player_df, _ = p.process_player_data()
-    player_df.to_parquet(f"../data/parquet/{config.all_player_data}.parquet")
+    player_df.to_parquet(f"data/parquet/{config.all_player_data}.parquet")
     styled_df = make_highlighted_table(player_df)
-    dfi.export(styled_df, f"../images/{config.all_player_data}.png", table_conversion="playwright")
+    dfi.export(styled_df, f"images/{config.all_player_data}.png", table_conversion="playwright")
     # create_styled_table(player_df, f"../images/{config.all_player_data}.png")
     logging.info(f"Player data saved as {config.all_player_data}.png")
 
     team_df = p.process_team_data()
-    team_df.to_parquet(f"../data/parquet/{config.all_team_data}.parquet")
+    team_df.to_parquet(f"data/parquet/{config.all_team_data}.parquet")
     styled_team_df = team_styled_table(team_df)
-    dfi.export(styled_team_df, f"../images/{config.all_team_data}.png", table_conversion="playwright")
+    dfi.export(styled_team_df, f"images/{config.all_team_data}.png", table_conversion="playwright")
     # create_styled_table(team_df, f"../images/{config.all_team_data}.png")
-
-    # worlds_df, _ = p.process_player_data(group_id=config._worlds_group_id)
-    # styled_df = make_highlighted_table(worlds_df)
-    # dfi.export(styled_df, f"../images/worlds.png")
-    # logging.info(f"Player data saved as {config.all_player_data}.png")
