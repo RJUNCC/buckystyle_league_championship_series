@@ -2,48 +2,41 @@ name: Daily Bot Task
 
 on:
   schedule:
-    - cron: "* 1 * * *" # Runs daily at 1:00 am UTC
-  workflow_dispatch: # Allows manual triggering if needed
+    - cron: "0 1 * * *" # Fixed cron syntax (runs at 1:00 AM UTC daily)
+  workflow_dispatch:
 
 jobs:
   run-scripts:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          # - "3.9"
-          # - "3.10"
-          - "3.11"
-          # - "3.12"
+    # Removed matrix since you're only using 3.11
+    environment: production # Add environment protection
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install astral uv
+      - name: Restore .env from secret
+        run: |
+          echo "${{ secrets.DOTENV_CONTENT }}" | base64 --decode > .env
+          # Verify .env was created (without exposing secrets)
+          [ -s .env ] && echo ".env file restored" || exit 1
+
+      - name: Set up Python environment
         uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version}}
+          python-version: "3.11"
 
-      - name: Install project
-        run: uv sync --all-extras --dev
-
-      - name: Setup python
-        run: uv python install
-
-      - name: Fetch data, filter data, and create images and stats
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-          CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
-
+      - name: Install dependencies
         run: |
-          uv run --with 'matplotlib' scripts/process.py
+          uv pip install -r requirements.txt --all-extras
+          uv pip install matplotlib  # Explicit installation
 
-      - name: Send images to discord channel
+      - name: Run processing
+        run: uv run scripts/process.py
         env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          TOKEN: ${{ secrets.TOKEN }}
-          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }} # Use your Discord token secret here
-          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }} # Use your Discord token secret here
-        run: |
-          uv run discord_bot/cogs/send_images.py
+          # Load all variables from .env automatically
+          $(cat .env | xargs)
+
+      - name: Send Discord images
+        run: uv run discord_bot/cogs/send_images.py
+        env: $(cat .env | xargs)
