@@ -3,11 +3,22 @@ import discord
 import os
 import signal
 import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from dotenv import load_dotenv
 from cogs.availability import AvailabilityCog
-from cogs.ballchasing import BallchasingCog
+# from cogs.ballchasing import BallchasingCog
 from cogs.admin import AdminCog
-from models.player import client
+from cogs.team_management import TeamManagementCog
+from cogs.series_management import SeriesManagementCog
+from cogs.statistics import StatisticsCog
+from cogs.scheduling import SchedulingCog
+from cogs.season_management import SeasonManagementCog
+from cogs.playoff_management import PlayoffManagementCog
+from cogs.season_summary import SeasonSummaryCog
+from models.player import client, initialize_db
+import asyncio
 
 load_dotenv()
 
@@ -25,8 +36,15 @@ class MyBot(discord.Bot):
         """Load all cogs with error handling"""
         try:
             self.add_cog(AvailabilityCog(self))
-            self.add_cog(BallchasingCog(self))
+            # self.add_cog(BallchasingCog(self))
             self.add_cog(AdminCog(self))
+            self.add_cog(TeamManagementCog(self))
+            self.add_cog(SeriesManagementCog(self))
+            self.add_cog(StatisticsCog(self))
+            self.add_cog(SchedulingCog(self))
+            self.add_cog(SeasonManagementCog(self))
+            self.add_cog(PlayoffManagementCog(self))
+            self.add_cog(SeasonSummaryCog(self))
             print("✅ Cogs loaded successfully")
         except Exception as e:
             print(f"❌ Error loading cogs: {str(e)}")
@@ -71,6 +89,7 @@ if __name__ == "__main__":
 
     try:
         print("\n🚀 Starting bot...")
+        asyncio.get_event_loop().run_until_complete(initialize_db())
         bot.run(os.getenv("DISCORD_TOKEN"))
     except KeyboardInterrupt:
         handle_exit()

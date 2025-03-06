@@ -4,6 +4,7 @@ from discord.ui import Select, View, Button
 from datetime import datetime, timedelta, time
 import pytz
 from models.player import Player
+from models.team import Team
 import os
 from dotenv import load_dotenv
 from collections import defaultdict
@@ -97,20 +98,18 @@ class TimeSelectorView(View):
             hour = 0
         return time(hour, int(self.minute))
 
-
 class AvailabilityCog(discord.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.active_selections = {}
-
-class AvailabilityCog(discord.Cog):
-    @discord.slash_command()
+    @discord.slash_command(name="set_player_availability")
     async def set_availability(self, ctx: discord.ApplicationContext):
         """Set availability using dropdowns"""
         try:
+            # Check if player is on a team
+            team = await Team.get_team_by_player(ctx.author.id)
+            if not team:
+                return await ctx.respond("You must be on a team to set availability", ephemeral=True)
+            
             await ctx.defer(ephemeral=True)
-            original_msg = await ctx.interaction.original_response()
-
+            
             # Step 1: Date Selection
             date_view = View(timeout=120)
             date_select = Select(
@@ -127,49 +126,52 @@ class AvailabilityCog(discord.Cog):
             date_select.callback = date_callback
             date_view.add_item(date_select)
             
-            date_msg = await ctx.followup.send("**Step 1/3:** Select available dates", view=date_view)
+            date_msg = await ctx.followup.send("**Step 1/3:** Select available dates", view=date_view, ephemeral=True)
             await date_view.wait()
             
             if not date_select.values:
-                return await date_msg.edit(content="❌ Date selection timed out", view=None)
+                return await ctx.followup.send("❌ Date selection timed out", ephemeral=True)
 
             # Step 2: Start Time
             start_view = TimeSelectorView("Start")
-            start_msg = await ctx.followup.send("**Step 2/3:** Select START time", view=start_view)
+            start_msg = await ctx.followup.send("**Step 2/3:** Select START time", view=start_view, ephemeral=True)
             await start_view.wait()
             
             if not start_view.confirmed:
-                return await start_msg.edit(content="❌ Start time selection timed out", view=None)
+                return await ctx.followup.send("❌ Start time selection timed out", ephemeral=True)
 
             # Step 3: End Time
             end_view = TimeSelectorView("End")
-            end_msg = await ctx.followup.send("**Step 3/3:** Select END time", view=end_view)
+            end_msg = await ctx.followup.send("**Step 3/3:** Select END time", view=end_view, ephemeral=True)
             await end_view.wait()
             
             if not end_view.confirmed:
-                return await end_msg.edit(content="❌ End time selection timed out", view=None)
+                return await ctx.followup.send("❌ End time selection timed out", ephemeral=True)
 
             # Validate and save
             start_time = start_view.get_time()
             end_time = end_view.get_time()
             
             if end_time <= start_time:
-                end_time = time(end_time.hour + 12, end_time.minute)  # Handle overnight
+                end_time = (datetime.combine(datetime.now().date(), end_time) + timedelta(days=1)).time()
                 
             if end_time <= start_time:
-                return await original_msg.edit(content="❌ End time must be after start time")
+                return await ctx.followup.send("❌ End time must be after start time", ephemeral=True)
 
+            # Convert times to strings
+            start_str = start_time.strftime('%I:%M %p')
+            end_str = end_time.strftime('%I:%M %p')
+
+            # Update the database
             await Player.update_availability(
                 ctx.author.id,
                 date_select.values,
-                f"{start_time.strftime('%I:%M %p')} - {end_time.strftime('%I:%M %p')}"
+                start_str,
+                end_str
             )
             
-            # Cleanup messages
-            await original_msg.edit(content="✅ Availability set successfully!")
-            await date_msg.delete()
-            await start_msg.delete()
-            await end_msg.delete()
+            # Final confirmation
+            await ctx.followup.send(f"✅ Availability set: {start_str} - {end_str} for {', '.join(date_select.values)}", ephemeral=True)
 
         except Exception as e:
             await ctx.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
@@ -178,50 +180,39 @@ class AvailabilityCog(discord.Cog):
 
 
 
-    @discord.slash_command()
+    @discord.slash_command(name="view_player_availability")
     async def view_availability(self, ctx: discord.ApplicationContext):
-        """View availability calendar"""
+        """View team availability calendar"""
         try:
             await ctx.defer(ephemeral=True)
-            all_players = await Player.get_all_players()
+            all_teams = await Team.get_all_teams()
             
             embed = discord.Embed(title="📅 Team Availability", color=discord.Color.blue())
-            schedule = defaultdict(lambda: defaultdict(list))
 
-            for player in all_players:
-                member = ctx.guild.get_member(player["_id"])
-                if not member or "availability" not in player:
-                    continue
-                    
-                # Modified structure handling
-                for entry in player["availability"]:
-                    date_str = entry["date"].strftime("%a %b %d")
-                    start = entry["start"].strftime("%I:%M %p").lstrip("0")
-                    end = entry["end"].strftime("%I:%M %p").lstrip("0")
-                    
-                    if entry["end"].date() > entry["start"].date():
-                        end += " (next day)"
-                    
-                    schedule[date_str][member.display_name].append(f"{start} - {end}")
-                        
-            for date in sorted(schedule.keys(), key=lambda d: datetime.strptime(d, "%a %b %d")):
-                entries = []
-                for member, times in schedule[date].items():
-                    entries.append(f"**{member}**\n" + "\n".join(times))
-                
-                embed.add_field(
-                    name=f"__{date}__",
-                    value="\n\n".join(entries) or "No availability",
-                    inline=False
-                )
+            for team in all_teams:
+                schedule = defaultdict(list)
+                for player_id in team["players"]:
+                    availability = await Player.get_player_availability(player_id)
+                    member = ctx.guild.get_member(player_id)
+                    for entry in availability:
+                        date_str = entry["date"].strftime("%Y-%m-%d")
+                        schedule[date_str].append(f"{member.display_name}: {entry['start']} - {entry['end']}")
+
+                if schedule:
+                    embed.add_field(
+                        name=f"__{team['name']}__",
+                        value="\n".join([f"**{date}**\n" + "\n".join(times) for date, times in schedule.items()]),
+                        inline=False
+                    )
 
             await ctx.followup.send(embed=embed, ephemeral=True)
-            
+        
         except Exception as e:
             await ctx.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
 
-
-
+    @tasks.loop(hours=1)
+    async def remove_past_availability(self):
+        await Player.remove_past_availability()
     
     @discord.slash_command()
     async def clear_availability(self, ctx: discord.ApplicationContext):
@@ -257,3 +248,6 @@ class TimeRangeModal(discord.ui.Modal):
         except Exception as e:
             await interaction.response.send_message(f"❌ Invalid format: {str(e)}", ephemeral=True)
 
+
+def setup(bot):
+    bot.add_cog(AvailabilityCog(bot))

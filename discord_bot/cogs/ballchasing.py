@@ -1,37 +1,52 @@
+# discord_bot/cogs/ballchasing.py
 import discord
-from utils.ballchasing_api import fetch_group_stats
-from models.player import Player
+from discord.ext import commands
+import os
+from dotenv import load_dotenv
+import requests
 
-class BallchasingCog(discord.Cog):
+load_dotenv()
+
+class BallchasingCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.api_key = os.getenv("TOKEN")
+        self.base_url = "https://ballchasing.com/api"
 
-    @discord.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if message.author.bot:
-            return
-            
-        if "ballchasing.com/groups/" in message.content:
-            group_id = message.content.split("/groups/")[-1]
-            stats = await fetch_group_stats(group_id)
-            
-            for player in stats["players"]:
-                await Player.update_stats(
-                    player["id"], 
-                    {
-                        "mmr": player["mmr"],
-                        "goals": player["stats"]["core"]["goals"],
-                        "saves": player["stats"]["core"]["saves"],
-                        "assists": player["stats"]["core"]["assists"]
-                    }
-                )
-            await message.channel.send("Stats updated!")
+    @discord.slash_command(name="set_ballchasing_group")
+    @commands.has_permissions(administrator=True)
+    async def set_current_group(self, ctx, group_id: str):
+        """Set the current Ballchasing group ID for the season"""
+        try:
+            # Verify the group exists
+            response = requests.get(f"{self.base_url}/group/{group_id}", headers={"Authorization": self.api_key})
+            if response.status_code != 200:
+                return await ctx.respond("Invalid group ID or API error.", ephemeral=True)
 
-    @discord.slash_command()
-    async def stats(self, ctx: discord.ApplicationContext, player: discord.Member):
-        data = await Player.collection.find_one({"_id": player.id})
-        if data:
-            embed = discord.Embed(title=f"{player.display_name}'s Stats")
-            embed.add_field(name="MMR", value=data["stats"]["mmr"])
-            embed.add_field(name="Goals", value=data["stats"]["goals"])
-            await ctx.respond(embed=embed)
+            # Update the environment variable
+            os.environ["CURRENT_GROUP_ID"] = group_id
+            await ctx.respond(f"Current Ballchasing group ID updated to {group_id}", ephemeral=True)
+        except Exception as e:
+            await ctx.respond(f"Error updating group ID: {str(e)}", ephemeral=True)
+
+    @discord.slash_command(name="get_ballchasing_stats")
+    async def get_group_stats(self, ctx):
+        """Get stats for the current Ballchasing group"""
+        try:
+            group_id = os.getenv("CURRENT_GROUP_ID")
+            if not group_id:
+                return await ctx.respond("No current group ID set. Use /set_ballchasing_group first.", ephemeral=True)
+
+            response = requests.get(f"{self.base_url}/group/{group_id}/stats/players", headers={"Authorization": self.api_key})
+            if response.status_code != 200:
+                return await ctx.respond("Error fetching group stats.", ephemeral=True)
+
+            stats = response.json()
+            # Process and display stats here
+            # This is a simplified example, you might want to format this data better
+            await ctx.respond(f"Stats for group {group_id}:\n``````", ephemeral=True)
+        except Exception as e:
+            await ctx.respond(f"Error fetching group stats: {str(e)}", ephemeral=True)
+
+def setup(bot):
+    bot.add_cog(BallchasingCog(bot))

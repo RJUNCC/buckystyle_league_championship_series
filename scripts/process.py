@@ -99,7 +99,7 @@ class Process:
 
         logging.info("Saving to parquet file...")
         print("Saving to parquet file...")
-        df_final.to_parquet("data/parquet/season_4_all_data.parquet")
+        df_final.to_parquet("data/parquet/season_3_all_data.parquet")
 
         df_final = df_final.drop("Team", axis=1)
 

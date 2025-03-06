@@ -1,56 +1,101 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime, time, timedelta
+from datetime import datetime
 import os
-import pytz
+from dotenv import load_dotenv
 
-# MongoDB Configuration
-MONGO_URI = os.getenv(
-    "MONGO_URI",
-    "mongodb://root:example@localhost:27017/rl_league?authSource=admin"
-)
+load_dotenv()
+
+from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import datetime, time
+import os
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+DB_NAME = os.getenv("DB_NAME", "rl_league")
 
 client = AsyncIOMotorClient(MONGO_URI)
-db = client.rl_league
+db = client[DB_NAME]
 
 class Player:
     collection = db.players
 
     @classmethod
-    async def update_availability(cls, player_id: int, dates: list, time_ranges: list):
-        """Add multiple time ranges for selected dates"""
-        updates = {}
+    async def set_availability(cls, player_id: int, availability: dict):
+        """
+        Set a player's availability
+        availability: {
+            "Monday": [{"start": "18:00", "end": "22:00"}],
+            "Tuesday": [{"start": "19:00", "end": "23:00"}],
+            ...
+        }
+        """
+        await cls.collection.update_one(
+            {"_id": player_id},
+            {"$set": {"availability": availability}},
+            upsert=True
+        )
+
+    @classmethod
+    async def get_availability(cls, player_id: int):
+        player = await cls.collection.find_one({"_id": player_id})
+        return player.get("availability", {}) if player else {}
+
+    @classmethod
+    async def update_stats(cls, player_id: int, goals: int, assists: int, saves: int, shots: int):
+        update = {
+            "$inc": {
+                "stats.goals": goals,
+                "stats.assists": assists,
+                "stats.saves": saves,
+                "stats.shots": shots,
+                "stats.games_played": 1
+            }
+        }
+        await cls.collection.update_one({"_id": player_id}, update, upsert=True)
+
+    @classmethod
+    async def get_player_stats(cls, player_id: int):
+        return await cls.collection.find_one(
+            {"_id": player_id},
+            {"stats": 1, "_id": 0}
+        )
+
+    @classmethod
+    async def get_top_players(cls, stat: str, limit: int = 10):
+        return await cls.collection.find(
+            {"stats": {"$exists": True}},
+            {"_id": 1, f"stats.{stat}": 1}
+        ).sort(f"stats.{stat}", -1).limit(limit).to_list(None)
+
+    @classmethod
+    async def update_availability(cls, player_id: int, dates: list, start_time: str, end_time: str):
+        availability = []
         for date_str in dates:
-            # Parse date from "Monday (Jul 15)" format
-            date_part = date_str.split(" (")[1].strip(")")
-            date_obj = datetime.strptime(f"{datetime.now().year} {date_part}", "%Y %b %d")
-            
-            # Store as ISO date string
-            iso_date = date_obj.isoformat()
-            
-            # Convert time ranges to datetime objects
-            time_entries = []
-            for start_str, end_str in time_ranges:
-                start = datetime.strptime(start_str, "%I:%M %p").time()
-                end = datetime.strptime(end_str, "%I:%M %p").time()
-                
-                # Handle next-day times
-                if end <= start:
-                    end_date = date_obj + timedelta(days=1)
-                else:
-                    end_date = date_obj
-                    
-                time_entries.append({
-                    "start": datetime.combine(date_obj, start),
-                    "end": datetime.combine(end_date, end)
-                })
-            
-            updates[f"availability.{iso_date}"] = {"$each": time_entries}
+            date_obj = datetime.strptime(f"{datetime.now().year} {date_str}", "%Y %A (%b %d)")
+            availability.append({
+                "date": date_obj,
+                "start": start_time,
+                "end": end_time
+            })
         
         await cls.collection.update_one(
             {"_id": player_id},
-            {"$push": updates},
+            {"$set": {"availability": availability}},
             upsert=True
         )
+
+    @classmethod
+    async def get_player_availability(cls, player_id: int):
+        player = await cls.collection.find_one({"_id": player_id})
+        return player.get("availability", []) if player else []
+
+    @classmethod
+    async def remove_past_availability(cls):
+        now = datetime.now()
+        await cls.collection.update_many(
+            {},
+            {"$pull": {"availability": {"date": {"$lt": now}}}}
+        )
+
 
 
     @classmethod
@@ -84,6 +129,32 @@ class Player:
             {"$unset": {"availability": ""}}
         )
 
+    @classmethod
+    async def reset_all_stats(cls):
+        await cls.collection.update_many(
+            {},
+            {"$set": {"stats": {}}}
+        )
+
+    @classmethod
+    async def get_top_players(cls, season_number, limit=10):
+        pipeline = [
+            {"$match": {"season": season_number}},
+            {"$project": {
+                "name": 1,
+                "top_stat_name": {"$arrayElemAt": [{"$objectToArray": "$stats"}, 0]},
+                "top_stat_value": {"$max": {"$objectToArray": "$stats"}}
+            }},
+            {"$sort": {"top_stat_value": -1}},
+            {"$limit": limit}
+        ]
+        return await cls.collection.aggregate(pipeline).to_list(None)
+
+# Ensure the database connection is established
 async def initialize_db():
-    """Initialize database indexes"""
-    await Player.collection.create_index("last_updated")
+    try:
+        await client.admin.command('ping')
+        print("Connected to MongoDB")
+    except Exception as e:
+        print(f"Error connecting to MongoDB: {e}")
+        raise
