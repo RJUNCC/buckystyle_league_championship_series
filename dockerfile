@@ -17,4 +17,4 @@ EXPOSE 8000
 ENV NAME World
 
 # Run app.py when the container launches
-CMD ["uv", "python", "discord_bot/bot.py"]
+CMD ["python", "discord_bot/bot.py"]
