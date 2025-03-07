@@ -23,7 +23,7 @@ class SeasonManagementCog(commands.Cog):
             all_seasons = await Season.get_all_seasons()
             new_season_number = len(all_seasons) + 1
 
-            await Season.create_season(new_season_number, datetime.utcnow(), ballchasing_group_id)
+            await Season.create_season(new_season_number, datetime.now(), ballchasing_group_id)
             
             # Reset team standings and player stats here
             await Team.reset_all_standings()

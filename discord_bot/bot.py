@@ -35,9 +35,13 @@ class MyBot(discord.Bot):
     def load_cogs(self):
         """Load all cogs with error handling"""
         try:
+            try: 
+                self.add_cog(AdminCog(self))
+                print("✅ AdminCog loaded successfully")
+            except Exception as e:
+                print(f"❌ Error loading AdminCog: {str(e)}")
+
             self.add_cog(AvailabilityCog(self))
-            # self.add_cog(BallchasingCog(self))
-            self.add_cog(AdminCog(self))
             self.add_cog(TeamManagementCog(self))
             self.add_cog(SeriesManagementCog(self))
             self.add_cog(StatisticsCog(self))

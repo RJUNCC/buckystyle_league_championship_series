@@ -1,2 +1,1 @@
-web: gunicorn src.app:app
-worker: poetry run python discord_bot/cogs/predictions.py
+worker: python -m discord_bot.bot
