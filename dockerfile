@@ -1,14 +1,12 @@
 # Use an official Python runtime as a parent image
-FROM python:3.11-slim
+FROM python:3.12-slim-bookworm
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+ADD . /app
 
 # Set the working directory in the container
 WORKDIR /app
-
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r discord_bot/requirements.txt
+RUN uv sync --frozen
 
 # Run app.py when the container launches
-CMD ["cd", "discord_bot", "&&", "python", "bot.py"]
+CMD ["uv", "run", "discord_bot/bot.py"]
