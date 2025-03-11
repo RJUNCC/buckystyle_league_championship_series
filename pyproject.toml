@@ -30,4 +30,5 @@ dependencies = [
     "motor>=3.7.0",
     "aiohttp>=3.11.11",
     "setuptools>=75.8.2",
+    "pymongo[srv]>=4.11.1",
 ]
