@@ -2,7 +2,7 @@ name: Daily Bot Task
 
 on:
   schedule:
-    - cron: "* 1 * * *" # Runs daily at 1:00 am UTC
+    - cron: "* 5 * * *" # Runs daily at 1:00 am UTC
   workflow_dispatch: # Allows manual triggering if needed
 
 jobs:
