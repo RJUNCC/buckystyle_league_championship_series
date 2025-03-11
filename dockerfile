@@ -11,4 +11,4 @@ COPY . /app
 RUN pip install --no-cache-dir -r discord_bot/requirements.txt
 
 # Run app.py when the container launches
-CMD ["python", "discord_bot/bot.py"]
+CMD ["cd", "discord_bot", "&&", "python", "bot.py"]
