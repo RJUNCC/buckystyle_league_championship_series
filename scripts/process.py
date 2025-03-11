@@ -191,7 +191,7 @@ class Process:
 
         return team_df
     
-if __name__ == "__main__":
+def run():
     p = Process()
 
     player_df, _ = p.process_player_data()
@@ -206,3 +206,6 @@ if __name__ == "__main__":
     styled_team_df = team_styled_table(team_df)
     dfi.export(styled_team_df, f"images/{config.all_team_data}.png", table_conversion="playwright")
     # create_styled_table(team_df, f"../images/{config.all_team_data}.png")
+
+if __name__ == "__main__":
+    run()
