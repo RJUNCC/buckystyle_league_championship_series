@@ -98,7 +98,7 @@ class TimeSelectorView(View):
             hour = 0
         return time(hour, int(self.minute))
 
-class AvailabilityCog(commands.Cog):
+class AvailabilityCog(discord.Cog):
     @discord.slash_command(name="set_player_availability")
     async def set_availability(self, ctx: discord.ApplicationContext):
         """Set availability using dropdowns"""
