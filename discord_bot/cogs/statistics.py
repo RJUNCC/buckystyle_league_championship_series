@@ -8,7 +8,7 @@ import pandas as pd
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scripts.process import Process
+from scripts.process import Process, run
 
 class StatisticsCog(commands.Cog):
     def __init__(self, bot):
@@ -75,8 +75,7 @@ class StatisticsCog(commands.Cog):
     async def update_stats(self, ctx):
         """Update all statistics from Ballchasing API"""
         try:
-            self.process.process_player_data()
-            self.process.process_team_data()
+            run()
             await ctx.respond("Statistics updated successfully!", ephemeral=True)
         except Exception as e:
             await ctx.respond(f"Error updating statistics: {str(e)}", ephemeral=True)
