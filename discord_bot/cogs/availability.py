@@ -1,5 +1,5 @@
 import discord
-from discord.ext import tasks
+from discord.ext import tasks, commands
 from discord.ui import Select, View, Button
 from datetime import datetime, timedelta, time
 import pytz
@@ -98,7 +98,7 @@ class TimeSelectorView(View):
             hour = 0
         return time(hour, int(self.minute))
 
-class AvailabilityCog(discord.Cog):
+class AvailabilityCog(commands.Cog):
     @discord.slash_command(name="set_player_availability")
     async def set_availability(self, ctx: discord.ApplicationContext):
         """Set availability using dropdowns"""
