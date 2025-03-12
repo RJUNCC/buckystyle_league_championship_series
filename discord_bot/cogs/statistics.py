@@ -77,8 +77,48 @@ class StatisticsCog(commands.Cog):
 
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
-        os.system("scripts/process.py")
-        os.system("discord_bot/cogs/send_images.py")
+        """Update all statistics from Ballchasing API"""
+        try:
+            await ctx.defer()  # Let Discord know we're working on it
+            
+            # Get absolute path to project root
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            # Run process.py
+            process_path = os.path.join(project_root, "scripts", "process.py")
+            process = await asyncio.create_subprocess_exec(
+                "python", process_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            await process.wait()
+            
+            # Run send_images.py
+            images_path = os.path.join(project_root, "discord_bot", "cogs", "send_images.py")
+            images = await asyncio.create_subprocess_exec(
+                "python", images_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            await images.wait()
+
+            # Verify images exist
+            image_dir = os.path.join(project_root, "images")
+            player_img = os.path.join(image_dir, "season_4_player_data.png")
+            team_img = os.path.join(image_dir, "season_4_team_data.png")
+            
+            if not os.path.exists(player_img) or not os.path.exists(team_img):
+                return await ctx.followup.send("❌ Failed to generate images", ephemeral=True)
+                
+            # Send images
+            files = [
+                discord.File(player_img),
+                discord.File(team_img)
+            ]
+            await ctx.followup.send("✅ Stats updated! Latest charts:", files=files, ephemeral=True)
+
+        except Exception as e:
+            await ctx.followup.send(f"❌ Error: {str(e)}", ephemeral=True)
 
 
 
