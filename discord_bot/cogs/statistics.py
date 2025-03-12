@@ -75,51 +75,32 @@ class StatisticsCog(commands.Cog):
         except Exception as e:
             await ctx.respond(f"Error retrieving leaderboard: {str(e)}", ephemeral=True)
 
-    @discord.slash_command(name="update_all_stats")
-    async def update_stats(self, ctx):
-        """Update all statistics from Ballchasing API"""
-        try:
-            await ctx.defer()
-            
-            # Run process.py
-            process = await asyncio.create_subprocess_exec(
-                "python", "scripts/process.py",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await process.communicate()
-            
-            # Check process results
-            if process.returncode != 0:
-                error_msg = (
-                    "❌ Failed to generate statistics:\n"
-                    f"``````"
-                )
-                return await ctx.followup.send(error_msg[:1500], ephemeral=True)
+@discord.slash_command(name="update_all_stats")
+async def update_stats(self, ctx):
+    """Update all statistics from Ballchasing API"""
+    try:
+        await ctx.defer()
+        
+        process = await asyncio.create_subprocess_exec(
+            "python", "scripts/process.py",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        
+        # Get both outputs for debugging
+        output = f"STDOUT:\n{stdout.decode()}\n\nSTDERR:\n{stderr.decode()}"
+        
+        if process.returncode != 0:
+            error_msg = f"❌ Process failed ({process.returncode}):\n``````"
+            with open("process_error.log", "w") as f:
+                f.write(output)
+            return await ctx.followup.send(error_msg, ephemeral=True)
 
-            # Verify files were created
-            required_files = [
-                f"images/{config.all_player_data}.png",
-                f"images/{config.all_team_data}.png"
-            ]
-            missing = [f for f in required_files if not os.path.exists(f)]
-            
-            if missing:
-                return await ctx.followup.send(
-                    f"❌ Missing generated files: {', '.join(missing)}",
-                    ephemeral=True
-                )
-
-            # Send images through cog
-            image_cog = self.bot.get_cog("ImageSenderCog")
-            if not image_cog:
-                return await ctx.followup.send("❌ Image sender not loaded", ephemeral=True)
-                
-            await image_cog.send_all_images()
-            await ctx.followup.send("✅ Successfully updated all stats and images!", ephemeral=True)
-
-        except Exception as e:
-            await ctx.followup.send(f"❌ Critical error: {str(e)}", ephemeral=True)
+        await ctx.followup.send("✅ Stats updated!", ephemeral=True)
+        
+    except Exception as e:
+        await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
 
 
 def setup(bot):

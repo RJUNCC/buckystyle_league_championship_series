@@ -3,6 +3,10 @@ FROM python:3.11-slim-bookworm
 
 # ADD . /app
 
+# Add these lines before installing dependencies
+RUN mkdir -p /app/images /app/data/parquet && \
+    chmod -R 777 /app/images /app/data
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \

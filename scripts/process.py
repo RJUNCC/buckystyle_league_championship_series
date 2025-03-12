@@ -196,46 +196,71 @@ class Process:
     
 def run():
     try:
+        # Set up logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            stream=sys.stdout
+        )
+        logger = logging.getLogger(__name__)
+        
+        logger.info("Starting data processing...")
+        
+        # Get absolute paths
+        base_dir = Path(__file__).resolve().parent.parent
+        data_dir = base_dir / "data" / "parquet"
+        images_dir = base_dir / "images"
+        
+        logger.info(f"Base directory: {base_dir}")
+        logger.info(f"Data directory: {data_dir}")
+        logger.info(f"Images directory: {images_dir}")
 
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        data_dir = os.path.join(base_dir, "data", "parquet")
-        images_dir = os.path.join(base_dir, "images")
-
-        # Create directories first
-        os.makedirs("data/parquet", exist_ok=True)
-        os.makedirs("images", exist_ok=True)
-
-        p = Process()
-
-        # Player data
-        player_df, _ = p.process_player_data()
-        player_path = f"data/parquet/{config.all_player_data}.parquet"
-        player_df.to_parquet(player_path)
-        print(f"Saved player data to {player_path}")
-
-        # Player image
+        # Create directories
+        data_dir.mkdir(parents=True, exist_ok=True)
+        images_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Process player data
+        logger.info("Processing player data...")
+        player_df, _ = Process().process_player_data()
+        logger.info(f"Player data shape: {player_df.shape}")
+        
+        # Save player data
+        player_parquet_path = data_dir / f"{config.all_player_data}.parquet"
+        player_df.to_parquet(player_parquet_path)
+        logger.info(f"Player data saved to {player_parquet_path}")
+        
+        # Generate player image
+        logger.info("Generating player image...")
         styled_player = make_highlighted_table(player_df)
-        player_img_path = os.path.join(images_dir, f"{config.all_player_data}.png")
-        dfi.export(styled_player, player_img_path, table_conversion="playwright")
-        print(f"Generated player image at {player_img_path}")
-
-        # Team data
-        team_df = p.process_team_data()
-        team_img_path = os.path.join(images_dir, f"{config.all_team_data}.png")
-        dfi.export(styled_team, team_img_path, table_conversion="playwright")
-        print(f"Saved team data to {team_img_path}")
-
-        # Team image
+        player_img_path = images_dir / f"{config.all_player_data}.png"
+        dfi.export(styled_player, str(player_img_path), table_conversion="playwright")
+        logger.info(f"Player image saved to {player_img_path}")
+        
+        # Process team data
+        logger.info("Processing team data...")
+        team_df = Process().process_team_data()
+        logger.info(f"Team data shape: {team_df.shape}")
+        
+        # Save team data
+        team_parquet_path = data_dir / f"{config.all_team_data}.parquet"
+        team_df.to_parquet(team_parquet_path)
+        logger.info(f"Team data saved to {team_parquet_path}")
+        
+        # Generate team image
+        logger.info("Generating team image...")
         styled_team = team_styled_table(team_df)
-        team_img_path = f"images/{config.all_team_data}.png"
-        dfi.export(styled_team, team_img_path, table_conversion="playwright")
-        print(f"Generated team image at {team_img_path}")
-
+        team_img_path = images_dir / f"{config.all_team_data}.png"
+        dfi.export(styled_team, str(team_img_path), table_conversion="playwright")
+        logger.info(f"Team image saved to {team_img_path}")
+        
+        logger.info("Data processing completed successfully")
+        
     except Exception as e:
-        print(f"CRITICAL ERROR IN PROCESS.PY: {str(e)}")
+        logger.error("CRITICAL FAILURE in data processing", exc_info=True)
+        print(f"Error: {str(e)}", file=sys.stderr)
         traceback.print_exc()
         sys.exit(1)
 
-
 if __name__ == "__main__":
     run()
+
