@@ -81,28 +81,46 @@ class StatisticsCog(commands.Cog):
         try:
             await ctx.defer()
             
-            # Run data processing
+            # Run process.py
             process = await asyncio.create_subprocess_exec(
                 "python", "scripts/process.py",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            await process.communicate()
+            stdout, stderr = await process.communicate()
+            
+            # Check process results
+            if process.returncode != 0:
+                error_msg = (
+                    "❌ Failed to generate statistics:\n"
+                    f"``````"
+                )
+                return await ctx.followup.send(error_msg[:1500], ephemeral=True)
 
-            # Get the image sender cog
-            image_cog = self.bot.get_cog("ImageSenderCog")
-            if not image_cog:
+            # Verify files were created
+            required_files = [
+                f"images/{config.all_player_data}.png",
+                f"images/{config.all_team_data}.png"
+            ]
+            missing = [f for f in required_files if not os.path.exists(f)]
+            
+            if missing:
                 return await ctx.followup.send(
-                    "❌ Image sender not loaded. Check bot logs.",
+                    f"❌ Missing generated files: {', '.join(missing)}",
                     ephemeral=True
                 )
+
+            # Send images through cog
+            image_cog = self.bot.get_cog("ImageSenderCog")
+            if not image_cog:
+                return await ctx.followup.send("❌ Image sender not loaded", ephemeral=True)
                 
-            # Send images
             await image_cog.send_all_images()
-            await ctx.followup.send("✅ Stats and images updated!", ephemeral=True)
+            await ctx.followup.send("✅ Successfully updated all stats and images!", ephemeral=True)
 
         except Exception as e:
-            await ctx.followup.send(f"Error: {str(e)}", ephemeral=True)
+            await ctx.followup.send(f"❌ Critical error: {str(e)}", ephemeral=True)
+
 
 def setup(bot):
     bot.add_cog(StatisticsCog(bot))

@@ -196,6 +196,11 @@ class Process:
     
 def run():
     try:
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_dir = os.path.join(base_dir, "data", "parquet")
+        images_dir = os.path.join(base_dir, "images")
+
         # Create directories first
         os.makedirs("data/parquet", exist_ok=True)
         os.makedirs("images", exist_ok=True)
@@ -210,14 +215,14 @@ def run():
 
         # Player image
         styled_player = make_highlighted_table(player_df)
-        player_img_path = f"images/{config.all_player_data}.png"
+        player_img_path = os.path.join(images_dir, f"{config.all_player_data}.png")
         dfi.export(styled_player, player_img_path, table_conversion="playwright")
         print(f"Generated player image at {player_img_path}")
 
         # Team data
         team_df = p.process_team_data()
-        team_path = f"data/parquet/{config.all_team_data}.parquet"
-        team_df.to_parquet(team_path)
+        team_img_path = os.path.join(images_dir, f"{config.all_team_data}.png")
+        dfi.export(styled_team, team_img_path, table_conversion="playwright")
         print(f"Saved team data to {team_path}")
 
         # Team image

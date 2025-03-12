@@ -24,21 +24,20 @@ class ImageSenderCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config()
-        self.logger = logging.getLogger(__name__)
         
-        # Validate environment variables
-        if not all([self.config._discord_token, self.config._player_channel_id, self.config._team_channel_id]):
-            self.logger.error("Missing required environment variables")
-            raise RuntimeError("Missing environment variables")
+        # Validate and convert channel IDs
+        try:
+            self.player_channel_id = int(self.config._player_channel_id)
+            self.team_channel_id = int(self.config._team_channel_id)
+            self.playoff_channel_id = int(os.getenv('PLAYOFF_CHANNEL_ID', 0)) or None
+        except (ValueError, TypeError) as e:
+            logging.error(f"Invalid channel ID format: {str(e)}")
+            raise RuntimeError("Invalid channel IDs in configuration") from e
 
-        # Define image paths
+        # Absolute paths
         self.image_paths = {
-            "player": [f"images/{self.config.all_player_data}.png"],
-            "team": [f"images/{self.config.all_team_data}.png"],
-            "playoff": [
-                f"images/{self.config.playoff_player_path}.png",
-                f"images/{self.config.playoff_team_path}.png"
-            ]
+            "player": [os.path.join("images", f"{self.config.all_player_data}.png")],
+            "team": [os.path.join("images", f"{self.config.all_team_data}.png")]
         }
 
     async def remove_previous_messages(self, channel):
