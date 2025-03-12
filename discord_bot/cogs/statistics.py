@@ -77,47 +77,8 @@ class StatisticsCog(commands.Cog):
 
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
-        """Update all statistics from Ballchasing API"""
-        try:
-            await ctx.defer()
-
-            # Run process.py from the correct directory
-            process = await asyncio.create_subprocess_exec(
-                "python", "scripts/process.py",
-                cwd="/buckystyle_league_championship_series",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await process.communicate()
-
-            # Debug logging
-            print("\nPROCESS.PY OUTPUT:")
-            print(stdout.decode())
-            print("\nPROCESS.PY ERRORS:")
-            print(stderr.decode())
-
-            if process.returncode != 0:
-                return await ctx.followup.send(f"Error generating statistics:\n{stderr.decode()}", ephemeral=True)
-
-            # Verify files exist before sending them
-            required_files = [
-                "images/season_4_player_data.png",
-                "images/season_4_team_data.png"
-            ]
-            missing_files = [f for f in required_files if not os.path.exists(f)]
-            if missing_files:
-                return await ctx.followup.send(f"Missing files: {', '.join(missing_files)}", ephemeral=True)
-
-            # Send generated images
-            files = [discord.File(file) for file in required_files]
-            await ctx.followup.send(
-                "Statistics updated successfully! Here are the latest charts:",
-                files=files,
-                ephemeral=True
-            )
-
-        except Exception as e:
-            await ctx.followup.send(f"Unexpected error: {str(e)}", ephemeral=True)
+        os.system("scripts/process.py")
+        os.system("discord_bot/cogs/send_images.py")
 
 
 
