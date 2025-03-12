@@ -223,7 +223,7 @@ def run():
         team_df = p.process_team_data()
         team_img_path = os.path.join(images_dir, f"{config.all_team_data}.png")
         dfi.export(styled_team, team_img_path, table_conversion="playwright")
-        print(f"Saved team data to {team_path}")
+        print(f"Saved team data to {team_img_path}")
 
         # Team image
         styled_team = team_styled_table(team_df)

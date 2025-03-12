@@ -24,6 +24,7 @@ class ImageSenderCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config()
+        self.logger = logging.getLogger(__name__)  # Add this line
         
         # Validate and convert channel IDs
         try:
@@ -31,7 +32,7 @@ class ImageSenderCog(commands.Cog):
             self.team_channel_id = int(self.config._team_channel_id)
             self.playoff_channel_id = int(os.getenv('PLAYOFF_CHANNEL_ID', 0)) or None
         except (ValueError, TypeError) as e:
-            logging.error(f"Invalid channel ID format: {str(e)}")
+            self.logger.error(f"Invalid channel ID format: {str(e)}")
             raise RuntimeError("Invalid channel IDs in configuration") from e
 
         # Absolute paths
@@ -39,6 +40,12 @@ class ImageSenderCog(commands.Cog):
             "player": [os.path.join("images", f"{self.config.all_player_data}.png")],
             "team": [os.path.join("images", f"{self.config.all_team_data}.png")]
         }
+        
+        self.logger.info("ImageSenderCog initialized successfully")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.logger.info("Image sender cog ready")
 
     async def remove_previous_messages(self, channel):
         """Remove all messages sent by the bot in the specified channel."""
