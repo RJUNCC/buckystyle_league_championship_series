@@ -15,6 +15,10 @@ from pathlib import Path
 import logging
 from discord.ext import commands
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config.config import Config
+
 class ImageSenderCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
