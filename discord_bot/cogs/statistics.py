@@ -10,6 +10,9 @@ import asyncio
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.process import Process, run
+from config.config import Config
+
+config = Config()
 
 class StatisticsCog(commands.Cog):
     def __init__(self, bot):
@@ -72,14 +75,28 @@ class StatisticsCog(commands.Cog):
         except Exception as e:
             await ctx.respond(f"Error retrieving leaderboard: {str(e)}", ephemeral=True)
 
+
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
         """Update all statistics from Ballchasing API"""
         try:
-            await asyncio.to_thread(run())
-            await ctx.respond("Statistics updated successfully!", ephemeral=True)
+            await ctx.defer()  # Let Discord know we're working on it
+            await asyncio.to_thread(run)
+            
+            # Send the generated images
+            files = [
+                discord.File(f"images/{config.all_player_data}.png"),
+                discord.File(f"images/{config.all_team_data}.png")
+            ]
+            
+            await ctx.followup.send(
+                "Statistics updated successfully! Here are the latest charts:",
+                files=files,
+                ephemeral=True
+            )
         except Exception as e:
-            await ctx.respond(f"Error updating statistics: {str(e)}", ephemeral=True)
+            await ctx.followup.send(f"Error updating statistics: {str(e)}", ephemeral=True)
+
 
 def setup(bot):
     bot.add_cog(StatisticsCog(bot))
