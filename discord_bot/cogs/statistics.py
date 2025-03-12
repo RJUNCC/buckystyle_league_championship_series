@@ -79,41 +79,59 @@ class StatisticsCog(commands.Cog):
     async def update_stats(self, ctx):
         """Update all statistics from Ballchasing API"""
         try:
-            await ctx.defer()  # Let Discord know we're working on it
+            await ctx.defer()
             
-            # Run process.py to generate data and images
+            # Run process.py
             process = await asyncio.create_subprocess_exec(
                 "python", "scripts/process.py",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
+            
+            # Read output in real-time
             stdout, stderr = await process.communicate()
             
+            # Debug logging
+            print("\nPROCESS.PY OUTPUT:")
+            print(stdout.decode())
+            print("\nPROCESS.PY ERRORS:")
+            print(stderr.decode())
+
             if process.returncode != 0:
-                print(f"Error running process.py: {stderr.decode()}")
-                return await ctx.followup.send("Error generating statistics.", ephemeral=True)
+                error_msg = f"Process failed with code {process.returncode}:\n{stderr.decode()}"
+                print(error_msg)
+                return await ctx.followup.send(error_msg, ephemeral=True)
+
+            # Verify files exist
+            required_files = [
+                f"images/{config.all_player_data}.png",
+                f"images/{config.all_team_data}.png",
+                f"data/parquet/{config.all_player_data}.parquet",
+                f"data/parquet/{config.all_team_data}.parquet"
+            ]
             
-            # Send the generated images
-            player_image_path = f"images/{config.all_player_data}.png"
-            team_image_path = f"images/{config.all_team_data}.png"
-            
-            # Check if the files exist before trying to send them
-            if not os.path.exists(player_image_path) or not os.path.exists(team_image_path):
-                return await ctx.followup.send("Error: Image files not found.", ephemeral=True)
-            
+            missing = [f for f in required_files if not os.path.exists(f)]
+            if missing:
+                return await ctx.followup.send(
+                    f"Missing files: {', '.join(missing)}", 
+                    ephemeral=True
+                )
+
+            # Send images
             files = [
-                discord.File(player_image_path),
-                discord.File(team_image_path)
+                discord.File(f"images/{config.all_player_data}.png"),
+                discord.File(f"images/{config.all_team_data}.png")
             ]
             
             await ctx.followup.send(
-                "Statistics updated successfully! Here are the latest charts:",
+                "Statistics updated! 🚀\nHere are the latest rankings:",
                 files=files,
                 ephemeral=True
             )
-            
+
         except Exception as e:
-            await ctx.followup.send(f"Error updating statistics: {str(e)}", ephemeral=True)
+            await ctx.followup.send(f"Unexpected error: {str(e)}", ephemeral=True)
+
 
 
 def setup(bot):

@@ -20,6 +20,7 @@ from scipy.stats import zscore
 import dataframe_image as dfi
 import numpy as np
 import asyncio
+import traceback
 # from numpy import round
 
 current_dir = os.path.dirname(os.path.abspath("__file__"))
@@ -194,21 +195,42 @@ class Process:
         return team_df
     
 def run():
-    p = Process()
+    try:
+        # Create directories first
+        os.makedirs("data/parquet", exist_ok=True)
+        os.makedirs("images", exist_ok=True)
 
-    os.makedirs("data/parquet", exist_ok=True)
-    os.makedirs("images", exist_ok=True)
+        p = Process()
 
-    player_df, _ = p.process_player_data()
-    player_df.to_parquet(f"data/parquet/{config.all_player_data}.parquet")
-    styled_df = make_highlighted_table(player_df)
-    dfi.export(styled_df, f"images/{config.all_player_data}.png", table_conversion="playwright")
-    logging.info(f"Player data saved as {config.all_player_data}.png")
+        # Player data
+        player_df, _ = p.process_player_data()
+        player_path = f"data/parquet/{config.all_player_data}.parquet"
+        player_df.to_parquet(player_path)
+        print(f"Saved player data to {player_path}")
 
-    team_df = p.process_team_data()
-    team_df.to_parquet(f"data/parquet/{config.all_team_data}.parquet")
-    styled_team_df = team_styled_table(team_df)
-    dfi.export(styled_team_df, f"images/{config.all_team_data}.png", table_conversion="playwright")
+        # Player image
+        styled_player = make_highlighted_table(player_df)
+        player_img_path = f"images/{config.all_player_data}.png"
+        dfi.export(styled_player, player_img_path, table_conversion="playwright")
+        print(f"Generated player image at {player_img_path}")
+
+        # Team data
+        team_df = p.process_team_data()
+        team_path = f"data/parquet/{config.all_team_data}.parquet"
+        team_df.to_parquet(team_path)
+        print(f"Saved team data to {team_path}")
+
+        # Team image
+        styled_team = team_styled_table(team_df)
+        team_img_path = f"images/{config.all_team_data}.png"
+        dfi.export(styled_team, team_img_path, table_conversion="playwright")
+        print(f"Generated team image at {team_img_path}")
+
+    except Exception as e:
+        print(f"CRITICAL ERROR IN PROCESS.PY: {str(e)}")
+        traceback.print_exc()
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     run()
