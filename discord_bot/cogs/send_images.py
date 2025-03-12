@@ -51,24 +51,33 @@ class ImageSenderCog(commands.Cog):
 
     async def send_images_to_channel(self, channel_id, image_paths):
         """Send images to a specific channel"""
-        channel = self.bot.get_channel(channel_id)
-        if not channel:
-            self.logger.error(f"Channel {channel_id} not found")
-            return
-
-        await self.remove_previous_messages(channel)
-
-        for path in image_paths:
-            if not os.path.exists(path):
-                self.logger.warning(f"Image not found: {path}")
-                continue
+        try:
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                raise ValueError(f"Channel {channel_id} not found")
+                
+            # Verify files exist first
+            valid_paths = []
+            for path in image_paths:
+                if os.path.exists(path):
+                    valid_paths.append(path)
+                else:
+                    logging.warning(f"Missing image: {path}")
+                    
+            if not valid_paths:
+                logging.error("No valid images to send")
+                return
+                
+            await self.remove_previous_messages(channel)
             
-            try:
+            for path in valid_paths:
                 with open(path, "rb") as f:
                     await channel.send(file=File(f, filename=Path(path).name))
-                    self.logger.info(f"Sent image to {channel.name}: {path}")
-            except Exception as e:
-                self.logger.error(f"Failed to send {path}: {str(e)}")
+                    
+        except Exception as e:
+            logging.error(f"Failed to send images: {str(e)}")
+            raise
+
 
     @commands.Cog.listener()
     async def on_ready(self):

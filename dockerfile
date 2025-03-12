@@ -24,7 +24,8 @@ RUN apt-get update && apt-get install -y \
     libwayland-client0 \
     fonts-liberation \
     libappindicator3-1 \
-    xdg-utils
+    xdg-utils \
+    && chmod -R a+w /app
 
 # Install UV
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
