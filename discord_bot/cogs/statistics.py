@@ -5,6 +5,7 @@ import os
 import sys
 # from ballchasing_api import BallchasingAPI
 import pandas as pd
+import asyncio
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -75,7 +76,7 @@ class StatisticsCog(commands.Cog):
     async def update_stats(self, ctx):
         """Update all statistics from Ballchasing API"""
         try:
-            run()
+            await asyncio.to_thread(run())
             await ctx.respond("Statistics updated successfully!", ephemeral=True)
         except Exception as e:
             await ctx.respond(f"Error updating statistics: {str(e)}", ephemeral=True)
