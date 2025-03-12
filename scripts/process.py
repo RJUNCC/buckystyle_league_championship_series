@@ -193,28 +193,22 @@ class Process:
 
         return team_df
     
-async def create_styled_table_async(player_df, output_path):
-    # Use asyncio.to_thread to run synchronous dfi.export
-    await asyncio.to_thread(dfi.export, player_df, output_path, table_conversion="matplotlib")
-    
 def run():
     p = Process()
 
+    os.makedirs("data/parquet", exist_ok=True)
+    os.makedirs("images", exist_ok=True)
+
     player_df, _ = p.process_player_data()
     player_df.to_parquet(f"data/parquet/{config.all_player_data}.parquet")
-    
-    # Create images directory if not exists
-    os.makedirs("images", exist_ok=True)
-    
-    # Generate player image
-    player_output = f"images/{config.all_player_data}.png"
-    asyncio.run(create_styled_table_async(player_df, player_output))
-    
-    # Generate team image
+    styled_df = make_highlighted_table(player_df)
+    dfi.export(styled_df, f"images/{config.all_player_data}.png", table_conversion="playwright")
+    logging.info(f"Player data saved as {config.all_player_data}.png")
+
     team_df = p.process_team_data()
     team_df.to_parquet(f"data/parquet/{config.all_team_data}.parquet")
-    team_output = f"images/{config.all_team_data}.png"
-    asyncio.run(create_styled_table_async(team_df, team_output))
+    styled_team_df = team_styled_table(team_df)
+    dfi.export(styled_team_df, f"images/{config.all_team_data}.png", table_conversion="playwright")
 
 if __name__ == "__main__":
     run()

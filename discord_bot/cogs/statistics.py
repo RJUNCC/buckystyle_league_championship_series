@@ -81,7 +81,22 @@ class StatisticsCog(commands.Cog):
         """Update all statistics from Ballchasing API"""
         try:
             await ctx.defer()  # Let Discord know we're working on it
-            await asyncio.to_thread(run)
+            
+            # Run process.py to generate data and images
+            process = await asyncio.create_subprocess_exec(
+                "python", "scripts/process.py",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            await process.communicate()
+            
+            # Run send_images.py to handle image styling
+            images = await asyncio.create_subprocess_exec(
+                "python", "discord_bot/cogs/send_images.py",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            await images.communicate()
             
             # Send the generated images
             files = [
