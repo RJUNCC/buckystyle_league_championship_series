@@ -9,6 +9,7 @@
 # ///
 # discord_bot/cogs/send_images.py
 import os
+import sys
 import discord
 from discord import File
 from pathlib import Path
