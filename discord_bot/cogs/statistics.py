@@ -75,7 +75,6 @@ class StatisticsCog(commands.Cog):
         except Exception as e:
             await ctx.respond(f"Error retrieving leaderboard: {str(e)}", ephemeral=True)
 
-
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
         """Update all statistics from Ballchasing API"""
@@ -88,20 +87,23 @@ class StatisticsCog(commands.Cog):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            await process.communicate()
+            stdout, stderr = await process.communicate()
             
-            # Run send_images.py to handle image styling
-            images = await asyncio.create_subprocess_exec(
-                "python", "discord_bot/cogs/send_images.py",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            await images.communicate()
+            if process.returncode != 0:
+                print(f"Error running process.py: {stderr.decode()}")
+                return await ctx.followup.send("Error generating statistics.", ephemeral=True)
             
             # Send the generated images
+            player_image_path = f"images/{config.all_player_data}.png"
+            team_image_path = f"images/{config.all_team_data}.png"
+            
+            # Check if the files exist before trying to send them
+            if not os.path.exists(player_image_path) or not os.path.exists(team_image_path):
+                return await ctx.followup.send("Error: Image files not found.", ephemeral=True)
+            
             files = [
-                discord.File(f"images/{config.all_player_data}.png"),
-                discord.File(f"images/{config.all_team_data}.png")
+                discord.File(player_image_path),
+                discord.File(team_image_path)
             ]
             
             await ctx.followup.send(
@@ -109,6 +111,7 @@ class StatisticsCog(commands.Cog):
                 files=files,
                 ephemeral=True
             )
+            
         except Exception as e:
             await ctx.followup.send(f"Error updating statistics: {str(e)}", ephemeral=True)
 
