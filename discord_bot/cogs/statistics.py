@@ -75,7 +75,6 @@ class StatisticsCog(commands.Cog):
         except Exception as e:
             await ctx.respond(f"Error retrieving leaderboard: {str(e)}", ephemeral=True)
 
-    # discord_bot/cogs/statistics.py
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
         """Update all statistics from Ballchasing API"""
@@ -90,13 +89,17 @@ class StatisticsCog(commands.Cog):
             )
             await process.communicate()
 
-            # Send images through the main bot
+            # Get the image sender cog
             image_cog = self.bot.get_cog("ImageSenderCog")
-            if image_cog:
-                await image_cog.send_all_images()
-                await ctx.followup.send("✅ Stats and images updated!", ephemeral=True)
-            else:
-                await ctx.followup.send("❌ Image sender not loaded", ephemeral=True)
+            if not image_cog:
+                return await ctx.followup.send(
+                    "❌ Image sender not loaded. Check bot logs.",
+                    ephemeral=True
+                )
+                
+            # Send images
+            await image_cog.send_all_images()
+            await ctx.followup.send("✅ Stats and images updated!", ephemeral=True)
 
         except Exception as e:
             await ctx.followup.send(f"Error: {str(e)}", ephemeral=True)
