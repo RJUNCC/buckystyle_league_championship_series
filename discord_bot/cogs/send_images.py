@@ -16,11 +16,6 @@ import asyncio
 import logging
 import sys
 
-current_dir = os.path.dirname(os.path.abspath("__file__"))
-print(current_dir)
-parent_dir = os.path.abspath(os.path.join(current_dir, '.'))
-print(parent_dir)
-
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.config import Config
 
