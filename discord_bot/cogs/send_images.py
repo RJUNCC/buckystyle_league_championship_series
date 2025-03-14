@@ -21,9 +21,7 @@ print(current_dir)
 parent_dir = os.path.abspath(os.path.join(current_dir, '.'))
 print(parent_dir)
 
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
-from config.config import Config
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 config = Config()
 
