@@ -63,6 +63,12 @@ class Process:
         max_val = np.max(data)
         return (data - min_val) / (max_val - min_val)
     
+    def remove_accidental_game(self, df: pd.DataFrame, index: int) -> pd.DataFrame:
+        df = df.sort_values('team')
+        df.loc[index, 'cumulative.games'] =  df.loc[index-1, 'cumulative.games']
+        return df
+    
+
     def process_player_data(self, group_id=config.current_group_id):
         logging.info("Processing player data")
         df = self.fetch_player_data(group_id=group_id)
@@ -81,6 +87,8 @@ class Process:
             "game_average.boost.amount_stolen_big",
             "game_average.boost.amount_stolen_small",
         ]
+
+        df = self.remove_accidental_game(df=df, index=11)
 
         df_final0 = df[features_to_keep].copy()
         df_final0.columns = ["Player", "Team", "Games", "Avg Score", "Goals Per Game", "Assists Per Game", "Saves Per Game", "Shots Per Game", "Shooting %", "Demos Inf. Per Game", "Demos Taken Per Game", "Big Boost Stolen", "Small Boost Stolen"]
@@ -117,9 +125,54 @@ class Process:
 
         return df_final, df_final0
     
+    def merge_remove_duplicate_teams(self, df:pd.DataFrame):
+        # Group by the 'Team' column and aggregate numerical columns
+        df = df.sort_values('name')
+
+        df["cumulative.games"]
+
+        merged_df = df.groupby("name").agg({   
+            "cumulative.games":"sum",       # Sum EPI Score     # Average Roster Rating
+            "cumulative.wins":"sum", 
+            "cumulative.core.goals": "sum",           # Sum Goals For
+            "cumulative.core.goals_against": "sum",       # Sum Goals Against           # Sum Goal Diff
+            "cumulative.core.shots": "sum",           # Sum Shots For
+            "cumulative.core.shots_against": "sum",
+            "cumulative.demo.inflicted": "sum",
+            "cumulative.demo.taken": "sum",
+            "game_average.core.goals": "sum",
+            "game_average.core.goals_against":"sum",
+            "game_average.core.shots": "sum",
+            "game_average.core.shots_against": "sum"            # Sum Shots Against     # Sum Shot Diff
+        }).reset_index()
+
+        print(merged_df.columns)
+
+        merged_df.loc[merged_df.shape[0]-1, 'cumulative.win_percentage'] = merged_df.loc[merged_df.shape[0]-1, 'cumulative.wins'] / merged_df.loc[merged_df.shape[0]-1, 'cumulative.games']
+
+        return merged_df
+
     def process_team_data(self, group_id=config.current_group_id):
         """Filter the data."""
         team_df = self.fetch_team_data(group_id=group_id)
+
+        # team_df = self.merge_remove_duplicate_teams(team_df)
+
+        team_df = team_df.sort_values('name').reset_index(drop=True)
+
+        team_df.loc[8, 'cumulative.games'] = team_df.loc[8, 'cumulative.games'] + 1
+        team_df.loc[8, 'cumulative.wins'] = team_df.loc[8, 'cumulative.wins'] + 1
+        team_df.loc[8, 'cumulative.win_percentage'] = team_df.loc[8, 'cumulative.wins'] / team_df.loc[8, 'cumulative.games']*100
+        team_df.loc[8, 'cumulative.core.shots'] = team_df.loc[7, 'cumulative.core.shots'] + team_df.loc[8, 'cumulative.core.shots']
+        team_df.loc[8, 'cumulative.core.shots_against'] = team_df.loc[7, 'cumulative.core.shots_against'] + team_df.loc[8, 'cumulative.core.shots_against']
+        team_df.loc[8, 'cumulative.demo.inflicted'] = team_df.loc[7, 'cumulative.demo.inflicted'] + team_df.loc[8, 'cumulative.demo.inflicted']
+        team_df.loc[8, 'cumulative.demo.taken'] = team_df.loc[7, 'cumulative.demo.taken'] + team_df.loc[8, 'cumulative.demo.taken']
+        team_df.loc[8, 'cumulative.core.goals'] = team_df.loc[7, 'cumulative.core.goals'] + team_df.loc[8, 'cumulative.core.goals']
+        team_df.loc[8, 'cumulative.core.goals_against'] = team_df.loc[7, 'cumulative.core.goals_against'] + team_df.loc[8, 'cumulative.core.goals_against']
+        print(team_df['cumulative.win_percentage'])
+        team_df = team_df.drop(7, axis=0).reset_index(drop=True)
+  
+
         df_final2, df_final = self.process_player_data()
         # Load the data
         team_df = team_df.sort_values(by="name").reset_index(drop=True)
@@ -196,71 +249,41 @@ class Process:
     
 def run():
     try:
-        # Set up logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            stream=sys.stdout
-        )
-        logger = logging.getLogger(__name__)
-        
-        logger.info("Starting data processing...")
-        
-        # Get absolute paths
-        base_dir = Path(__file__).resolve().parent.parent
-        data_dir = base_dir / "data" / "parquet"
-        images_dir = base_dir / "images"
-        
-        logger.info(f"Base directory: {base_dir}")
-        logger.info(f"Data directory: {data_dir}")
-        logger.info(f"Images directory: {images_dir}")
+        # Create directories first
+        os.makedirs("data/parquet", exist_ok=True)
+        os.makedirs("images", exist_ok=True)
 
-        # Create directories
-        data_dir.mkdir(parents=True, exist_ok=True)
-        images_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Process player data
-        logger.info("Processing player data...")
-        player_df, _ = Process().process_player_data()
-        logger.info(f"Player data shape: {player_df.shape}")
-        
-        # Save player data
-        player_parquet_path = data_dir / f"{config.all_player_data}.parquet"
-        player_df.to_parquet(player_parquet_path)
-        logger.info(f"Player data saved to {player_parquet_path}")
-        
-        # Generate player image
-        logger.info("Generating player image...")
+        p = Process()
+
+        # Player data
+        player_df, _ = p.process_player_data()
+        player_path = f"data/parquet/{config.all_player_data}.parquet"
+        player_df.to_parquet(player_path)
+        print(f"Saved player data to {player_path}")
+
+        # Player image
         styled_player = make_highlighted_table(player_df)
-        player_img_path = images_dir / f"{config.all_player_data}.png"
-        dfi.export(styled_player, str(player_img_path), table_conversion="playwright")
-        logger.info(f"Player image saved to {player_img_path}")
-        
-        # Process team data
-        logger.info("Processing team data...")
-        team_df = Process().process_team_data()
-        logger.info(f"Team data shape: {team_df.shape}")
-        
-        # Save team data
-        team_parquet_path = data_dir / f"{config.all_team_data}.parquet"
-        team_df.to_parquet(team_parquet_path)
-        logger.info(f"Team data saved to {team_parquet_path}")
-        
-        # Generate team image
-        logger.info("Generating team image...")
+        player_img_path = f"images/{config.all_player_data}.png"
+        dfi.export(styled_player, player_img_path, table_conversion="playwright")
+        print(f"Generated player image at {player_img_path}")
+
+        # Team data
+        team_df = p.process_team_data()
+        team_path = f"data/parquet/{config.all_team_data}.parquet"
+        team_df.to_parquet(team_path)
+        print(f"Saved team data to {team_path}")
+
+        # Team image
         styled_team = team_styled_table(team_df)
-        team_img_path = images_dir / f"{config.all_team_data}.png"
-        dfi.export(styled_team, str(team_img_path), table_conversion="playwright")
-        logger.info(f"Team image saved to {team_img_path}")
-        
-        logger.info("Data processing completed successfully")
-        
+        team_img_path = f"images/{config.all_team_data}.png"
+        dfi.export(styled_team, team_img_path, table_conversion="playwright")
+        print(f"Generated team image at {team_img_path}")
+
     except Exception as e:
-        logger.error("CRITICAL FAILURE in data processing", exc_info=True)
-        print(f"Error: {str(e)}", file=sys.stderr)
+        print(f"CRITICAL ERROR IN PROCESS.PY: {str(e)}")
         traceback.print_exc()
         sys.exit(1)
 
+
 if __name__ == "__main__":
     run()
-
