@@ -2,7 +2,7 @@ name: Daily Bot Task
 
 on:
   schedule:
-    - cron: "* 5 * * *" # Runs daily at 1:00 am UTC
+    - cron: "0 5 * * *" # Runs daily at 5:00 am UTC (fixed cron syntax)
   workflow_dispatch: # Allows manual triggering if needed
 
 jobs:
@@ -11,10 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          # - "3.9"
-          # - "3.10"
           - "3.11"
-          # - "3.12"
 
     steps:
       - name: Checkout code
@@ -31,19 +28,41 @@ jobs:
       - name: Setup python
         run: uv python install
 
+      - name: Install Playwright dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgbm1 libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6
+          playwright install chromium
+
       - name: Fetch data, filter data, and create images and stats
         env:
           TOKEN: ${{ secrets.TOKEN }}
           CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
-
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }}
+          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }}
         run: |
           uv run --with 'matplotlib' scripts/process.py
+
+      - name: Fix Python path for send_images.py
+        run: |
+          echo "import sys; sys.path.insert(0, '.')" > fix_path.py
+          cat fix_path.py discord_bot/cogs/send_images.py > temp_script.py
+          mv temp_script.py discord_bot/cogs/send_images.py
 
       - name: Send images to discord channel
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           TOKEN: ${{ secrets.TOKEN }}
-          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }} # Use your Discord token secret here
-          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }} # Use your Discord token secret here
+          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }}
+          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }}
         run: |
+          cd $GITHUB_WORKSPACE
           uv run discord_bot/cogs/send_images.py
+
+      - name: Upload images as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated-images
+          path: |
+            images/*.png
