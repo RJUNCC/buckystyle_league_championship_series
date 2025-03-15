@@ -179,6 +179,8 @@ class Process:
         team_df["Goal Diff"] = team_df["cumulative.core.goals"] - team_df["cumulative.core.goals_against"]
         team_df["Demo Diff"] = team_df["cumulative.demo.inflicted"] / team_df["cumulative.demo.taken"]
         team_df["Shots Diff"] = team_df["cumulative.core.shots"] - team_df["cumulative.core.shots_against"]
+        team_df["Demos Inflicted"] = team_df["game_average.demo.inflicted"]
+        team_df["Demos Taken"] = team_df["game_average.demo.taken"]
         team_df["Win % Zscore"] = zscore(team_df["cumulative.win_percentage"]) * config.win_perc_weight
         team_df["Goal Diff Zscore"] = zscore(team_df["Goal Diff"]) * config.goal_diff_weight
         team_df["Demo Diff Zscore"] = zscore(team_df["Demo Diff"]) * config.demo_diff_weight
@@ -193,20 +195,22 @@ class Process:
             # "Team Played Win % Zscore"
         ]].sum(axis=1)
 
+        print(team_df)
+
         features_of_interest = ["name", "cumulative.win_percentage", "game_average.core.goals", "game_average.core.goals_against", "cumulative.core.goals", 
-                            "cumulative.core.goals_against", "game_average.core.shots", "game_average.core.shots_against", "cumulative.core.shots", "cumulative.core.shots_against", "EPI Score"
+                            "cumulative.core.goals_against", "game_average.core.shots", "game_average.core.shots_against", "cumulative.core.shots", "cumulative.core.shots_against", "EPI Score", "Goal Diff", "Shots Diff", "game_average.demo.inflicted", "game_average.demo.taken"
                             ]
         
         team_df = team_df[features_of_interest]
 
-        team_df["Goal Diff"] = team_df.loc[:, "cumulative.core.goals"] - team_df.loc[:, "cumulative.core.goals_against"]
-        team_df["Shot Diff"] = team_df.loc[:, "cumulative.core.shots"] - team_df.loc[:, "cumulative.core.shots_against"]
-
         team_df = team_df.drop(columns=["cumulative.core.goals", "cumulative.core.goals_against", "cumulative.core.shots", "cumulative.core.shots_against"], axis=1)
+        print(team_df)
 
-        team_df.columns = ["Team", "Win %", "Goals For", "Goals Against", "Shots For", "Shots Against", "EPI Score", "Goal Diff", "Shot Diff"]
+        team_df.columns = ["Team", "Win %", "Goals For", "Goals Against", "Shots For", "Shots Against", "EPI Score", "Goal Diff", "Shot Diff", "Demos Inflicted", "Demos Taken"]
+        print(team_df)
 
-        team_df = team_df[["Team", "EPI Score", "Win %", "Goals For", "Goals Against", "Goal Diff", "Shots For", "Shots Against", "Shot Diff"]]
+        team_df = team_df[["Team", "EPI Score", "Win %", "Goals For", "Goals Against", "Goal Diff", "Shots For", "Shots Against", "Shot Diff", "Demos Inflicted", "Demos Taken"]]
+        print(team_df)
 
         df_final3 = df_final.copy()
         # print(df_final3.head())
@@ -218,6 +222,8 @@ class Process:
         player_dq_summation_zipped = dict(zip(player_dq_summation["Team"], player_dq_summation["Dominance Quotient"]))
         df_final3["Roster Rating"] = df_final3["Team"].map(player_dq_summation_zipped)
 
+
+
         df_final3 = df_final3.drop("Player", axis=1)
         df_final3 = df_final3.groupby("Team")["Roster Rating"].mean().reset_index()
 
@@ -227,7 +233,7 @@ class Process:
 
         team_df["EPI Score"] = round(team_df["EPI Score"] * 50, 2)
 
-        team_df = team_df[["Team", "EPI Score", "Roster Rating", "Win %", "Goals For", "Goals Against", "Goal Diff", "Shots For", "Shots Against", "Shot Diff"]]
+        team_df = team_df[["Team", "EPI Score", "Roster Rating", "Win %", "Goals For", "Goals Against", "Goal Diff", "Shots For", "Shots Against", "Shot Diff", "Demos Inflicted", "Demos Taken"]]
 
         team_df["Goal Diff"] = team_df["Goal Diff"].apply(lambda x: str(f"{x}") if x < 0 else f"+{x}")
         team_df["Shot Diff"] = team_df["Shot Diff"].apply(lambda x: str(f"{x}") if x < 0 else f"+{x}")

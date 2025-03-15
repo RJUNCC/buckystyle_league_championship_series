@@ -63,7 +63,9 @@ def team_styled_table(df: pd.DataFrame) -> None:
         'Goals For': '{:.2f}',           
         'Goals Against': '{:.2f}',      
         'Shots For': '{:.2f}',           
-        'Shots Against': '{:.2f}',       
+        'Shots Against': '{:.2f}',
+        'Demos Inflicted': '{:.2f}',
+        'Demos Taken': '{:.2f}', 
         'Strength of Schedule': '{:.2f}' 
     }).set_table_styles([
         {'selector': 'thead th', 'props': 'color: #f8f8f2; background-color: #282a36;'},
