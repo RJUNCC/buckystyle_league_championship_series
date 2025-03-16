@@ -15,7 +15,7 @@ from cogs.scheduling import SchedulingCog
 from cogs.season_management import SeasonManagementCog
 from cogs.playoff_management import PlayoffManagementCog
 from cogs.season_summary import SeasonSummaryCog
-from cogs.send_images import ImageSenderCog
+# from cogs.send_images import ImageSenderCog
 from models.player import initialize_db
 
 load_dotenv()
@@ -34,7 +34,7 @@ class MyBot(discord.Bot):
         cogs = [
             AdminCog, AvailabilityCog, TeamManagementCog, SeriesManagementCog,
             StatisticsCog, SchedulingCog, SeasonManagementCog,
-            PlayoffManagementCog, SeasonSummaryCog, ImageSenderCog
+            PlayoffManagementCog, SeasonSummaryCog
         ]
         for cog in cogs:
             try:
