@@ -81,24 +81,13 @@ class StatisticsCog(commands.Cog):
         try:
             await ctx.defer()
             
-            process = await asyncio.create_subprocess_exec(
-                "python", "scripts/process.py",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await process.communicate()
-            
-            # Get both outputs for debugging
-            output = f"STDOUT:\n{stdout.decode()}\n\nSTDERR:\n{stderr.decode()}"
-            
-            if process.returncode != 0:
-                error_msg = f"❌ Process failed ({process.returncode}):\n``````"
-                with open("process_error.log", "w") as f:
-                    f.write(output)
-                return await ctx.followup.send(error_msg, ephemeral=True)
-
-            await ctx.followup.send("✅ Stats updated!", ephemeral=True)
-            
+            # Run the script directly
+            try:
+                run()
+                await ctx.followup.send("✅ Stats updated!", ephemeral=True)
+            except Exception as e:
+                await ctx.followup.send(f"❌ Error updating stats: {str(e)}", ephemeral=True)
+                
         except Exception as e:
             await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
 
