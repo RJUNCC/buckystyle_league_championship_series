@@ -1,8 +1,6 @@
 # Use an official Python runtime as a parent image
 FROM python:3.11-slim-bookworm
 
-# ADD . /app
-
 # Add these lines before installing dependencies
 RUN mkdir -p /app/images /app/data/parquet && \
     chmod -R 777 /app/images /app/data
@@ -16,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     libappindicator3-1 xdg-utils
 
 # Install UV
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Set the working directory in the container
 WORKDIR /app
@@ -24,8 +22,8 @@ COPY . .
 
 RUN uv sync --frozen
 
-# install playwright browsers
+# Install Playwright browsers
 RUN playwright install chromium && chmod -R a+rwx /app/images
 
-# Run app.py when the container launches
+# Run the bot
 CMD ["uv", "run", "discord_bot/bot.py"]
