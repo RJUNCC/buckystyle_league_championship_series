@@ -6,6 +6,7 @@ import sys
 # from ballchasing_api import BallchasingAPI
 import pandas as pd
 import asyncio
+import subprocess
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -81,13 +82,22 @@ class StatisticsCog(commands.Cog):
         try:
             await ctx.defer()
             
-            # Run the script directly
+            # Run the process.py script directly
             try:
                 run()
-                await ctx.followup.send("✅ Stats updated!", ephemeral=True)
             except Exception as e:
                 await ctx.followup.send(f"❌ Error updating stats: {str(e)}", ephemeral=True)
-                
+                return
+            
+            # Run send_images.py
+            try:
+                subprocess.run(["uv", "run", "discord_bot/cogs/send_images.py"])
+            except Exception as e:
+                await ctx.followup.send(f"❌ Error sending images: {str(e)}", ephemeral=True)
+                return
+            
+            await ctx.followup.send("✅ Stats updated and images sent!", ephemeral=True)
+            
         except Exception as e:
             await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
 
