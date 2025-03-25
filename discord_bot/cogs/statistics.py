@@ -75,32 +75,32 @@ class StatisticsCog(commands.Cog):
         except Exception as e:
             await ctx.respond(f"Error retrieving leaderboard: {str(e)}", ephemeral=True)
 
-@discord.slash_command(name="update_all_stats")
-async def update_stats(self, ctx):
-    """Update all statistics from Ballchasing API"""
-    try:
-        await ctx.defer()
-        
-        process = await asyncio.create_subprocess_exec(
-            "python", "scripts/process.py",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-        
-        # Get both outputs for debugging
-        output = f"STDOUT:\n{stdout.decode()}\n\nSTDERR:\n{stderr.decode()}"
-        
-        if process.returncode != 0:
-            error_msg = f"❌ Process failed ({process.returncode}):\n``````"
-            with open("process_error.log", "w") as f:
-                f.write(output)
-            return await ctx.followup.send(error_msg, ephemeral=True)
+    @discord.slash_command(name="update_all_stats")
+    async def update_stats(self, ctx):
+        """Update all statistics from Ballchasing API"""
+        try:
+            await ctx.defer()
+            
+            process = await asyncio.create_subprocess_exec(
+                "python", "scripts/process.py",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            # Get both outputs for debugging
+            output = f"STDOUT:\n{stdout.decode()}\n\nSTDERR:\n{stderr.decode()}"
+            
+            if process.returncode != 0:
+                error_msg = f"❌ Process failed ({process.returncode}):\n``````"
+                with open("process_error.log", "w") as f:
+                    f.write(output)
+                return await ctx.followup.send(error_msg, ephemeral=True)
 
-        await ctx.followup.send("✅ Stats updated!", ephemeral=True)
-        
-    except Exception as e:
-        await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
+            await ctx.followup.send("✅ Stats updated!", ephemeral=True)
+            
+        except Exception as e:
+            await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
 
 
 def setup(bot):
