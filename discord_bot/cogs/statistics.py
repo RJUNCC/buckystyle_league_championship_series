@@ -7,6 +7,7 @@ import sys
 import pandas as pd
 import asyncio
 import subprocess
+import requests
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -78,26 +79,28 @@ class StatisticsCog(commands.Cog):
 
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
-        """Update all statistics from Ballchasing API"""
+        """Trigger a GitHub Actions workflow to update statistics."""
         try:
             await ctx.defer()
             
-            # Run the process.py script directly
-            try:
-                run()
-            except Exception as e:
-                await ctx.followup.send(f"❌ Error updating stats: {str(e)}", ephemeral=True)
-                return
+            # GitHub API endpoint to trigger a workflow
+            url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/128475690"
+            headers = {
+                "Authorization": f"Bearer {os.getenv("GITHUB_TOKEN")}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "ref": "main",  # Branch to use
+                "inputs": {
+                    "some-input": "some-value"  # Optional inputs for the workflow
+                }
+            }
             
-            # Run send_images.py
-            try:
-                subprocess.run(["uv", "run", "discord_bot/cogs/send_images.py"])
-            except Exception as e:
-                await ctx.followup.send(f"❌ Error sending images: {str(e)}", ephemeral=True)
-                return
-            
-            await ctx.followup.send("✅ Stats updated and images sent!", ephemeral=True)
-            
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code == 204:
+                await ctx.followup.send("✅ Workflow triggered successfully!", ephemeral=True)
+            else:
+                await ctx.followup.send(f"❌ Failed to trigger workflow: {response.text}", ephemeral=True)
         except Exception as e:
             await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
 

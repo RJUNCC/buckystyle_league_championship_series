@@ -16,6 +16,8 @@ jobs:
           - "3.11"
           # - "3.12"
 
+    permissions: write-all
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
