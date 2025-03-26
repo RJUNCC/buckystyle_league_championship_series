@@ -84,16 +84,15 @@ class StatisticsCog(commands.Cog):
             await ctx.defer()
             
             # GitHub API endpoint to trigger a workflow
-            url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/128475690"
+            url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/main.yml/dispatches"
             headers = {
-                "Authorization": f"Bearer {os.getenv("GITHUB_TOKEN")}",
-                "Content-Type": "application/json"
+                'Accept': 'application/vnd.github+json',
+                'Authorization': f'Bearer {os.getenv("GITHUB_TOKEN")}',
+                'X-GitHub-Api-Version': '2022-11-28',
+                'Content-Type': 'application/json'
             }
             payload = {
-                "ref": "main",  # Branch to use
-                "inputs": {
-                    "some-input": "some-value"  # Optional inputs for the workflow
-                }
+                "ref": "main"  # Branch to use
             }
             
             response = requests.post(url, headers=headers, json=payload)
@@ -103,6 +102,7 @@ class StatisticsCog(commands.Cog):
                 await ctx.followup.send(f"❌ Failed to trigger workflow: {response.text}", ephemeral=True)
         except Exception as e:
             await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
+
 
 
 def setup(bot):
