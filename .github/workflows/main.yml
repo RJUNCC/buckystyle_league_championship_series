@@ -3,7 +3,11 @@ name: Daily Bot Task
 on:
   schedule:
     - cron: "0 5 * * *" # Runs daily at 1:00 am ETC
-  workflow_dispatch: # Allows manual triggering if needed
+  workflow_dispatch:
+    inputs:
+      trigger-type:
+        description: "Type of trigger (e.g., manual)"
+        required: false
 
 jobs:
   run-scripts:
@@ -37,6 +41,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.TOKEN }}
           CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
+          TRIGGER_TYPE: ${{ github.event.inputs.trigger-type }}
 
         run: |
           uv run --with 'matplotlib' scripts/process.py
