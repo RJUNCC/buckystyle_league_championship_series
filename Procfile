@@ -1,1 +1,1 @@
-worker: cd /app && uv run discord_bot/bot.py
+worker: cd /app && python discord_bot/bot.py
