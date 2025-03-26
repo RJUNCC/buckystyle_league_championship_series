@@ -84,7 +84,7 @@ class StatisticsCog(commands.Cog):
             await ctx.defer()
             
             # GitHub API endpoint to trigger a workflow
-            url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/main.yml/dispatches"
+            url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/128475690/dispatches"
             headers = {
                 'Accept': 'application/vnd.github+json',
                 'Authorization': f'Bearer {os.getenv("GITHUB_TOKEN")}',
