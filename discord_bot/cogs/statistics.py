@@ -91,28 +91,34 @@ class StatisticsCog(commands.Cog):
                 'X-GitHub-Api-Version': '2022-11-28',
                 'Content-Type':'application/json'
             }
-
             # JSON payload with ref and event type
             data = {
-                "ref": "main",
+                "ref": "main",  # Make sure this matches your default branch
             }
 
+            # Log the request details (without the token)
+            logger.info(f"Triggering workflow: {url}")
+            
+            # Send the request
             response = requests.post(url=url, headers=headers, data=json.dumps(data))
+            
+            # Log the response
+            logger.info(f"Response status: {response.status_code}")
+            logger.info(f"Response headers: {response.headers}")
+            
+            if response.text:
+                logger.info(f"Response body: {response.text}")
+            
             if response.status_code == 204:
-                logger.info('Successful')
+                logger.info('Workflow trigger successful')
+                return True
             else:
-                logger.error(f'{response.status_code}')
-                logger.error('Unsuccessful')
-        except requests.exceptions.HTTPError as errh:
-            logger.error(f'HTTP Error: {errh}')
-        except requests.exceptions.ConnectionError as errc:
-            logger.error(f'Error connecting: {errc}')
-        except requests.exceptions.Timeout as errt:
-            logger.error(f'Timeout Error: {errt}')
-        except requests.exceptions.RequestException as err:
-            logger.error(f'Something went wrong: {err}')
+                logger.error(f'Workflow trigger failed with status code: {response.status_code}')
+                logger.error(f'Response: {response.text}')
+                return False
         except Exception as e:
-            logger.error(f'Unexpected error: {str(e)}')
+            logger.error(f'Unexpected error in run_workflow: {str(e)}')
+            raise
 
 
     @discord.slash_command(name="update_all_stats")
