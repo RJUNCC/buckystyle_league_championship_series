@@ -8,6 +8,7 @@ import pandas as pd
 import asyncio
 import subprocess
 import requests
+import json
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -95,7 +96,7 @@ class StatisticsCog(commands.Cog):
                 "ref": "main"  # Branch to use
             }
             
-            response = requests.post(url, headers=headers, json=payload)
+            response = requests.post(url, headers=headers, json=json.dumps(payload))
             if response.status_code == 204:
                 await ctx.followup.send("✅ Workflow triggered successfully!", ephemeral=True)
             else:
