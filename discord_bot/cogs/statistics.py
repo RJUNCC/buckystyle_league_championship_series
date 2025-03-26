@@ -9,8 +9,11 @@ import asyncio
 import subprocess
 import requests
 import json
+from loguru import logger
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+print(os.getenv('GITHUB_TOKEN'))
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.process import Process, run
 from config.config import Config
@@ -78,33 +81,49 @@ class StatisticsCog(commands.Cog):
         except Exception as e:
             await ctx.respond(f"Error retrieving leaderboard: {str(e)}", ephemeral=True)
 
-    @discord.slash_command(name="update_all_stats")
-    async def update_stats(self, ctx):
-        """Trigger a GitHub Actions workflow to update statistics."""
+    async def run_workflow(self):
         try:
-            await ctx.defer()
-            
             # GitHub API endpoint to trigger a workflow
             url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/128475690/dispatches"
             headers = {
                 'Accept': 'application/vnd.github+json',
                 'Authorization': f'Bearer {os.getenv("GITHUB_TOKEN")}',
                 'X-GitHub-Api-Version': '2022-11-28',
-                'Content-Type': 'application/json'
+                'Content-Type':'application/json'
             }
-            payload = {
-                "ref": "main"  # Branch to use
+
+            # JSON payload with ref and event type
+            data = {
+                "ref": "main",
             }
-            
-            response = requests.post(url, headers=headers, json=json.dumps(payload))
+
+            response = requests.post(url=url, headers=headers, data=json.dumps(data))
             if response.status_code == 204:
-                await ctx.followup.send("✅ Workflow triggered successfully!", ephemeral=True)
+                logger.info('Successful')
             else:
-                await ctx.followup.send(f"❌ Failed to trigger workflow: {response.text}", ephemeral=True)
+                logger.error(f'{response.status_code}')
+                logger.error('Unsuccessful')
+        except requests.exceptions.HTTPError as errh:
+            logger.error(f'HTTP Error: {errh}')
+        except requests.exceptions.ConnectionError as errc:
+            logger.error(f'Error connecting: {errc}')
+        except requests.exceptions.Timeout as errt:
+            logger.error(f'Timeout Error: {errt}')
+        except requests.exceptions.RequestException as err:
+            logger.error(f'Something went wrong: {err}')
+        except Exception as e:
+            logger.error(f'Unexpected error: {str(e)}')
+
+
+    @discord.slash_command(name="update_all_stats")
+    async def update_stats(self, ctx):
+        """Trigger a GitHub Actions workflow to update statistics."""
+        try:
+            await ctx.defer()
+            await self.run_workflow()  # Make this async
+            await ctx.followup.send("✅ Workflow triggered successfully!", ephemeral=True)
         except Exception as e:
             await ctx.followup.send(f"❌ Unexpected error: {str(e)}", ephemeral=True)
-
-
 
 def setup(bot):
     bot.add_cog(StatisticsCog(bot))
