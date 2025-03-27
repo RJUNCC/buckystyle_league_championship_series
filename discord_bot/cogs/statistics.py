@@ -103,35 +103,37 @@ class StatisticsCog(commands.Cog):
 
     async def run_workflow(self):
         try:
+            # GitHub API endpoint to trigger a workflow
             url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/128475690/dispatches"
             headers = {
                 'Accept': 'application/vnd.github+json',
                 'Authorization': f'Bearer {os.getenv("GITHUB_TOKEN")}',
                 'X-GitHub-Api-Version': '2022-11-28',
-                'Content-Type': 'application/json'
+                'Content-Type':'application/json'
             }
-            
-            payload = {
+
+            # JSON payload with ref and event type
+            data = {
                 "ref": "main",
             }
 
-            logger.info("Attempting to trigger GitHub workflow")
-            response = requests.post(url, headers=headers, json=payload)
-            
+            response = requests.post(url=url, headers=headers, data=json.dumps(data))
             if response.status_code == 204:
-                logger.info("API request accepted")
-                await asyncio.sleep(5)  # Wait for workflow to start
-                if await self.verify_workflow_run():
-                    return True
-                logger.error("Workflow not found in recent runs")
-                return False
+                logger.info('Successful')
             else:
-                logger.error(f"GitHub API error: {response.status_code} - {response.text}")
-                return False
-                
+                logger.error(f'{response.status_code}')
+                logger.error('Unsuccessful')
+        except requests.exceptions.HTTPError as errh:
+            logger.error(f'HTTP Error: {errh}')
+        except requests.exceptions.ConnectionError as errc:
+            logger.error(f'Error connecting: {errc}')
+        except requests.exceptions.Timeout as errt:
+            logger.error(f'Timeout Error: {errt}')
+        except requests.exceptions.RequestException as err:
+            logger.error(f'Something went wrong: {err}')
         except Exception as e:
-            logger.error(f"Workflow trigger failed: {str(e)}")
-            return False
+            logger.error(f'Unexpected error: {str(e)}')
+
 
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
