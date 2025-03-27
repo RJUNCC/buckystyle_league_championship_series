@@ -137,6 +137,8 @@ class StatisticsCog(commands.Cog):
         except Exception as e:
             logger.error(f'Unexpected error: {str(e)}')
 
+        return response.status_code
+
 
     @discord.slash_command(name="update_all_stats")
     async def update_stats(self, ctx):
@@ -161,7 +163,7 @@ class StatisticsCog(commands.Cog):
             # Trigger workflow
             success = await self.run_workflow()
             
-            if success:
+            if success == 204:
                 self.cooldowns[user_id] = current_time
                 await ctx.followup.send("✅ Successfully triggered stats update!", ephemeral=True)
             else:
