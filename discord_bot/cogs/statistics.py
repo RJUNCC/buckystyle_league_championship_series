@@ -113,9 +113,6 @@ class StatisticsCog(commands.Cog):
             
             payload = {
                 "ref": "main",
-                "inputs": {
-                    "triggered_by": "discord_bot"
-                }
             }
 
             logger.info("Attempting to trigger GitHub workflow")
