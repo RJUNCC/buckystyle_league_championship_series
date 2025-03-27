@@ -9,6 +9,9 @@ import json
 import time
 from datetime import datetime
 from loguru import logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
