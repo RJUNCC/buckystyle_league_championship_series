@@ -101,7 +101,7 @@ class StatisticsCog(commands.Cog):
             logger.error(f"Workflow verification failed: {str(e)}")
             return False
 
-    async def run_workflow(self):
+    def run_workflow(self):
         try:
             # GitHub API endpoint to trigger a workflow
             url = "https://api.github.com/repos/RJUNCC/buckystyle_league_championship_series/actions/workflows/128475690/dispatches"
@@ -156,7 +156,7 @@ class StatisticsCog(commands.Cog):
                     return
             
             # Trigger workflow
-            success = await self.run_workflow()
+            success = self.run_workflow()
             
             if success:
                 self.cooldowns[user_id] = current_time
