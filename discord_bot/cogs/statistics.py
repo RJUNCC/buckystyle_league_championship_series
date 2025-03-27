@@ -141,6 +141,7 @@ class StatisticsCog(commands.Cog):
 
 
     @discord.slash_command(name="update_all_stats")
+    @commands.has_permissions(administrator=True)
     async def update_stats(self, ctx):
         """Trigger GitHub Actions workflow"""
         try:
