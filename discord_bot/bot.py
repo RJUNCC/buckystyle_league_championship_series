@@ -2,6 +2,9 @@
 import discord
 import os
 import sys
+import asyncio
+from aiohttp import web
+import threading
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -48,10 +51,49 @@ class MyBot(discord.Bot):
         print(f"\n🤖 Logged in as {self.user} (ID: {self.user.id})")
         print("🔁 Syncing commands globally...")
         await self.sync_commands()
+        
+        # Start health check server after bot is ready
+        await self.start_health_server()
         print("✅ Bot ready")
+
+    async def start_health_server(self):
+        """Start health check server for DigitalOcean"""
+        async def health_check(request):
+            return web.Response(text="BLCS Bot is running!", status=200)
+
+        app = web.Application()
+        app.router.add_get('/health', health_check)
+        app.router.add_get('/', health_check)  # For root path too
+        
+        runner = web.AppRunner(app)
+        await runner.setup()
+        
+        # Use PORT environment variable or default to 8080
+        port = int(os.getenv('PORT', 8080))
+        site = web.TCPSite(runner, '0.0.0.0', port)
+        await site.start()
+        print(f"🌐 Health check server running on port {port}")
 
 bot = MyBot()
 
+async def main():
+    """Main async function to run the bot"""
+    # Initialize database
+    try:
+        initialize_db()
+        print("✅ Database initialized")
+    except Exception as e:
+        print(f"❌ Database initialization error: {e}")
+    
+    # Start the bot
+    async with bot:
+        await bot.start(os.getenv("DISCORD_TOKEN"))
+
 if __name__ == "__main__":
     print("\n🚀 Starting bot...")
-    bot.run(os.getenv("DISCORD_TOKEN"))
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n👋 Bot stopped by user")
+    except Exception as e:
+        print(f"\n❌ Bot crashed: {e}")
