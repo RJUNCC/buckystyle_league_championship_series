@@ -23,13 +23,7 @@ import asyncio
 import traceback
 # from numpy import round
 
-current_dir = os.path.dirname(os.path.abspath("__file__"))
-print(current_dir)
-parent_dir = os.path.abspath(os.path.join(current_dir, '.'))
-print(parent_dir)
-
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.config import Config
 from visualization.visualization import make_highlighted_table, team_styled_table, export_styled_table, create_styled_table
 
@@ -160,17 +154,17 @@ class Process:
 
         team_df = team_df.sort_values('name').reset_index(drop=True)
 
-        team_df.loc[8, 'cumulative.games'] = team_df.loc[8, 'cumulative.games'] + 1
-        team_df.loc[8, 'cumulative.wins'] = team_df.loc[8, 'cumulative.wins'] + 1
-        team_df.loc[8, 'cumulative.win_percentage'] = team_df.loc[8, 'cumulative.wins'] / team_df.loc[8, 'cumulative.games']*100
-        team_df.loc[8, 'cumulative.core.shots'] = team_df.loc[7, 'cumulative.core.shots'] + team_df.loc[8, 'cumulative.core.shots']
-        team_df.loc[8, 'cumulative.core.shots_against'] = team_df.loc[7, 'cumulative.core.shots_against'] + team_df.loc[8, 'cumulative.core.shots_against']
-        team_df.loc[8, 'cumulative.demo.inflicted'] = team_df.loc[7, 'cumulative.demo.inflicted'] + team_df.loc[8, 'cumulative.demo.inflicted']
-        team_df.loc[8, 'cumulative.demo.taken'] = team_df.loc[7, 'cumulative.demo.taken'] + team_df.loc[8, 'cumulative.demo.taken']
-        team_df.loc[8, 'cumulative.core.goals'] = team_df.loc[7, 'cumulative.core.goals'] + team_df.loc[8, 'cumulative.core.goals']
-        team_df.loc[8, 'cumulative.core.goals_against'] = team_df.loc[7, 'cumulative.core.goals_against'] + team_df.loc[8, 'cumulative.core.goals_against']
-        print(team_df['cumulative.win_percentage'])
-        team_df = team_df.drop(7, axis=0).reset_index(drop=True)
+        # team_df.loc[8, 'cumulative.games'] = team_df.loc[8, 'cumulative.games'] + 1
+        # team_df.loc[8, 'cumulative.wins'] = team_df.loc[8, 'cumulative.wins'] + 1
+        # team_df.loc[8, 'cumulative.win_percentage'] = team_df.loc[8, 'cumulative.wins'] / team_df.loc[8, 'cumulative.games']*100
+        # team_df.loc[8, 'cumulative.core.shots'] = team_df.loc[7, 'cumulative.core.shots'] + team_df.loc[8, 'cumulative.core.shots']
+        # team_df.loc[8, 'cumulative.core.shots_against'] = team_df.loc[7, 'cumulative.core.shots_against'] + team_df.loc[8, 'cumulative.core.shots_against']
+        # team_df.loc[8, 'cumulative.demo.inflicted'] = team_df.loc[7, 'cumulative.demo.inflicted'] + team_df.loc[8, 'cumulative.demo.inflicted']
+        # team_df.loc[8, 'cumulative.demo.taken'] = team_df.loc[7, 'cumulative.demo.taken'] + team_df.loc[8, 'cumulative.demo.taken']
+        # team_df.loc[8, 'cumulative.core.goals'] = team_df.loc[7, 'cumulative.core.goals'] + team_df.loc[8, 'cumulative.core.goals']
+        # team_df.loc[8, 'cumulative.core.goals_against'] = team_df.loc[7, 'cumulative.core.goals_against'] + team_df.loc[8, 'cumulative.core.goals_against']
+        # print(team_df['cumulative.win_percentage'])
+        # team_df = team_df.drop(7, axis=0).reset_index(drop=True)
   
 
         df_final2, df_final = self.process_player_data()

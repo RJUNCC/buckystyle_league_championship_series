@@ -30,4 +30,6 @@ dependencies = [
     "setuptools>=75.8.2",
     "pymongo[srv]>=4.11.1",
     "pillow>=11.1.0",
+    "pydantic>=2.11.3",
+    "fastapi[standard]>=0.115.12",
 ]

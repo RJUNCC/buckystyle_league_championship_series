@@ -63,10 +63,10 @@ class Config:
         self.regular_team_data = "season_4_team_stats.parquet"
         self.overall_player_data = "season_3_overall_player_data.parquet"
 
-        self.all_player_data = "season_4_player_data"
+        self.all_player_data = "playoff_player_data_season_4"
         self.all_team_data = "season_4_team_data"
-        self.playoff_player_path = "playoff_player_data_season_3"
-        self.playoff_team_path = "playoff_team_data_season_3"
+        self.playoff_player_path = "playoff_player_data_season_4"
+        self.playoff_team_path = "playoff_team_data_season_4"
 
         # PATHS TO GROUPS
         self.all_blcs_season_2_matches_link = "all-blcs-2-matches-reg-playoffs-ajmebwvz3b"

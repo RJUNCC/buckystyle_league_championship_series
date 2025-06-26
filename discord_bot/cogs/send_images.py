@@ -16,6 +16,9 @@ import asyncio
 import logging
 import sys
 
+load_dotenv("../.env")
+print(load_dotenv())
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from config import Config
 
@@ -70,7 +73,7 @@ IMAGE_PATHS_TEAM_CHANNEL = [
 
 IMAGE_PATHS_PLAYOFF_STATS = [
     f"images/{config.playoff_player_path}.png",
-    f"images/{config.playoff_team_path}.png",
+    # f"images/{config.playoff_team_path}.png",
 ]
 
 # ======= Define Async Function to Remove Previous Messages =======
@@ -132,9 +135,9 @@ async def send_images():
     logging.info("Sending images to Player Channel...")
     await send_images_to_channel(PLAYER_CHANNEL_ID, IMAGE_PATHS_PLAYER_CHANNEL)
 
-    # Send images to the team channel
-    logging.info("Sending images to Team Channel...")
-    await send_images_to_channel(TEAM_CHANNEL_ID, IMAGE_PATHS_TEAM_CHANNEL)
+    # # Send images to the team channel
+    # logging.info("Sending images to Team Channel...")
+    # await send_images_to_channel(TEAM_CHANNEL_ID, IMAGE_PATHS_TEAM_CHANNEL)
 
     # Send images to playoff chnanel
     # logging.info("Sending images to playoff channel")
