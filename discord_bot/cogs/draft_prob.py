@@ -146,7 +146,7 @@ class TimeSelectionView(discord.ui.View):
             return time_24h
     
     @discord.ui.button(label="Confirm Times", style=discord.ButtonStyle.green)
-    async def confirm_times(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def confirm_times(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
@@ -176,7 +176,7 @@ class TimeSelectionView(discord.ui.View):
                 pass
     
     @discord.ui.button(label="Not Available", style=discord.ButtonStyle.red)
-    async def not_available(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def not_available(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
@@ -205,7 +205,7 @@ class TimeSelectionView(discord.ui.View):
                 pass
     
     @discord.ui.button(label="Available All Day", style=discord.ButtonStyle.blurple)
-    async def all_day(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def all_day(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
@@ -285,7 +285,7 @@ class DaySelectionView(discord.ui.View):
                 pass
     
     @discord.ui.button(label="View My Schedule", style=discord.ButtonStyle.secondary)
-    async def view_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def view_schedule(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
@@ -342,7 +342,7 @@ class DaySelectionView(discord.ui.View):
             return time_24h  # Return original if parsing fails
     
     @discord.ui.button(label="Finalize Schedule", style=discord.ButtonStyle.green)
-    async def finalize_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def finalize_schedule(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
