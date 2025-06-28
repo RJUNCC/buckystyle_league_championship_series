@@ -510,5 +510,153 @@ class DraftLotteryCog(commands.Cog):
         
         await ctx.respond(embed=embed)
 
+    @discord.slash_command(name="tournament_seeding", description="Generate dramatic tournament seeding for 8 teams")
+    @commands.has_permissions(administrator=True)
+    async def tournament_seeding(self, ctx):
+        """Generate dramatic tournament seeding ceremony"""
+        try:
+            # Team names
+            teams = [
+                "YNs",
+                "Team 2", 
+                "Mulignans",
+                "16 Keycaps",
+                "Team 5",
+                "Mounties",
+                "Team 7",
+                "Ice Truck Killers"
+            ]
+            
+            # Shuffle teams randomly
+            shuffled_teams = teams.copy()
+            random.shuffle(shuffled_teams)
+            
+            # Create seeding dictionary
+            seeding = {}
+            for i, team in enumerate(shuffled_teams, 1):
+                seeding[i] = team
+            
+            # Initial announcement
+            embed = discord.Embed(
+                title="🏆 TOURNAMENT SEEDING CEREMONY 🏆",
+                description="The moment you've all been waiting for...\nThe seeds have been determined!\n\nDrumroll please... 🥁🥁🥁",
+                color=0xffd700
+            )
+            await ctx.respond(embed=embed)
+            await asyncio.sleep(3)
+            
+            # Dramatic phrases for each seed
+            dramatic_phrases = [
+                "👑 Taking the throne as our #1 seed...",
+                "🥈 Claiming the prestigious #2 position...",
+                "🥉 Securing a strong #3 seed...",
+                "⭐ Earning the #4 spot with determination...",
+                "🔥 Fighting their way to the #5 seed...",
+                "💪 Proving their worth as the #6 seed...",
+                "⚡ Showing resilience as our #7 seed...",
+                "🎯 Rounding out our bracket as the #8 seed..."
+            ]
+            
+            seeding_text = ""
+            
+            # Announce each seed dramatically
+            for seed in range(1, 9):
+                seeding_text += f"**SEED #{seed}**: {seeding[seed]}\n"
+                
+                embed = discord.Embed(
+                    title="🎯 SEEDING ANNOUNCEMENT 🎯",
+                    description=f"⚡ {dramatic_phrases[seed-1]}\n\n**SEED #{seed}: {seeding[seed]}**",
+                    color=0x00ff00 if seed <= 4 else 0xff6600
+                )
+                
+                if seeding_text:
+                    embed.add_field(
+                        name="🏆 SEEDS ANNOUNCED SO FAR",
+                        value=seeding_text,
+                        inline=False
+                    )
+                
+                await ctx.edit(embed=embed)
+                await asyncio.sleep(4)
+            
+            # Transition to matchups
+            await asyncio.sleep(2)
+            embed = discord.Embed(
+                title="🔥 FIRST ROUND MATCHUPS 🔥",
+                description="Time to see who faces who in the opening round!",
+                color=0xff0000
+            )
+            embed.add_field(
+                name="🏆 FINAL SEEDINGS",
+                value=seeding_text,
+                inline=False
+            )
+            await ctx.edit(embed=embed)
+            await asyncio.sleep(3)
+            
+            # Generate and announce matchups
+            matchups = [
+                (1, 8),
+                (2, 7),
+                (3, 6),
+                (4, 5)
+            ]
+            
+            matchup_names = ["QUARTERFINAL 1", "QUARTERFINAL 2", "QUARTERFINAL 3", "QUARTERFINAL 4"]
+            matchup_text = ""
+            
+            for i, (higher_seed, lower_seed) in enumerate(matchups):
+                matchup_entry = f"⚔️ **{matchup_names[i]}**\n#{higher_seed} {seeding[higher_seed]} **VS** #{lower_seed} {seeding[lower_seed]}\n\n"
+                matchup_text += matchup_entry
+                
+                embed = discord.Embed(
+                    title=f"⚔️ {matchup_names[i]} ⚔️",
+                    description=f"**#{higher_seed} {seeding[higher_seed]}**\n\n**VS**\n\n**#{lower_seed} {seeding[lower_seed]}**",
+                    color=0x8b0000
+                )
+                
+                embed.add_field(
+                    name="🏆 FINAL SEEDINGS",
+                    value=seeding_text,
+                    inline=False
+                )
+                
+                if matchup_text:
+                    embed.add_field(
+                        name="🔥 MATCHUPS SO FAR",
+                        value=matchup_text,
+                        inline=False
+                    )
+                
+                await ctx.edit(embed=embed)
+                await asyncio.sleep(4)
+            
+            # Final summary
+            await asyncio.sleep(2)
+            final_embed = discord.Embed(
+                title="🎊 LET THE TOURNAMENT BEGIN! 🎊",
+                description="All seeds and matchups have been determined!",
+                color=0x00ff00
+            )
+            
+            final_embed.add_field(
+                name="🏆 FINAL SEEDINGS",
+                value=seeding_text,
+                inline=False
+            )
+            
+            final_embed.add_field(
+                name="🔥 ALL QUARTERFINAL MATCHUPS",
+                value=matchup_text,
+                inline=False
+            )
+            
+            final_embed.set_footer(text="Good luck to all teams! 🍀")
+            
+            await ctx.edit(embed=final_embed)
+            
+        except Exception as e:
+            await ctx.channel.send(f"Error generating tournament seeding: {str(e)}")
+
 def setup(bot):
     bot.add_cog(DraftLotteryCog(bot))
