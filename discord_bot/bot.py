@@ -17,7 +17,7 @@ from cogs.statistics import StatisticsCog
 from cogs.season_management import SeasonManagementCog
 from cogs.playoff_management import PlayoffManagementCog
 from cogs.season_summary import SeasonSummaryCog
-from cogs.draft_prob import DraftLotteryCog  # Add this import
+from cogs.draft_prob import DraftLotteryCog  # This includes both draft lottery AND scheduling
 # from cogs.send_images import ImageSenderCog
 from models.player import initialize_db
 
@@ -37,7 +37,7 @@ class MyBot(discord.Bot):
         cogs = [
             AdminCog, AvailabilityCog, TeamManagementCog, SeriesManagementCog,
             StatisticsCog, SeasonManagementCog,
-            PlayoffManagementCog, SeasonSummaryCog, DraftLotteryCog  # Add DraftLotteryCog here
+            PlayoffManagementCog, SeasonSummaryCog, DraftLotteryCog  # This handles both features
         ]
         for cog in cogs:
             try:

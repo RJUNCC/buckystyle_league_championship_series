@@ -1074,25 +1074,27 @@ class DraftLotteryCog(commands.Cog):
         session = self.active_sessions[channel_id]
         user_id = ctx.author.id
         
+        # Create the interactive view with dropdowns and buttons
+        view = DaySelectionView(user_id, session)
+        
         # Allow players to reset/modify their schedule
         if user_id in session.players_responded:
             embed = discord.Embed(
                 title="🔄 Update Your Schedule",
-                description="You can modify your existing schedule or view it below.",
+                description="Use the dropdown below to select a day and set your availability. You can modify any day multiple times.",
                 color=0xffa500
             )
         else:
             embed = discord.Embed(
                 title="📅 Set Your Weekly Availability",
-                description="Select a day to set your available times. You can modify any day multiple times.",
+                description="Use the dropdown below to select a day and set your available times. You can modify any day multiple times.",
                 color=0x0099ff
             )
         
-        view = DaySelectionView(user_id, session)
-        
         try:
+            # Send the interactive interface directly in DM
             await ctx.author.send(embed=embed, view=view)
-            await ctx.respond(f"{ctx.author.mention}, check your DMs to set your schedule!", ephemeral=True)
+            await ctx.respond(f"{ctx.author.mention}, check your DMs for the interactive schedule interface!", ephemeral=True)
         except discord.Forbidden:
             await ctx.respond("I couldn't send you a DM. Please enable DMs from server members and try again.", ephemeral=True)
         except Exception as e:
