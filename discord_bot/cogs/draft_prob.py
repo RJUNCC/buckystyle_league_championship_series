@@ -24,10 +24,18 @@ class SchedulingSession:
         self.players_responded = set()
         self.expected_players = 6  # 3 players per team × 2 teams
         self.weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        self.confirmation_message = None
+        self.confirmations = {}  # {user_id: True/False}
         
     def add_player_schedule(self, user_id, schedule):
         self.player_schedules[user_id] = schedule
         self.players_responded.add(user_id)
+        
+    def reset_player_schedule(self, user_id):
+        if user_id in self.player_schedules:
+            del self.player_schedules[user_id]
+        if user_id in self.players_responded:
+            self.players_responded.remove(user_id)
         
     def is_complete(self):
         return len(self.players_responded) >= self.expected_players
@@ -54,6 +62,311 @@ class SchedulingSession:
                         common_times[day] = sorted(list(common_slots))
         
         return dict(common_times) if common_times else None
+
+class TimeSelectionView(discord.ui.View):
+    def __init__(self, user_id, day, session):
+        super().__init__(timeout=300)
+        self.user_id = user_id
+        self.day = day
+        self.session = session
+        self.selected_times = set()
+        
+    @discord.ui.select(
+        placeholder="Select available times (you can select multiple)",
+        options=[
+            discord.SelectOption(label="12:00 PM", value="12:00"),
+            discord.SelectOption(label="12:30 PM", value="12:30"),
+            discord.SelectOption(label="1:00 PM", value="13:00"),
+            discord.SelectOption(label="1:30 PM", value="13:30"),
+            discord.SelectOption(label="2:00 PM", value="14:00"),
+            discord.SelectOption(label="2:30 PM", value="14:30"),
+            discord.SelectOption(label="3:00 PM", value="15:00"),
+            discord.SelectOption(label="3:30 PM", value="15:30"),
+            discord.SelectOption(label="4:00 PM", value="16:00"),
+            discord.SelectOption(label="4:30 PM", value="16:30"),
+            discord.SelectOption(label="5:00 PM", value="17:00"),
+            discord.SelectOption(label="5:30 PM", value="17:30"),
+            discord.SelectOption(label="6:00 PM", value="18:00"),
+            discord.SelectOption(label="6:30 PM", value="18:30"),
+            discord.SelectOption(label="7:00 PM", value="19:00"),
+            discord.SelectOption(label="7:30 PM", value="19:30"),
+            discord.SelectOption(label="8:00 PM", value="20:00"),
+            discord.SelectOption(label="8:30 PM", value="20:30"),
+            discord.SelectOption(label="9:00 PM", value="21:00"),
+            discord.SelectOption(label="9:30 PM", value="21:30"),
+            discord.SelectOption(label="10:00 PM", value="22:00"),
+            discord.SelectOption(label="10:30 PM", value="22:30"),
+            discord.SelectOption(label="11:00 PM", value="23:00"),
+            discord.SelectOption(label="11:30 PM", value="23:30"),
+            discord.SelectOption(label="12:00 AM", value="00:00"),
+        ],
+        max_values=25,
+        min_values=0
+    )
+    async def time_select(self, interaction: discord.Interaction, select: discord.ui.Select):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        self.selected_times = set(select.values)
+        
+        if self.selected_times:
+            times_display = ", ".join([self.format_time_display(t) for t in sorted(self.selected_times)])
+            await interaction.response.edit_message(
+                content=f"**{self.day}** - Selected times: {times_display}\n\nClick 'Confirm' to save these times or select different ones.",
+                view=self
+            )
+        else:
+            await interaction.response.edit_message(
+                content=f"**{self.day}** - No times selected (not available)\n\nClick 'Confirm' to save or select times above.",
+                view=self
+            )
+    
+    def format_time_display(self, time_24h):
+        hour = int(time_24h.split(':')[0])
+        minute = time_24h.split(':')[1]
+        
+        if hour == 0:
+            return f"12:{minute} AM"
+        elif hour < 12:
+            return f"{hour}:{minute} AM"
+        elif hour == 12:
+            return f"12:{minute} PM"
+        else:
+            return f"{hour-12}:{minute} PM"
+    
+    @discord.ui.button(label="Confirm Times", style=discord.ButtonStyle.green)
+    async def confirm_times(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        # Save the times for this day
+        if self.user_id not in self.session.player_schedules:
+            self.session.player_schedules[self.user_id] = {}
+            
+        self.session.player_schedules[self.user_id][self.day] = list(self.selected_times)
+        
+        await interaction.response.edit_message(
+            content=f"✅ **{self.day}** times saved! Use `/my_schedule` again to set other days or check your full schedule.",
+            view=None
+        )
+    
+    @discord.ui.button(label="Not Available", style=discord.ButtonStyle.red)
+    async def not_available(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        if self.user_id not in self.session.player_schedules:
+            self.session.player_schedules[self.user_id] = {}
+            
+        self.session.player_schedules[self.user_id][self.day] = []
+        
+        await interaction.response.edit_message(
+            content=f"✅ **{self.day}** marked as not available! Use `/my_schedule` again to set other days.",
+            view=None
+        )
+    
+    @discord.ui.button(label="Available All Day", style=discord.ButtonStyle.blurple)
+    async def all_day(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        # Set all available times
+        all_times = []
+        for hour in range(12, 24):
+            all_times.extend([f"{hour:02d}:00", f"{hour:02d}:30"])
+        for hour in range(0, 3):
+            all_times.extend([f"{hour:02d}:00", f"{hour:02d}:30"])
+            
+        if self.user_id not in self.session.player_schedules:
+            self.session.player_schedules[self.user_id] = {}
+            
+        self.session.player_schedules[self.user_id][self.day] = all_times
+        
+        await interaction.response.edit_message(
+            content=f"✅ **{self.day}** set to all day available (12 PM - 2 AM)! Use `/my_schedule` again to set other days.",
+            view=None
+        )
+
+class DaySelectionView(discord.ui.View):
+    def __init__(self, user_id, session):
+        super().__init__(timeout=300)
+        self.user_id = user_id
+        self.session = session
+        
+    @discord.ui.select(
+        placeholder="Select a day to set your availability",
+        options=[
+            discord.SelectOption(label="Monday", value="Monday", emoji="📅"),
+            discord.SelectOption(label="Tuesday", value="Tuesday", emoji="📅"),
+            discord.SelectOption(label="Wednesday", value="Wednesday", emoji="📅"),
+            discord.SelectOption(label="Thursday", value="Thursday", emoji="📅"),
+            discord.SelectOption(label="Friday", value="Friday", emoji="📅"),
+            discord.SelectOption(label="Saturday", value="Saturday", emoji="📅"),
+            discord.SelectOption(label="Sunday", value="Sunday", emoji="📅"),
+        ]
+    )
+    async def day_select(self, interaction: discord.Interaction, select: discord.ui.Select):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        selected_day = select.values[0]
+        time_view = TimeSelectionView(self.user_id, selected_day, self.session)
+        
+        await interaction.response.edit_message(
+            content=f"Setting availability for **{selected_day}**\nSelect all times you're available to play:",
+            view=time_view
+        )
+    
+    @discord.ui.button(label="View My Schedule", style=discord.ButtonStyle.secondary)
+    async def view_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        if self.user_id not in self.session.player_schedules:
+            await interaction.response.send_message("You haven't set any times yet!", ephemeral=True)
+            return
+            
+        schedule = self.session.player_schedules[self.user_id]
+        schedule_text = "**Your Current Schedule:**\n"
+        
+        days_set = 0
+        for day in self.session.weekdays:
+            if day in schedule:
+                days_set += 1
+                if not schedule[day]:
+                    schedule_text += f"**{day}:** Not available\n"
+                elif len(schedule[day]) >= 20:
+                    schedule_text += f"**{day}:** All day available\n"
+                else:
+                    times = [self.format_time_display(t) for t in sorted(schedule[day])]
+                    schedule_text += f"**{day}:** {', '.join(times)}\n"
+            else:
+                schedule_text += f"**{day}:** Not set\n"
+        
+        schedule_text += f"\n**Progress:** {days_set}/7 days completed"
+        
+        if days_set == 7:
+            schedule_text += "\n✅ **Ready to finalize!** Use the 'Finalize Schedule' button."
+            
+        await interaction.response.send_message(schedule_text, ephemeral=True)
+    
+    def format_time_display(self, time_24h):
+        hour = int(time_24h.split(':')[0])
+        minute = time_24h.split(':')[1]
+        
+        if hour == 0:
+            return f"12:{minute} AM"
+        elif hour < 12:
+            return f"{hour}:{minute} AM"
+        elif hour == 12:
+            return f"12:{minute} PM"
+        else:
+            return f"{hour-12}:{minute} PM"
+    
+    @discord.ui.button(label="Finalize Schedule", style=discord.ButtonStyle.green)
+    async def finalize_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        if self.user_id not in self.session.player_schedules:
+            await interaction.response.send_message("You haven't set any times yet!", ephemeral=True)
+            return
+        
+        schedule = self.session.player_schedules[self.user_id]
+        days_set = len(schedule)
+        
+        if days_set < 7:
+            await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {days_set}/7 days set.", ephemeral=True)
+            return
+        
+        # Add user to responded list
+        self.session.players_responded.add(self.user_id)
+        
+        channel = self.bot.get_channel(self.session.channel_id)
+        remaining = self.session.expected_players - len(self.session.players_responded)
+        
+        if remaining > 0:
+            await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
+        
+        await interaction.response.edit_message(
+            content="✅ **Schedule finalized!** Thank you for submitting your availability.",
+            view=None
+        )
+        
+        # Check if all schedules are complete
+        if self.session.is_complete():
+            await self.finalize_scheduling(channel, self.session)
+
+class ConfirmationView(discord.ui.View):
+    def __init__(self, session, game_time_info, cog):
+        super().__init__(timeout=600)  # 10 minute timeout
+        self.session = session
+        self.game_time_info = game_time_info
+        self.cog = cog
+        
+    @discord.ui.button(label="✅ Confirm", style=discord.ButtonStyle.green)
+    async def confirm_game(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = interaction.user.id
+        
+        # Check if user is part of this game
+        if user_id not in self.session.player_schedules:
+            await interaction.response.send_message("You're not part of this scheduled game!", ephemeral=True)
+            return
+            
+        self.session.confirmations[user_id] = True
+        confirmed = sum(1 for c in self.session.confirmations.values() if c)
+        total = len(self.session.player_schedules)
+        
+        await interaction.response.send_message(f"✅ You confirmed the game time! ({confirmed}/{total} confirmed)", ephemeral=True)
+        
+        # Check if everyone confirmed
+        if confirmed >= self.session.expected_players:
+            channel = self.cog.bot.get_channel(self.session.channel_id)
+            final_embed = discord.Embed(
+                title="🎮 Game Confirmed!",
+                description=f"**{self.game_time_info['day']} at {self.game_time_info['time']}**",
+                color=0x00ff00
+            )
+            final_embed.add_field(
+                name="Status",
+                value="✅ All players confirmed! Game is scheduled.",
+                inline=False
+            )
+            
+            await channel.send("@everyone")
+            await channel.send(embed=final_embed)
+            
+            # Clean up session
+            if self.session.channel_id in self.cog.active_sessions:
+                del self.cog.active_sessions[self.session.channel_id]
+    
+    @discord.ui.button(label="❌ Can't Make It", style=discord.ButtonStyle.red)
+    async def decline_game(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = interaction.user.id
+        
+        if user_id not in self.session.player_schedules:
+            await interaction.response.send_message("You're not part of this scheduled game!", ephemeral=True)
+            return
+            
+        self.session.confirmations[user_id] = False
+        
+        await interaction.response.send_message(
+            "❌ You declined the game time. Please update your schedule using `/my_schedule` and set more accurate times.",
+            ephemeral=True
+        )
+        
+        # Reset this player's status so they can resubmit
+        self.session.reset_player_schedule(user_id)
+        
+        channel = self.cog.bot.get_channel(self.session.channel_id)
+        await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. Use `/my_schedule` to resubmit availability.")
 
 class DraftLottery:
     def __init__(self):
@@ -145,169 +458,27 @@ class DraftLottery:
         
         return results
 
-# Scheduling utility functions
+# No longer needed - keeping for reference in case of fallback
+# These functions are replaced by the interactive UI system
 def parse_time_input(time_str):
-    """Parse various time formats into 24-hour format"""
-    time_str = time_str.strip().lower()
-    
-    # Handle ranges like "2-4pm" or "14:00-16:00"
-    if '-' in time_str:
-        start, end = time_str.split('-', 1)
-        start_time = parse_single_time(start.strip())
-        end_time = parse_single_time(end.strip())
-        if start_time and end_time:
-            return generate_time_slots(start_time, end_time)
-    
-    # Handle single times
-    single_time = parse_single_time(time_str)
-    if single_time:
-        return [single_time]
-    
-    return []
+    """Legacy function - kept for potential fallback use"""
+    pass
 
 def parse_single_time(time_str):
-    """Parse a single time string into 24-hour format"""
-    time_str = time_str.strip().lower()
-    
-    # Handle formats like "2pm", "14:00", "2:30pm", "10:30pm", "11:59pm"
-    am_pm_pattern = r'(\d{1,2})(?::(\d{2}))?\s*(am|pm)'
-    military_pattern = r'(\d{1,2}):(\d{2})'
-    simple_pattern = r'(\d{1,2})(am|pm)?'
-    
-    # Try AM/PM format first (this handles 10:30pm, 11:59pm, etc.)
-    match = re.match(am_pm_pattern, time_str)
-    if match:
-        hour = int(match.group(1))
-        minute = int(match.group(2)) if match.group(2) else 0
-        period = match.group(3)
-        
-        # Handle 12-hour to 24-hour conversion
-        if period == 'pm' and hour != 12:
-            hour += 12
-        elif period == 'am' and hour == 12:
-            hour = 0
-            
-        # Validate hour and minute ranges
-        if 0 <= hour <= 23 and 0 <= minute <= 59:
-            return f"{hour:02d}:{minute:02d}"
-    
-    # Try military time (24-hour format)
-    match = re.match(military_pattern, time_str)
-    if match:
-        hour = int(match.group(1))
-        minute = int(match.group(2))
-        if 0 <= hour <= 23 and 0 <= minute <= 59:
-            return f"{hour:02d}:{minute:02d}"
-    
-    # Try simple number format (fallback for cases like "2pm", "14")
-    match = re.match(simple_pattern, time_str)
-    if match:
-        hour = int(match.group(1))
-        period = match.group(2)
-        
-        if period == 'pm' and hour != 12:
-            hour += 12
-        elif period == 'am' and hour == 12:
-            hour = 0
-        elif not period and 1 <= hour <= 12:
-            # Assume PM for afternoon hours without AM/PM
-            if hour >= 8:
-                hour += 12
-                
-        if 0 <= hour <= 23:
-            return f"{hour:02d}:00"
-    
-    return None
+    """Legacy function - kept for potential fallback use"""
+    pass
 
 def generate_time_slots(start_time, end_time):
-    """Generate time slots between start and end time (now supports minutes)"""
-    slots = []
-    
-    # Parse start and end times
-    start_parts = start_time.split(':')
-    end_parts = end_time.split(':')
-    
-    start_hour = int(start_parts[0])
-    start_minute = int(start_parts[1]) if len(start_parts) > 1 else 0
-    
-    end_hour = int(end_parts[0])
-    end_minute = int(end_parts[1]) if len(end_parts) > 1 else 0
-    
-    # Convert to total minutes for easier calculation
-    start_total_minutes = start_hour * 60 + start_minute
-    end_total_minutes = end_hour * 60 + end_minute
-    
-    # Handle overnight ranges (like 10:30pm-11:59pm)
-    if end_total_minutes <= start_total_minutes:
-        end_total_minutes += 24 * 60  # Add 24 hours
-    
-    # Generate 30-minute slots
-    current_minutes = start_total_minutes
-    while current_minutes < end_total_minutes:
-        hours = (current_minutes // 60) % 24
-        minutes = current_minutes % 60
-        slots.append(f"{hours:02d}:{minutes:02d}")
-        current_minutes += 30  # 30-minute increments
-    
-    return slots
+    """Legacy function - kept for potential fallback use"""
+    pass
 
 def parse_schedule_message(message):
-    """Parse a multi-line schedule message"""
-    schedule = {}
-    weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    
-    lines = message.strip().split('\n')
-    
-    for line in lines:
-        line = line.strip()
-        if ':' not in line:
-            continue
-            
-        day_part, time_part = line.split(':', 1)
-        day = day_part.strip().lower()
-        
-        # Find matching weekday
-        matched_day = None
-        for weekday in weekdays:
-            if day.startswith(weekday[:3]):  # Match first 3 letters
-                matched_day = weekday.capitalize()
-                break
-        
-        if not matched_day:
-            continue
-            
-        time_part = time_part.strip().lower()
-        
-        # Check if not available
-        if any(word in time_part for word in ['not available', 'none', 'n/a', 'unavailable', 'busy', 'no']):
-            schedule[matched_day] = []
-        # Check if all day available
-        elif any(phrase in time_part for phrase in ['all day', 'anytime', 'flexible', 'any time', 'whole day', 'entire day']):
-            # Generate slots from 8 AM to 11 PM for "all day"
-            schedule[matched_day] = [f"{hour:02d}:00" for hour in range(8, 24)]
-        else:
-            # Parse time slots
-            time_slots = []
-            # Split by commas for multiple time ranges
-            time_ranges = [t.strip() for t in time_part.split(',')]
-            
-            for time_range in time_ranges:
-                slots = parse_time_input(time_range)
-                time_slots.extend(slots)
-            
-            schedule[matched_day] = time_slots
-    
-    return schedule if schedule else None
+    """Legacy function - kept for potential fallback use"""
+    pass
 
 def format_available_times(common_times):
-    """Format the available times for display"""
-    formatted = []
-    for day, times in common_times.items():
-        if times:
-            time_str = ", ".join(times)
-            formatted.append(f"**{day}:** {time_str}")
-    
-    return "\n".join(formatted) if formatted else "No common times found"
+    """Legacy function - kept for potential fallback use"""
+    pass
 
 class DraftLotteryCog(commands.Cog):
     def __init__(self, bot):
