@@ -1,4 +1,4 @@
-# discord_bot/cogs/draft_lottery.py
+# cogs/draft_prob.py
 import discord
 from discord.ext import commands
 import asyncio
@@ -653,7 +653,7 @@ class DraftLotteryCog(commands.Cog):
             
             final_embed.set_footer(text="Good luck to all teams! 🍀")
             
-            await ctx.edit(embed=final_embed)
+            await ctx.edit(embed=embed)
             
         except Exception as e:
             await ctx.channel.send(f"Error generating tournament seeding: {str(e)}")
