@@ -289,20 +289,25 @@ class DaySelectionView(discord.ui.View):
         # Add user to responded list
         self.session.players_responded.add(self.user_id)
         
-        channel = self.bot.get_channel(self.session.channel_id)
-        remaining = self.session.expected_players - len(self.session.players_responded)
-        
-        if remaining > 0:
-            await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
-        
-        await interaction.response.edit_message(
-            content="✅ **Schedule finalized!** Thank you for submitting your availability.",
-            view=None
-        )
-        
-        # Check if all schedules are complete
-        if self.session.is_complete():
-            await self.finalize_scheduling(channel, self.session)
+        # Get the bot instance through the cog
+        # We need to access the cog through the bot
+        for cog in interaction.client.cogs.values():
+            if hasattr(cog, 'active_sessions') and self.session.channel_id in cog.active_sessions:
+                channel = cog.bot.get_channel(self.session.channel_id)
+                remaining = self.session.expected_players - len(self.session.players_responded)
+                
+                if remaining > 0:
+                    await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
+                
+                await interaction.response.edit_message(
+                    content="✅ **Schedule finalized!** Thank you for submitting your availability.",
+                    view=None
+                )
+                
+                # Check if all schedules are complete
+                if self.session.is_complete():
+                    await cog.finalize_scheduling(channel, self.session)
+                break
 
 class ConfirmationView(discord.ui.View):
     def __init__(self, session, game_time_info, cog):
