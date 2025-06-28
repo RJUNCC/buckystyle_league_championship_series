@@ -169,26 +169,29 @@ def parse_single_time(time_str):
     """Parse a single time string into 24-hour format"""
     time_str = time_str.strip().lower()
     
-    # Handle formats like "2pm", "14:00", "2:30pm"
+    # Handle formats like "2pm", "14:00", "2:30pm", "10:30pm", "11:59pm"
     am_pm_pattern = r'(\d{1,2})(?::(\d{2}))?\s*(am|pm)'
     military_pattern = r'(\d{1,2}):(\d{2})'
     simple_pattern = r'(\d{1,2})(am|pm)?'
     
-    # Try AM/PM format first
+    # Try AM/PM format first (this handles 10:30pm, 11:59pm, etc.)
     match = re.match(am_pm_pattern, time_str)
     if match:
         hour = int(match.group(1))
         minute = int(match.group(2)) if match.group(2) else 0
         period = match.group(3)
         
+        # Handle 12-hour to 24-hour conversion
         if period == 'pm' and hour != 12:
             hour += 12
         elif period == 'am' and hour == 12:
             hour = 0
             
-        return f"{hour:02d}:{minute:02d}"
+        # Validate hour and minute ranges
+        if 0 <= hour <= 23 and 0 <= minute <= 59:
+            return f"{hour:02d}:{minute:02d}"
     
-    # Try military time
+    # Try military time (24-hour format)
     match = re.match(military_pattern, time_str)
     if match:
         hour = int(match.group(1))
@@ -196,7 +199,7 @@ def parse_single_time(time_str):
         if 0 <= hour <= 23 and 0 <= minute <= 59:
             return f"{hour:02d}:{minute:02d}"
     
-    # Try simple number format
+    # Try simple number format (fallback for cases like "2pm", "14")
     match = re.match(simple_pattern, time_str)
     if match:
         hour = int(match.group(1))
@@ -217,16 +220,35 @@ def parse_single_time(time_str):
     return None
 
 def generate_time_slots(start_time, end_time):
-    """Generate hourly time slots between start and end time"""
+    """Generate time slots between start and end time (now supports minutes)"""
     slots = []
-    start_hour = int(start_time.split(':')[0])
-    end_hour = int(end_time.split(':')[0])
     
-    current_hour = start_hour
-    while current_hour < end_hour:
-        slots.append(f"{current_hour:02d}:00")
-        current_hour += 1
-        
+    # Parse start and end times
+    start_parts = start_time.split(':')
+    end_parts = end_time.split(':')
+    
+    start_hour = int(start_parts[0])
+    start_minute = int(start_parts[1]) if len(start_parts) > 1 else 0
+    
+    end_hour = int(end_parts[0])
+    end_minute = int(end_parts[1]) if len(end_parts) > 1 else 0
+    
+    # Convert to total minutes for easier calculation
+    start_total_minutes = start_hour * 60 + start_minute
+    end_total_minutes = end_hour * 60 + end_minute
+    
+    # Handle overnight ranges (like 10:30pm-11:59pm)
+    if end_total_minutes <= start_total_minutes:
+        end_total_minutes += 24 * 60  # Add 24 hours
+    
+    # Generate 30-minute slots
+    current_minutes = start_total_minutes
+    while current_minutes < end_total_minutes:
+        hours = (current_minutes // 60) % 24
+        minutes = current_minutes % 60
+        slots.append(f"{hours:02d}:{minutes:02d}")
+        current_minutes += 30  # 30-minute increments
+    
     return slots
 
 def parse_schedule_message(message):
