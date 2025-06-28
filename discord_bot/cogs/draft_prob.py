@@ -99,7 +99,7 @@ class TimeSelectionView(discord.ui.View):
         max_values=25,
         min_values=0
     )
-    async def time_select(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def time_select(self, select: discord.ui.Select, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
@@ -258,7 +258,7 @@ class DaySelectionView(discord.ui.View):
             discord.SelectOption(label="Sunday", value="Sunday", emoji="📅"),
         ]
     )
-    async def day_select(self, interaction: discord.Interaction, select: discord.ui.Select):
+    async def day_select(self, select: discord.ui.Select, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
