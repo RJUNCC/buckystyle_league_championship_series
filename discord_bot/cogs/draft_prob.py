@@ -903,9 +903,11 @@ class DraftLotteryCog(commands.Cog):
         )
         
         instructions_embed.add_field(
-            name="📅 Example Schedule Format",
+            name="📝 Alternative Method (If DMs Don't Work)",
             value=(
-                "```Monday: 2pm-6pm, 8pm-10pm\n"
+                "If `/my_schedule` doesn't send you a DM, use this instead:\n"
+                "```/schedule_submit schedule:\n"
+                "Monday: 2pm-6pm, 8pm-10pm\n"
                 "Tuesday: All day\n"
                 "Wednesday: Not available\n"
                 "Thursday: 7pm-11pm\n"
@@ -957,7 +959,10 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond("You've already submitted your schedule for this game!", ephemeral=True)
             return
         
-        # Create DM to collect schedule privately
+        # Try to create DM to collect schedule privately
+        dm_success = False
+        dm_channel = None
+        
         try:
             dm_channel = await ctx.author.create_dm()
             
@@ -998,8 +1003,57 @@ class DraftLotteryCog(commands.Cog):
             )
             
             await dm_channel.send(embed=embed)
-            await ctx.respond(f"{ctx.author.mention}, check your DMs to input your schedule!", ephemeral=True)
+            dm_success = True
+            await ctx.respond(f"✅ {ctx.author.mention}, I've sent you a DM! Please check your direct messages to input your schedule.", ephemeral=True)
             
+        except discord.Forbidden:
+            # DM failed, use channel method instead
+            await ctx.respond(
+                f"❌ I couldn't send you a DM, {ctx.author.mention}. Your DMs might be disabled.\n"
+                f"I'll send you an ephemeral message instead. Please respond with your schedule in the format shown below:",
+                ephemeral=True
+            )
+            
+            # Send ephemeral instructions
+            embed = discord.Embed(
+                title="📅 Weekly Schedule Input (Ephemeral)",
+                description="Since DMs are disabled, please use `/schedule_submit` with your schedule.",
+                color=0xff9900
+            )
+            embed.add_field(
+                name="🕐 Time Format Options",
+                value=(
+                    "• **Single times:** `2pm`, `7pm`, `14:00`, `20:30`\n"
+                    "• **Time ranges:** `2pm-6pm`, `14:00-18:00`\n"
+                    "• **Multiple slots:** `2pm-4pm, 7pm-9pm`\n"
+                    "• **All day available:** `all day`, `anytime`, `flexible`\n"
+                    "• **Not available:** `not available`, `none`, `n/a`, `busy`"
+                ),
+                inline=False
+            )
+            embed.add_field(
+                name="📝 Use This Command Format",
+                value=(
+                    "```/schedule_submit schedule:\n"
+                    "Monday: 2pm-6pm, 8pm-10pm\n"
+                    "Tuesday: All day\n"
+                    "Wednesday: Not available\n"
+                    "Thursday: 7pm-11pm\n"
+                    "Friday: Anytime\n"
+                    "Saturday: 12pm-3pm, 6pm-9pm\n"
+                    "Sunday: None```"
+                ),
+                inline=False
+            )
+            
+            await ctx.followup.send(embed=embed, ephemeral=True)
+            return
+        
+        except Exception as e:
+            await ctx.respond(f"❌ Error creating DM: {str(e)}. Please try again or contact an admin.", ephemeral=True)
+            return
+        
+        if dm_success and dm_channel:
             # Wait for DM response
             def check_dm(message):
                 return (message.author == ctx.author and 
@@ -1044,10 +1098,63 @@ class DraftLotteryCog(commands.Cog):
                     await dm_channel.send("❌ Could not parse your schedule. Please try again with the correct format.")
                     
             except asyncio.TimeoutError:
-                await dm_channel.send("⏰ Schedule input timed out. Please use `/my_schedule` again to retry.")
+                try:
+                    await dm_channel.send("⏰ Schedule input timed out. Please use `/my_schedule` again to retry.")
+                except:
+                    pass  # DM might be closed
+
+    @discord.slash_command(name="schedule_submit", description="Submit your schedule directly (fallback if DMs don't work)")
+    async def schedule_submit(self, ctx, schedule: str):
+        """Fallback method to submit schedule if DMs don't work"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        user_id = ctx.author.id
+        
+        if user_id in session.players_responded:
+            await ctx.respond("You've already submitted your schedule for this game!", ephemeral=True)
+            return
+        
+        # Parse the schedule
+        parsed_schedule = parse_schedule_message(schedule)
+        
+        if parsed_schedule:
+            session.add_player_schedule(user_id, parsed_schedule)
+            
+            # Show confirmation with parsed schedule (ephemeral)
+            confirmation_embed = discord.Embed(
+                title="✅ Schedule Received!",
+                description="Here's what I understood from your schedule:",
+                color=0x00ff00
+            )
+            
+            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                if day in parsed_schedule:
+                    if not parsed_schedule[day]:
+                        availability = "Not available"
+                    elif len(parsed_schedule[day]) >= 15:  # All day has many slots
+                        availability = "All day (8 AM - 11 PM)"
+                    else:
+                        availability = ", ".join(parsed_schedule[day])
+                    confirmation_embed.add_field(name=day, value=availability, inline=True)
+            
+            await ctx.respond(embed=confirmation_embed, ephemeral=True)
+            
+            # Update progress in main channel
+            remaining = session.expected_players - len(session.players_responded)
+            if remaining > 0:
+                await ctx.channel.send(f"📝 {ctx.author.display_name} submitted their schedule. Waiting for {remaining} more players...")
+            
+            # Check if we have all schedules
+            if session.is_complete():
+                await self.finalize_scheduling(ctx.channel, session)
                 
-        except discord.Forbidden:
-            await ctx.respond("I couldn't send you a DM. Please enable DMs from server members and try again.", ephemeral=True)
+        else:
+            await ctx.respond("❌ Could not parse your schedule. Please check the format and try again.", ephemeral=True)
 
     async def finalize_scheduling(self, channel, session):
         """Find common times and announce the game time"""
