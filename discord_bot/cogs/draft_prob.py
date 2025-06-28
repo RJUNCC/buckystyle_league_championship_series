@@ -1116,7 +1116,7 @@ class DraftLotteryCog(commands.Cog):
         user_id = ctx.author.id
         
         if user_id in session.players_responded:
-            await ctx.respond("You've already submitted your schedule for this game!", ephemeral=True)
+            await ctx.respond("You've already submitted your schedule for this game! Use `/schedule_update` to change it.", ephemeral=True)
             return
         
         # Parse the schedule
@@ -1155,6 +1155,101 @@ class DraftLotteryCog(commands.Cog):
                 
         else:
             await ctx.respond("❌ Could not parse your schedule. Please check the format and try again.", ephemeral=True)
+
+    @discord.slash_command(name="schedule_update", description="Update your already submitted schedule")
+    async def schedule_update(self, ctx, schedule: str):
+        """Allow users to update their submitted schedule"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        user_id = ctx.author.id
+        
+        if user_id not in session.players_responded:
+            await ctx.respond("You haven't submitted a schedule yet! Use `/my_schedule` or `/schedule_submit` first.", ephemeral=True)
+            return
+        
+        # Parse the new schedule
+        parsed_schedule = parse_schedule_message(schedule)
+        
+        if parsed_schedule:
+            # Update the existing schedule
+            session.player_schedules[user_id] = parsed_schedule
+            
+            # Show confirmation with updated schedule (ephemeral)
+            confirmation_embed = discord.Embed(
+                title="✅ Schedule Updated!",
+                description="Here's your updated schedule:",
+                color=0x00ff00
+            )
+            
+            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                if day in parsed_schedule:
+                    if not parsed_schedule[day]:
+                        availability = "Not available"
+                    elif len(parsed_schedule[day]) >= 15:  # All day has many slots
+                        availability = "All day (8 AM - 11 PM)"
+                    else:
+                        availability = ", ".join(parsed_schedule[day])
+                    confirmation_embed.add_field(name=day, value=availability, inline=True)
+            
+            await ctx.respond(embed=confirmation_embed, ephemeral=True)
+            
+            # Notify channel that someone updated their schedule
+            await ctx.channel.send(f"📝 {ctx.author.display_name} updated their schedule.")
+            
+            # Check if we have all schedules and can finalize
+            if session.is_complete():
+                await self.finalize_scheduling(ctx.channel, session)
+                
+        else:
+            await ctx.respond("❌ Could not parse your schedule. Please check the format and try again.", ephemeral=True)
+
+    @discord.slash_command(name="schedule_view", description="View your current submitted schedule")
+    async def schedule_view(self, ctx):
+        """Allow users to view their current submitted schedule"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        user_id = ctx.author.id
+        
+        if user_id not in session.players_responded:
+            await ctx.respond("You haven't submitted a schedule yet! Use `/my_schedule` or `/schedule_submit` first.", ephemeral=True)
+            return
+        
+        user_schedule = session.player_schedules[user_id]
+        
+        # Show current schedule
+        view_embed = discord.Embed(
+            title="👀 Your Current Schedule",
+            description="Here's what you submitted:",
+            color=0x0099ff
+        )
+        
+        for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+            if day in user_schedule:
+                if not user_schedule[day]:
+                    availability = "Not available"
+                elif len(user_schedule[day]) >= 15:  # All day has many slots
+                    availability = "All day (8 AM - 11 PM)"
+                else:
+                    availability = ", ".join(user_schedule[day])
+                view_embed.add_field(name=day, value=availability, inline=True)
+        
+        view_embed.add_field(
+            name="💡 Want to Change It?",
+            value="Use `/schedule_update` with your new schedule!",
+            inline=False
+        )
+        
+        await ctx.respond(embed=view_embed, ephemeral=True)
 
     async def finalize_scheduling(self, channel, session):
         """Find common times and announce the game time"""
