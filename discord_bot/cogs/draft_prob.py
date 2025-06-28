@@ -463,27 +463,7 @@ class DraftLottery:
         
         return results
 
-# No longer needed - keeping for reference in case of fallback
-# These functions are replaced by the interactive UI system
-def parse_time_input(time_str):
-    """Legacy function - kept for potential fallback use"""
-    pass
-
-def parse_single_time(time_str):
-    """Legacy function - kept for potential fallback use"""
-    pass
-
-def generate_time_slots(start_time, end_time):
-    """Legacy function - kept for potential fallback use"""
-    pass
-
-def parse_schedule_message(message):
-    """Legacy function - kept for potential fallback use"""
-    pass
-
-def format_available_times(common_times):
-    """Legacy function - kept for potential fallback use"""
-    pass
+# Interactive scheduling system - no text parsing needed
 
 class DraftLotteryCog(commands.Cog):
     def __init__(self, bot):
