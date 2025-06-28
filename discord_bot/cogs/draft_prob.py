@@ -6,7 +6,6 @@ import random
 from collections import defaultdict
 from typing import Dict, List, Tuple, NamedTuple
 from datetime import datetime
-import re
 
 class Player(NamedTuple):
     name: str
@@ -19,10 +18,10 @@ class DraftResult(NamedTuple):
 class SchedulingSession:
     def __init__(self, channel_id, teams):
         self.channel_id = channel_id
-        self.teams = teams  # List of team names/IDs
-        self.player_schedules = {}  # {user_id: {day: [time_slots]}}
+        self.teams = teams
+        self.player_schedules = {}
         self.players_responded = set()
-        self.expected_players = 6  # 3 players per team × 2 teams
+        self.expected_players = 6
         self.weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         self.confirmation_message = None
         self.confirmations = {}  # {user_id: True/False}
@@ -46,16 +45,13 @@ class SchedulingSession:
             
         common_times = defaultdict(list)
         
-        # For each day of the week
         for day in self.weekdays:
-            # Get all time slots for this day from all players
             day_schedules = []
             for user_id, schedule in self.player_schedules.items():
                 if day in schedule:
                     day_schedules.append(set(schedule[day]))
             
             if len(day_schedules) >= self.expected_players:
-                # Find intersection of all players' available times
                 if day_schedules:
                     common_slots = set.intersection(*day_schedules[:self.expected_players])
                     if common_slots:
@@ -178,8 +174,8 @@ class TimeSelectionView(discord.ui.View):
         all_times = []
         for hour in range(12, 24):
             all_times.extend([f"{hour:02d}:00", f"{hour:02d}:30"])
-        for hour in range(0, 3):
-            all_times.extend([f"{hour:02d}:00", f"{hour:02d}:30"])
+        for hour in range(0, 1):  # Just midnight
+            all_times.extend([f"{hour:02d}:00"])
             
         if self.user_id not in self.session.player_schedules:
             self.session.player_schedules[self.user_id] = {}
@@ -187,7 +183,7 @@ class TimeSelectionView(discord.ui.View):
         self.session.player_schedules[self.user_id][self.day] = all_times
         
         await interaction.response.edit_message(
-            content=f"✅ **{self.day}** set to all day available (12 PM - 2 AM)! Use `/my_schedule` again to set other days.",
+            content=f"✅ **{self.day}** set to all day available (12 PM - 12 AM)! Use `/my_schedule` again to set other days.",
             view=None
         )
 
@@ -289,25 +285,28 @@ class DaySelectionView(discord.ui.View):
         # Add user to responded list
         self.session.players_responded.add(self.user_id)
         
-        # Get the bot instance through the cog
-        # We need to access the cog through the bot
+        # Find the cog to access bot and finalize_scheduling method
+        draft_cog = None
         for cog in interaction.client.cogs.values():
             if hasattr(cog, 'active_sessions') and self.session.channel_id in cog.active_sessions:
-                channel = cog.bot.get_channel(self.session.channel_id)
-                remaining = self.session.expected_players - len(self.session.players_responded)
-                
-                if remaining > 0:
-                    await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
-                
-                await interaction.response.edit_message(
-                    content="✅ **Schedule finalized!** Thank you for submitting your availability.",
-                    view=None
-                )
-                
-                # Check if all schedules are complete
-                if self.session.is_complete():
-                    await cog.finalize_scheduling(channel, self.session)
+                draft_cog = cog
                 break
+        
+        if draft_cog:
+            channel = draft_cog.bot.get_channel(self.session.channel_id)
+            remaining = self.session.expected_players - len(self.session.players_responded)
+            
+            if remaining > 0:
+                await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
+            
+            await interaction.response.edit_message(
+                content="✅ **Schedule finalized!** Thank you for submitting your availability.",
+                view=None
+            )
+            
+            # Check if all schedules are complete
+            if self.session.is_complete():
+                await draft_cog.finalize_scheduling(channel, self.session)
 
 class ConfirmationView(discord.ui.View):
     def __init__(self, session, game_time_info, cog):
@@ -462,8 +461,6 @@ class DraftLottery:
                     results['tier1_eliminations'] += 1
         
         return results
-
-# Interactive scheduling system - no text parsing needed
 
 class DraftLotteryCog(commands.Cog):
     def __init__(self, bot):
@@ -1034,96 +1031,40 @@ class DraftLotteryCog(commands.Cog):
         
         # Check if there's already an active session in this channel
         if channel_id in self.active_sessions:
-            await ctx.respond("There's already an active scheduling session in this channel. Please wait for it to complete.", ephemeral=True)
+            await ctx.respond("There's already an active scheduling session in this channel. Use `/cancel_schedule` to cancel it first.", ephemeral=True)
             return
         
         # Create new scheduling session
         session = SchedulingSession(channel_id, [team1, team2])
         self.active_sessions[channel_id] = session
         
-        # Main announcement embed
-        main_embed = discord.Embed(
+        embed = discord.Embed(
             title="🎮 Game Scheduling Started!",
-            description=f"Scheduling game between **{team1}** and **{team2}**",
+            description=(
+                f"**Scheduling game between {team1} and {team2}**\n\n"
+                f"📋 **What Players Need to Do:**\n"
+                f"All **6 players** (3 from each team) must use: `/my_schedule`\n\n"
+                f"🕐 **Interactive System:**\n"
+                f"• Select days and times using dropdown menus\n"
+                f"• Times range from 12 PM to 12 AM\n"
+                f"• Easy buttons for 'Not Available' and 'All Day'\n"
+                f"• View and modify your schedule anytime\n\n"
+                f"🎯 **Process:**\n"
+                f"1️⃣ All 6 players set their weekly availability\n"
+                f"2️⃣ Bot finds common times and proposes game time\n"
+                f"3️⃣ All players confirm with ✅/❌ buttons\n"
+                f"4️⃣ If anyone declines, they update schedule and repeat\n\n"
+                f"⏳ **Progress:** Waiting for {session.expected_players} players..."
+            ),
             color=0x00ff00
         )
-        main_embed.add_field(
-            name="📋 What Players Need to Do",
-            value=(
-                "**ALL 6 PLAYERS** (3 from each team) must submit their weekly availability using:\n"
-                "```/my_schedule```"
-            ),
-            inline=False
-        )
-        main_embed.add_field(
-            name="Progress",
-            value=f"⏳ Waiting for {session.expected_players} players to respond...",
-            inline=False
-        )
+        embed.set_footer(text="Use /my_schedule to start setting your availability!")
         
-        # Detailed instructions embed
-        instructions_embed = discord.Embed(
-            title="📝 How to Submit Your Schedule",
-            description="When you use `/my_schedule`, the bot will DM you for your availability. Here's how to format it:",
-            color=0x0099ff
-        )
-        
-        instructions_embed.add_field(
-            name="🕐 Time Formats Accepted",
-            value=(
-                "• **Single times:** `2pm`, `7pm`, `14:00`, `20:30`\n"
-                "• **Time ranges:** `2pm-6pm`, `14:00-18:00`\n"
-                "• **Multiple slots:** `2pm-4pm, 7pm-9pm`\n"
-                "• **All day available:** `all day`, `anytime`, `flexible`\n"
-                "• **Not available:** `not available`, `none`, `n/a`, `busy`"
-            ),
-            inline=False
-        )
-        
-        instructions_embed.add_field(
-            name="📝 Alternative Method (If DMs Don't Work)",
-            value=(
-                "If `/my_schedule` doesn't send you a DM, use this instead:\n"
-                "```/schedule_submit schedule:\n"
-                "Monday: 2pm-6pm, 8pm-10pm\n"
-                "Tuesday: All day\n"
-                "Wednesday: Not available\n"
-                "Thursday: 7pm-11pm\n"
-                "Friday: Anytime\n"
-                "Saturday: 12pm-3pm, 6pm-9pm\n"
-                "Sunday: None```"
-            ),
-            inline=False
-        )
-        
-        instructions_embed.add_field(
-            name="⚠️ Important Notes",
-            value=(
-                "• You have **5 minutes** to respond in DMs after using `/my_schedule`\n"
-                "• Make sure your DMs are open to receive the bot's message\n"
-                "• Include ALL 7 days of the week in your response\n"
-                "• The bot will find times that work for ALL 6 players"
-            ),
-            inline=False
-        )
-        
-        instructions_embed.add_field(
-            name="🎯 What Happens Next",
-            value=(
-                "1️⃣ All 6 players submit schedules\n"
-                "2️⃣ Bot finds common available times\n"
-                "3️⃣ Bot announces best game time with @everyone\n"
-                "4️⃣ Players confirm and get ready to play!"
-            ),
-            inline=False
-        )
-        
-        await ctx.respond(embed=main_embed)
-        await ctx.followup.send(embed=instructions_embed)
+        await ctx.respond(embed=embed)
 
-    @discord.slash_command(name="my_schedule", description="Submit your weekly schedule for the current game")
+    @discord.slash_command(name="my_schedule", description="Set your weekly availability using interactive menus")
     async def my_schedule(self, ctx):
-        """Allow players to input their weekly schedule"""
+        """Interactive schedule setting"""
         channel_id = ctx.channel.id
         
         if channel_id not in self.active_sessions:
@@ -1133,359 +1074,127 @@ class DraftLotteryCog(commands.Cog):
         session = self.active_sessions[channel_id]
         user_id = ctx.author.id
         
+        # Allow players to reset/modify their schedule
         if user_id in session.players_responded:
-            await ctx.respond("You've already submitted your schedule for this game!", ephemeral=True)
-            return
-        
-        # Try to create DM to collect schedule privately
-        dm_success = False
-        dm_channel = None
-        
-        try:
-            dm_channel = await ctx.author.create_dm()
-            
             embed = discord.Embed(
-                title="📅 Weekly Schedule Input",
-                description="Please provide your availability for each day of the week.",
+                title="🔄 Update Your Schedule",
+                description="You can modify your existing schedule or view it below.",
+                color=0xffa500
+            )
+        else:
+            embed = discord.Embed(
+                title="📅 Set Your Weekly Availability",
+                description="Select a day to set your available times. You can modify any day multiple times.",
                 color=0x0099ff
             )
-            embed.add_field(
-                name="🕐 Time Format Options",
-                value=(
-                    "• **Single times:** `2pm`, `7pm`, `14:00`, `20:30`\n"
-                    "• **Time ranges:** `2pm-6pm`, `14:00-18:00`\n"
-                    "• **Multiple slots:** `2pm-4pm, 7pm-9pm`\n"
-                    "• **All day available:** `all day`, `anytime`, `flexible`\n"
-                    "• **Not available:** `not available`, `none`, `n/a`, `busy`"
-                ),
-                inline=False
-            )
-            embed.add_field(
-                name="📝 Required Format",
-                value=(
-                    "Reply with ALL 7 days in this format:\n\n"
-                    "```Monday: 2pm-6pm, 8pm-10pm\n"
-                    "Tuesday: All day\n"
-                    "Wednesday: Not available\n"
-                    "Thursday: 7pm-11pm\n"
-                    "Friday: Anytime\n"
-                    "Saturday: 12pm-3pm, 6pm-9pm\n"
-                    "Sunday: None```"
-                ),
-                inline=False
-            )
-            embed.add_field(
-                name="⏰ Time Limit",
-                value="You have **5 minutes** to respond with your complete schedule!",
-                inline=False
-            )
-            
-            await dm_channel.send(embed=embed)
-            dm_success = True
-            await ctx.respond(f"✅ {ctx.author.mention}, I've sent you a DM! Please check your direct messages to input your schedule.", ephemeral=True)
-            
+        
+        view = DaySelectionView(user_id, session)
+        
+        try:
+            await ctx.author.send(embed=embed, view=view)
+            await ctx.respond(f"{ctx.author.mention}, check your DMs to set your schedule!", ephemeral=True)
         except discord.Forbidden:
-            # DM failed, use channel method instead
-            await ctx.respond(
-                f"❌ I couldn't send you a DM, {ctx.author.mention}. Your DMs might be disabled.\n"
-                f"I'll send you an ephemeral message instead. Please respond with your schedule in the format shown below:",
-                ephemeral=True
-            )
-            
-            # Send ephemeral instructions
-            embed = discord.Embed(
-                title="📅 Weekly Schedule Input (Ephemeral)",
-                description="Since DMs are disabled, please use `/schedule_submit` with your schedule.",
-                color=0xff9900
-            )
-            embed.add_field(
-                name="🕐 Time Format Options",
-                value=(
-                    "• **Single times:** `2pm`, `7pm`, `14:00`, `20:30`\n"
-                    "• **Time ranges:** `2pm-6pm`, `14:00-18:00`\n"
-                    "• **Multiple slots:** `2pm-4pm, 7pm-9pm`\n"
-                    "• **All day available:** `all day`, `anytime`, `flexible`\n"
-                    "• **Not available:** `not available`, `none`, `n/a`, `busy`"
-                ),
-                inline=False
-            )
-            embed.add_field(
-                name="📝 Use This Command Format",
-                value=(
-                    "```/schedule_submit schedule:\n"
-                    "Monday: 2pm-6pm, 8pm-10pm\n"
-                    "Tuesday: All day\n"
-                    "Wednesday: Not available\n"
-                    "Thursday: 7pm-11pm\n"
-                    "Friday: Anytime\n"
-                    "Saturday: 12pm-3pm, 6pm-9pm\n"
-                    "Sunday: None```"
-                ),
-                inline=False
-            )
-            
-            await ctx.followup.send(embed=embed, ephemeral=True)
-            return
-        
+            await ctx.respond("I couldn't send you a DM. Please enable DMs from server members and try again.", ephemeral=True)
         except Exception as e:
-            await ctx.respond(f"❌ Error creating DM: {str(e)}. Please try again or contact an admin.", ephemeral=True)
-            return
-        
-        if dm_success and dm_channel:
-            # Wait for DM response
-            def check_dm(message):
-                return (message.author == ctx.author and 
-                       isinstance(message.channel, discord.DMChannel))
-            
-            try:
-                response = await self.bot.wait_for('message', check=check_dm, timeout=300.0)
-                schedule = parse_schedule_message(response.content)
-                
-                if schedule:
-                    session.add_player_schedule(user_id, schedule)
-                    
-                    # Show confirmation with parsed schedule
-                    confirmation_embed = discord.Embed(
-                        title="✅ Schedule Received!",
-                        description="Here's what I understood from your schedule:",
-                        color=0x00ff00
-                    )
-                    
-                    for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
-                        if day in schedule:
-                            if not schedule[day]:
-                                availability = "Not available"
-                            elif len(schedule[day]) >= 15:  # All day has many slots
-                                availability = "All day (8 AM - 11 PM)"
-                            else:
-                                availability = ", ".join(schedule[day])
-                            confirmation_embed.add_field(name=day, value=availability, inline=True)
-                    
-                    await dm_channel.send(embed=confirmation_embed)
-                    
-                    # Update progress in main channel
-                    remaining = session.expected_players - len(session.players_responded)
-                    if remaining > 0:
-                        await ctx.channel.send(f"📝 {ctx.author.display_name} submitted their schedule. Waiting for {remaining} more players...")
-                    
-                    # Check if we have all schedules
-                    if session.is_complete():
-                        await self.finalize_scheduling(ctx.channel, session)
-                        
-                else:
-                    await dm_channel.send("❌ Could not parse your schedule. Please try again with the correct format.")
-                    
-            except asyncio.TimeoutError:
-                try:
-                    await dm_channel.send("⏰ Schedule input timed out. Please use `/my_schedule` again to retry.")
-                except:
-                    pass  # DM might be closed
-
-    @discord.slash_command(name="schedule_submit", description="Submit your schedule directly (fallback if DMs don't work)")
-    async def schedule_submit(self, ctx, schedule: str):
-        """Fallback method to submit schedule if DMs don't work"""
-        channel_id = ctx.channel.id
-        
-        if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
-            return
-        
-        session = self.active_sessions[channel_id]
-        user_id = ctx.author.id
-        
-        if user_id in session.players_responded:
-            await ctx.respond("You've already submitted your schedule for this game! Use `/schedule_update` to change it.", ephemeral=True)
-            return
-        
-        # Parse the schedule
-        parsed_schedule = parse_schedule_message(schedule)
-        
-        if parsed_schedule:
-            session.add_player_schedule(user_id, parsed_schedule)
-            
-            # Show confirmation with parsed schedule (ephemeral)
-            confirmation_embed = discord.Embed(
-                title="✅ Schedule Received!",
-                description="Here's what I understood from your schedule:",
-                color=0x00ff00
-            )
-            
-            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
-                if day in parsed_schedule:
-                    if not parsed_schedule[day]:
-                        availability = "Not available"
-                    elif len(parsed_schedule[day]) >= 15:  # All day has many slots
-                        availability = "All day (8 AM - 11 PM)"
-                    else:
-                        availability = ", ".join(parsed_schedule[day])
-                    confirmation_embed.add_field(name=day, value=availability, inline=True)
-            
-            await ctx.respond(embed=confirmation_embed, ephemeral=True)
-            
-            # Update progress in main channel
-            remaining = session.expected_players - len(session.players_responded)
-            if remaining > 0:
-                await ctx.channel.send(f"📝 {ctx.author.display_name} submitted their schedule. Waiting for {remaining} more players...")
-            
-            # Check if we have all schedules
-            if session.is_complete():
-                await self.finalize_scheduling(ctx.channel, session)
-                
-        else:
-            await ctx.respond("❌ Could not parse your schedule. Please check the format and try again.", ephemeral=True)
-
-    @discord.slash_command(name="schedule_update", description="Update your already submitted schedule")
-    async def schedule_update(self, ctx, schedule: str):
-        """Allow users to update their submitted schedule"""
-        channel_id = ctx.channel.id
-        
-        if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
-            return
-        
-        session = self.active_sessions[channel_id]
-        user_id = ctx.author.id
-        
-        if user_id not in session.players_responded:
-            await ctx.respond("You haven't submitted a schedule yet! Use `/my_schedule` or `/schedule_submit` first.", ephemeral=True)
-            return
-        
-        # Parse the new schedule
-        parsed_schedule = parse_schedule_message(schedule)
-        
-        if parsed_schedule:
-            # Update the existing schedule
-            session.player_schedules[user_id] = parsed_schedule
-            
-            # Show confirmation with updated schedule (ephemeral)
-            confirmation_embed = discord.Embed(
-                title="✅ Schedule Updated!",
-                description="Here's your updated schedule:",
-                color=0x00ff00
-            )
-            
-            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
-                if day in parsed_schedule:
-                    if not parsed_schedule[day]:
-                        availability = "Not available"
-                    elif len(parsed_schedule[day]) >= 15:  # All day has many slots
-                        availability = "All day (8 AM - 11 PM)"
-                    else:
-                        availability = ", ".join(parsed_schedule[day])
-                    confirmation_embed.add_field(name=day, value=availability, inline=True)
-            
-            await ctx.respond(embed=confirmation_embed, ephemeral=True)
-            
-            # Notify channel that someone updated their schedule
-            await ctx.channel.send(f"📝 {ctx.author.display_name} updated their schedule.")
-            
-            # Check if we have all schedules and can finalize
-            if session.is_complete():
-                await self.finalize_scheduling(ctx.channel, session)
-                
-        else:
-            await ctx.respond("❌ Could not parse your schedule. Please check the format and try again.", ephemeral=True)
-
-    @discord.slash_command(name="schedule_view", description="View your current submitted schedule")
-    async def schedule_view(self, ctx):
-        """Allow users to view their current submitted schedule"""
-        channel_id = ctx.channel.id
-        
-        if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-            return
-        
-        session = self.active_sessions[channel_id]
-        user_id = ctx.author.id
-        
-        if user_id not in session.players_responded:
-            await ctx.respond("You haven't submitted a schedule yet! Use `/my_schedule` or `/schedule_submit` first.", ephemeral=True)
-            return
-        
-        user_schedule = session.player_schedules[user_id]
-        
-        # Show current schedule
-        view_embed = discord.Embed(
-            title="👀 Your Current Schedule",
-            description="Here's what you submitted:",
-            color=0x0099ff
-        )
-        
-        for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
-            if day in user_schedule:
-                if not user_schedule[day]:
-                    availability = "Not available"
-                elif len(user_schedule[day]) >= 15:  # All day has many slots
-                    availability = "All day (8 AM - 11 PM)"
-                else:
-                    availability = ", ".join(user_schedule[day])
-                view_embed.add_field(name=day, value=availability, inline=True)
-        
-        view_embed.add_field(
-            name="💡 Want to Change It?",
-            value="Use `/schedule_update` with your new schedule!",
-            inline=False
-        )
-        
-        await ctx.respond(embed=view_embed, ephemeral=True)
+            await ctx.respond(f"Error sending DM: {str(e)}", ephemeral=True)
 
     async def finalize_scheduling(self, channel, session):
-        """Find common times and announce the game time"""
+        """Find common times and start confirmation process"""
         common_times = session.find_common_times()
         
         if not common_times:
             embed = discord.Embed(
                 title="❌ No Common Times Found",
-                description="Unfortunately, no times work for all players.",
+                description="Unfortunately, no times work for all players. Players should use `/my_schedule` to adjust their availability.",
                 color=0xff0000
             )
-            embed.add_field(
-                name="Suggestion",
-                value="Players may need to adjust their schedules or consider alternative arrangements.",
-                inline=False
+            await channel.send(embed=embed)
+            return
+        
+        # Pick the best time
+        best_day = None
+        best_time = None
+        
+        for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+            if day in common_times and common_times[day]:
+                best_day = day
+                # Prefer evening times (6 PM to 10 PM)
+                for time in common_times[day]:
+                    hour = int(time.split(':')[0])
+                    if 18 <= hour <= 22:
+                        best_time = time
+                        break
+                if not best_time:
+                    best_time = common_times[day][0]
+                break
+        
+        if not best_day or not best_time:
+            embed = discord.Embed(
+                title="❌ No Suitable Time Found",
+                description="Could not determine a good game time. Please adjust schedules.",
+                color=0xff0000
             )
             await channel.send(embed=embed)
-        else:
-            # Pick the best time (earliest day with most options)
-            best_day = None
-            best_times = None
-            
-            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
-                if day in common_times and common_times[day]:
-                    best_day = day
-                    best_times = common_times[day]
-                    break
-            
-            if best_day and best_times:
-                # Pick a reasonable time (prefer evening hours)
-                game_time = best_times[0]
-                for time in best_times:
-                    hour = int(time.split(':')[0])
-                    if 18 <= hour <= 21:  # 6 PM to 9 PM preferred
-                        game_time = time
-                        break
-                
-                embed = discord.Embed(
-                    title="🎉 Game Time Scheduled!",
-                    description=f"**{best_day} at {game_time}**",
-                    color=0x00ff00
-                )
-                embed.add_field(
-                    name="All Available Times",
-                    value=format_available_times(common_times),
-                    inline=False
-                )
-                embed.add_field(
-                    name="Next Steps",
-                    value="Please confirm this time works and be ready to play!",
-                    inline=False
-                )
-                
-                await channel.send("@everyone")
-                await channel.send(embed=embed)
+            return
         
-        # Clean up session
-        del self.active_sessions[session.channel_id]
+        # Format time for display
+        hour = int(best_time.split(':')[0])
+        minute = best_time.split(':')[1]
+        
+        if hour == 0:
+            display_time = f"12:{minute} AM"
+        elif hour < 12:
+            display_time = f"{hour}:{minute} AM"
+        elif hour == 12:
+            display_time = f"12:{minute} PM"
+        else:
+            display_time = f"{hour-12}:{minute} PM"
+        
+        game_info = {'day': best_day, 'time': display_time}
+        
+        embed = discord.Embed(
+            title="🎮 Proposed Game Time",
+            description=f"**{best_day} at {display_time}**",
+            color=0xffa500
+        )
+        embed.add_field(
+            name="⚠️ Confirmation Required",
+            value="All players must confirm this time works for them using the buttons below.",
+            inline=False
+        )
+        embed.add_field(
+            name="Available Times Found",
+            value=self.format_available_times_interactive(common_times),
+            inline=False
+        )
+        
+        view = ConfirmationView(session, game_info, self)
+        session.confirmation_message = await channel.send("@everyone", embed=embed, view=view)
+
+    def format_available_times_interactive(self, common_times):
+        """Format available times for display"""
+        formatted = []
+        for day, times in common_times.items():
+            if times:
+                display_times = []
+                for time in times[:5]:  # Show first 5 times
+                    hour = int(time.split(':')[0])
+                    minute = time.split(':')[1]
+                    if hour == 0:
+                        display_times.append(f"12:{minute} AM")
+                    elif hour < 12:
+                        display_times.append(f"{hour}:{minute} AM")
+                    elif hour == 12:
+                        display_times.append(f"12:{minute} PM")
+                    else:
+                        display_times.append(f"{hour-12}:{minute} PM")
+                
+                time_str = ", ".join(display_times)
+                if len(times) > 5:
+                    time_str += f" (+{len(times)-5} more)"
+                formatted.append(f"**{day}:** {time_str}")
+        
+        return "\n".join(formatted) if formatted else "No common times found"
 
     @discord.slash_command(name="cancel_schedule", description="Cancel the current scheduling session")
     async def cancel_schedule(self, ctx):
@@ -1516,14 +1225,23 @@ class DraftLotteryCog(commands.Cog):
         )
         embed.add_field(
             name="Progress",
-            value=f"{len(session.players_responded)}/{session.expected_players} players responded",
+            value=f"{len(session.players_responded)}/{session.expected_players} players completed their schedules",
             inline=False
         )
-        embed.add_field(
-            name="Remaining",
-            value=f"Waiting for {remaining} more players",
-            inline=False
-        )
+        
+        if remaining > 0:
+            embed.add_field(
+                name="Remaining",
+                value=f"Waiting for {remaining} more players to use `/my_schedule`",
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="Status",
+                value="All schedules received! Processing game time...",
+                inline=False
+            )
+        
         embed.add_field(
             name="Teams",
             value=f"{session.teams[0]} vs {session.teams[1]}",
