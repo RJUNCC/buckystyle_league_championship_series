@@ -14,7 +14,6 @@ from cogs.admin import AdminCog
 from cogs.team_management import TeamManagementCog
 from cogs.series_management import SeriesManagementCog
 from cogs.statistics import StatisticsCog
-from cogs.scheduling import SchedulingCog
 from cogs.season_management import SeasonManagementCog
 from cogs.playoff_management import PlayoffManagementCog
 from cogs.season_summary import SeasonSummaryCog
@@ -37,7 +36,7 @@ class MyBot(discord.Bot):
         """Load all cogs with error handling"""
         cogs = [
             AdminCog, AvailabilityCog, TeamManagementCog, SeriesManagementCog,
-            StatisticsCog, SchedulingCog, SeasonManagementCog,
+            StatisticsCog, SeasonManagementCog,
             PlayoffManagementCog, SeasonSummaryCog, DraftLotteryCog  # Add DraftLotteryCog here
         ]
         for cog in cogs:
