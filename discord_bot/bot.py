@@ -17,8 +17,7 @@ from cogs.statistics import StatisticsCog
 from cogs.season_management import SeasonManagementCog
 from cogs.playoff_management import PlayoffManagementCog
 from cogs.season_summary import SeasonSummaryCog
-from cogs.draft_prob import DraftLotteryCog  # This includes both draft lottery AND scheduling
-# from cogs.send_images import ImageSenderCog
+from cogs.draft_prob import DraftLotteryCog 
 from models.player import initialize_db
 
 load_dotenv()
@@ -77,12 +76,26 @@ bot = MyBot()
 
 async def main():
     """Main async function to run the bot"""
-    # Initialize database
+    # Initialize player database
     try:
         initialize_db()
-        print("✅ Database initialized")
+        print("✅ Player database initialized")
     except Exception as e:
-        print(f"❌ Database initialization error: {e}")
+        print(f"❌ Player database initialization error: {e}")
+    
+    # Initialize scheduling database
+    try:
+        from models.scheduling import Base, engine
+        Base.metadata.create_all(engine)
+        print("✅ Scheduling database initialized")
+        
+        # Optional: Clean up old sessions on startup
+        from models.scheduling import cleanup_old_sessions
+        cleaned = cleanup_old_sessions(days_old=30)
+        if cleaned > 0:
+            print(f"🧹 Cleaned up {cleaned} old scheduling sessions")
+    except Exception as e:
+        print(f"⚠️ Scheduling database initialization error (non-fatal): {e}")
     
     # Start the bot
     async with bot:

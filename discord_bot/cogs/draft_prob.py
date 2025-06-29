@@ -6,6 +6,7 @@ import random
 from collections import defaultdict
 from typing import Dict, List, Tuple, NamedTuple
 from datetime import datetime, timedelta
+from models.scheduling import save_session, load_session, delete_session, get_all_active_sessions
 
 class Player(NamedTuple):
     name: str
@@ -87,6 +88,33 @@ class SchedulingSession:
                         common_times[day_name] = sorted(list(common_slots))
         
         return dict(common_times) if common_times else None
+    
+    def save(self):
+        """Save current state to database"""
+        save_session(self)
+    
+    def add_player_schedule(self, user_id, schedule):
+        self.player_schedules[user_id] = schedule
+        self.players_responded.add(user_id)
+        self.save()  # Add this line
+        
+    def reset_player_schedule(self, user_id):
+        if user_id in self.player_schedules:
+            del self.player_schedules[user_id]
+        if user_id in self.players_responded:
+            self.players_responded.remove(user_id)
+        self.save()  # Add this line
+    
+    @classmethod
+    def from_db(cls, db_session):
+        """Create a SchedulingSession from database data"""
+        session = cls(int(db_session.channel_id), [db_session.team1, db_session.team2])
+        session.player_schedules = db_session.player_schedules or {}
+        session.players_responded = set(db_session.players_responded or [])
+        session.expected_players = db_session.expected_players
+        session.schedule_dates = db_session.schedule_dates or session.generate_next_week()
+        session.confirmations = db_session.confirmations or {}
+        return session
 
 class DaySelect(discord.ui.Select):
     def __init__(self, options, user_id, session, parent_view):
