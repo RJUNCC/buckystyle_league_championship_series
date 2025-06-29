@@ -6,7 +6,16 @@ import random
 from collections import defaultdict
 from typing import Dict, List, Tuple, NamedTuple
 from datetime import datetime, timedelta
-from models.scheduling import save_session, load_session, delete_session, get_all_active_sessions
+
+# Import database functions
+try:
+    from models.scheduling import save_session, load_session, delete_session, get_all_active_sessions
+except ImportError:
+    print("Warning: scheduling module not found. Database persistence disabled.")
+    save_session = lambda x: None
+    load_session = lambda x: None
+    delete_session = lambda x: None
+    get_all_active_sessions = lambda: []
 
 class Player(NamedTuple):
     name: str
@@ -30,6 +39,21 @@ class SchedulingSession:
         
         self.confirmation_message = None
         self.confirmations = {}  # {user_id: True/False}
+    
+    def save(self):
+        """Save current state to database"""
+        save_session(self)
+    
+    @classmethod
+    def from_db(cls, db_session):
+        """Create a SchedulingSession from database data"""
+        session = cls(int(db_session.channel_id), [db_session.team1, db_session.team2])
+        session.player_schedules = db_session.player_schedules or {}
+        session.players_responded = set(db_session.players_responded or [])
+        session.expected_players = db_session.expected_players
+        session.schedule_dates = db_session.schedule_dates or session.generate_next_week()
+        session.confirmations = db_session.confirmations or {}
+        return session
     
     def generate_next_week(self):
         """Generate the next 7 days starting from tomorrow with actual dates"""
@@ -57,12 +81,14 @@ class SchedulingSession:
     def add_player_schedule(self, user_id, schedule):
         self.player_schedules[user_id] = schedule
         self.players_responded.add(user_id)
+        self.save()
         
     def reset_player_schedule(self, user_id):
         if user_id in self.player_schedules:
             del self.player_schedules[user_id]
         if user_id in self.players_responded:
             self.players_responded.remove(user_id)
+        self.save()
         
     def is_complete(self):
         return len(self.players_responded) >= self.expected_players
@@ -88,33 +114,6 @@ class SchedulingSession:
                         common_times[day_name] = sorted(list(common_slots))
         
         return dict(common_times) if common_times else None
-    
-    def save(self):
-        """Save current state to database"""
-        save_session(self)
-    
-    def add_player_schedule(self, user_id, schedule):
-        self.player_schedules[user_id] = schedule
-        self.players_responded.add(user_id)
-        self.save()  # Add this line
-        
-    def reset_player_schedule(self, user_id):
-        if user_id in self.player_schedules:
-            del self.player_schedules[user_id]
-        if user_id in self.players_responded:
-            self.players_responded.remove(user_id)
-        self.save()  # Add this line
-    
-    @classmethod
-    def from_db(cls, db_session):
-        """Create a SchedulingSession from database data"""
-        session = cls(int(db_session.channel_id), [db_session.team1, db_session.team2])
-        session.player_schedules = db_session.player_schedules or {}
-        session.players_responded = set(db_session.players_responded or [])
-        session.expected_players = db_session.expected_players
-        session.schedule_dates = db_session.schedule_dates or session.generate_next_week()
-        session.confirmations = db_session.confirmations or {}
-        return session
 
 class DaySelect(discord.ui.Select):
     def __init__(self, options, user_id, session, parent_view):
@@ -252,6 +251,7 @@ class TimeSelectionView(discord.ui.View):
                 self.session.player_schedules[self.user_id] = {}
                 
             self.session.player_schedules[self.user_id][self.day] = list(self.selected_times)
+            self.session.save()
             
             # Go back to day selection with updated info
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** times saved!")
@@ -274,6 +274,7 @@ class TimeSelectionView(discord.ui.View):
                 self.session.player_schedules[self.user_id] = {}
                 
             self.session.player_schedules[self.user_id][self.day] = []
+            self.session.save()
             
             # Go back to day selection with updated info
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** marked as not available!")
@@ -302,6 +303,7 @@ class TimeSelectionView(discord.ui.View):
                 self.session.player_schedules[self.user_id] = {}
                 
             self.session.player_schedules[self.user_id][self.day] = all_times
+            self.session.save()
             
             # Go back to day selection with updated info
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** set to all day available!")
@@ -476,6 +478,7 @@ class DaySelectionView(discord.ui.View):
             
             # Add user to responded list
             self.session.players_responded.add(self.user_id)
+            self.session.save()
             
             # Find the cog to access bot and finalize_scheduling method
             draft_cog = None
@@ -527,6 +530,7 @@ class ConfirmationView(discord.ui.View):
             return
             
         self.session.confirmations[user_id] = True
+        self.session.save()
         confirmed = sum(1 for c in self.session.confirmations.values() if c)
         total = len(self.session.player_schedules)
         
@@ -552,6 +556,7 @@ class ConfirmationView(discord.ui.View):
             # Clean up session
             if self.session.channel_id in self.cog.active_sessions:
                 del self.cog.active_sessions[self.session.channel_id]
+                delete_session(self.session.channel_id)
     
     @discord.ui.button(label="❌ Can't Make It", style=discord.ButtonStyle.red)
     async def decline_game(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -562,6 +567,7 @@ class ConfirmationView(discord.ui.View):
             return
             
         self.session.confirmations[user_id] = False
+        self.session.save()
         
         await interaction.response.send_message(
             "❌ You declined the game time. Please update your schedule using `/my_schedule` and set more accurate times.",
@@ -669,7 +675,22 @@ class DraftLotteryCog(commands.Cog):
         self.bot = bot
         self.lottery = DraftLottery()
         self.last_result = None
-        self.active_sessions = {}  # Store active scheduling sessions
+        self.active_sessions = {}
+        
+        # Load active sessions from database on startup
+        self.bot.loop.create_task(self.load_active_sessions())
+    
+    async def load_active_sessions(self):
+        """Load all active sessions from database on startup"""
+        try:
+            await asyncio.sleep(2)  # Wait a bit for bot to be ready
+            active_sessions = get_all_active_sessions()
+            for db_session in active_sessions:
+                session = SchedulingSession.from_db(db_session)
+                self.active_sessions[int(db_session.channel_id)] = session
+                print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
+        except Exception as e:
+            print(f"Error loading sessions: {e}")
 
     def get_pick_emoji(self, pick: int) -> str:
         if pick <= 2:
@@ -1168,6 +1189,7 @@ class DraftLotteryCog(commands.Cog):
         # Create new scheduling session
         session = SchedulingSession(channel_id, [team1, team2])
         self.active_sessions[channel_id] = session
+        session.save()
         
         embed = discord.Embed(
             title="🎮 Game Scheduling Started!",
@@ -1347,6 +1369,7 @@ class DraftLotteryCog(commands.Cog):
         
         if channel_id in self.active_sessions:
             del self.active_sessions[channel_id]
+            delete_session(channel_id)
             await ctx.respond("❌ Scheduling session cancelled.")
         else:
             await ctx.respond("No active scheduling session to cancel.", ephemeral=True)
