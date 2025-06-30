@@ -6,13 +6,13 @@ RUN pip install uv
 WORKDIR /app
 
 # Copy pyproject.toml
-COPY discord_bot/pyproject.toml ./
+COPY pyproject.toml ./
 
 # Install dependencies with uv
 RUN uv sync --frozen --no-dev
 
 # Copy app code
-COPY discord_bot/ ./
+COPY . ./
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
