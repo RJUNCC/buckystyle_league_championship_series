@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 # from cogs.season_summary import SeasonSummaryCog
 from cogs.draft_prob import DraftLotteryCog 
 # from models.player import initialize_db
+from loguru import logger
 
 load_dotenv()
 
@@ -99,7 +100,8 @@ async def main():
         await bot.start(os.getenv("DISCORD_TOKEN"))
 
 if __name__ == "__main__":
-    print("\n🚀 Starting bot...")
+    logger.info("\n🚀 Starting bot...")
+    
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
