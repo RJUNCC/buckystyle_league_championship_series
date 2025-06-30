@@ -7,6 +7,7 @@ authors = [{ email = "20bigal04@ryeguytech.com" }]
 requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.11.11",
+    "loguru>=0.7.3",
     "motor>=3.7.1",
     "py-cord>=2.6.1",
     "python-dotenv>=1.0.1",
