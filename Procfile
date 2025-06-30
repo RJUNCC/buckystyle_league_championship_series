@@ -1,1 +1,0 @@
-worker: cd /app && python discord_bot/bot.py

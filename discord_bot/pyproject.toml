@@ -1,0 +1,27 @@
+[project]
+name = "discord-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [{ email = "20bigal04@ryeguytech.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.11.11",
+    "py-cord>=2.6.1",
+    "python-dotenv>=1.0.1",
+    "sqlalchemy>=2.0.41",
+]
+
+[project.scripts]
+discord-bot = "discord_bot:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "pytest>=8.3.4",
+    "ruff>=0.12.1",
+]

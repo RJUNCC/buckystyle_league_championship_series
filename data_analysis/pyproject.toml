@@ -1,0 +1,40 @@
+[project]
+name = "data-analysis"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { email = "20bigal04@ryeguytech.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "dataframe-image>=0.2.6",
+    "ipykernel>=6.29.5",
+    "jupyter>=1.1.1",
+    "lxml>=5.3.0",
+    "matplotlib>=3.10.0",
+    "numpy>=2.2.2",
+    "pandas>=2.2.3",
+    "pillow>=11.1.0",
+    "playwright>=1.49.1",
+    "plotly>=5.24.1",
+    "pyarrow>=19.0.0",
+    "pymongo>=4.11.1",
+    "scikit-learn>=1.6.1",
+    "scipy>=1.15.1",
+    "sqlalchemy>=2.0.41",
+]
+
+[project.scripts]
+data-analysis = "data_analysis:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "mypy>=1.16.1",
+    "pytest>=8.3.4",
+]

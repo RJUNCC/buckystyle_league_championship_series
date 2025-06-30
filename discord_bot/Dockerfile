@@ -20,4 +20,4 @@ RUN mkdir -p /app/data
 EXPOSE 8080
 
 # Run the bot
-CMD ["uv", "run", "discord_bot/bot.py"]
+CMD ["uv", "run", "bot.py"]
