@@ -301,7 +301,6 @@ python-multipart==0.0.20
     # via fastapi
 pytz==2024.2
     # via pandas
-pywin32==310
     # via jupyter-core
 pyyaml==6.0.2
     # via uvicorn
