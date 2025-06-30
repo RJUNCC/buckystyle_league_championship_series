@@ -1473,19 +1473,20 @@ class DraftLotteryCog(commands.Cog):
     #         await ctx.respond(f"❌ Error reloading cog: {str(e)}", ephemeral=True)
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
-    # @commands.has_permissions(administrator=True)
+    @commands.has_permissions(administrator=True)
     async def db_health(self, ctx):
         """Check database health and connection status"""
         try:
             from models.scheduling import engine
+            from sqlalchemy import text
             import time
             
             # Test connection
             start_time = time.time()
             
-            # Try a simple query
+            # Try a simple query with proper SQLAlchemy 2.0 syntax
             with engine.connect() as conn:
-                result = conn.execute("SELECT 1")
+                result = conn.execute(text("SELECT 1"))
                 result.fetchone()
             
             connection_time = (time.time() - start_time) * 1000  # Convert to ms
@@ -1496,6 +1497,7 @@ class DraftLotteryCog(commands.Cog):
             
             # Count active sessions
             try:
+                from models.scheduling import get_all_active_sessions
                 active_sessions = get_all_active_sessions()
                 session_count = len(active_sessions)
             except Exception as e:
@@ -1510,6 +1512,10 @@ class DraftLotteryCog(commands.Cog):
             embed.add_field(name="Status", value="✅ Healthy", inline=True)
             embed.add_field(name="Active Sessions", value=str(session_count), inline=True)
             embed.add_field(name="Memory Sessions", value=str(len(self.active_sessions)), inline=True)
+            
+            # Show database URL (masked for security)
+            masked_url = db_url.split('@')[0] + '@***' if '@' in db_url else db_url
+            embed.add_field(name="Database URL", value=f"`{masked_url}`", inline=False)
             
             if db_type == "PostgreSQL":
                 embed.add_field(name="💾 Persistence", value="✅ Full persistence across deployments", inline=False)
