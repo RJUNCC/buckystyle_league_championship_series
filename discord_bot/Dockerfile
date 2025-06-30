@@ -8,8 +8,8 @@ WORKDIR /app
 # Copy pyproject.toml
 COPY pyproject.toml ./
 
-# Install dependencies with uv
-RUN uv sync --frozen --no-dev
+# Install dependencies with uv without requiring lock file
+RUN uv sync --no-dev
 
 # Copy app code
 COPY . ./
