@@ -1465,6 +1465,8 @@ class DraftLotteryCog(commands.Cog):
 
 # Add this class to your cogs/draft_prob.py file
 
+# Add this class to your cogs/draft_prob.py file
+
 class CalendarScheduleView(discord.ui.View):
     def __init__(self, user_id, session):
         super().__init__(timeout=600)  # 10 minute timeout
@@ -1629,10 +1631,6 @@ class CalendarScheduleView(discord.ui.View):
         """Update the visual state of all buttons"""
         self.clear_items()
         self.create_calendar_buttons()
-        
-        # Add control buttons
-        self.add_item(CancelButton())
-        self.add_item(FinalizeButton())
     
     async def update_message(self, interaction):
         """Update the message with current schedule state"""
