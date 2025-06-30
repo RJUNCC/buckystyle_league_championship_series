@@ -172,7 +172,7 @@ class TimeSelectionView(discord.ui.View):
             discord.SelectOption(label="11:00 PM", value="23:00"),
             discord.SelectOption(label="12:00 AM", value="00:00"),
         ],
-        max_values=25,
+        max_values=7,  # Updated to match the number of options
         min_values=0
     )
     async def time_select(self, select: discord.ui.Select, interaction: discord.Interaction):
@@ -275,11 +275,8 @@ class TimeSelectionView(discord.ui.View):
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
                 
-            # Set all available times
-            all_times = []
-            for hour in range(12, 24):
-                all_times.extend([f"{hour:02d}:00", f"{hour:02d}:30"])
-            all_times.append("00:00")  # midnight
+            # Set all available times (6 PM to 12 AM - 7 hour slots)
+            all_times = ["18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00"]
                 
             if self.user_id not in self.session.player_schedules:
                 self.session.player_schedules[self.user_id] = {}
@@ -333,7 +330,7 @@ class TimeSelectionView(discord.ui.View):
             if day_name in schedule:
                 if not schedule[day_name]:
                     status_text += f"**{day_display}:** ❌ Not available\n"
-                elif len(schedule[day_name]) >= 20:
+                elif len(schedule[day_name]) >= 6:  # Updated threshold for 1-hour intervals (6+ out of 7 slots = "all day")
                     status_text += f"**{day_display}:** ✅ All day\n"
                 else:
                     status_text += f"**{day_display}:** ✅ {len(schedule[day_name])} time slots\n"
