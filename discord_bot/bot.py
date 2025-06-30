@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 # from cogs.playoff_management import PlayoffManagementCog
 # from cogs.season_summary import SeasonSummaryCog
 from cogs.draft_prob import DraftLotteryCog 
-from models.player import initialize_db
+# from models.player import initialize_db
 
 load_dotenv()
 
@@ -74,11 +74,11 @@ bot = MyBot()
 async def main():
     """Main async function to run the bot"""
     # Initialize player database
-    try:
-        initialize_db()
-        print("✅ Player database initialized")
-    except Exception as e:
-        print(f"❌ Player database initialization error: {e}")
+    # try:
+    #     initialize_db()
+    #     print("✅ Player database initialized")
+    # except Exception as e:
+    #     print(f"❌ Player database initialization error: {e}")
     
     # Initialize scheduling database
     try:
