@@ -1460,12 +1460,16 @@ class DraftLotteryCog(commands.Cog):
         )
         
         await ctx.respond(embed=embed)
-
-# Add this class to your cogs/draft_prob.py file
-
-# Add this class to your cogs/draft_prob.py file
-
-# Add this class to your cogs/draft_prob.py file
+    
+    # @discord.slash_command(name="reload_cog", description="Reload the draft/scheduling cog")
+    # @commands.has_permissions(administrator=True)
+    # async def reload_cog(self, ctx):
+    #     """Reload this cog to register new commands"""
+    #     try:
+    #         self.bot.reload_extension('cogs.draft_prob')
+    #         await ctx.respond("✅ DraftLotteryCog reloaded! New commands should now appear.", ephemeral=True)
+    #     except Exception as e:
+    #         await ctx.respond(f"❌ Error reloading cog: {str(e)}", ephemeral=True)
 
 class CalendarScheduleView(discord.ui.View):
     def __init__(self, user_id, session):

@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 # from cogs.playoff_management import PlayoffManagementCog
 # from cogs.season_summary import SeasonSummaryCog
 from cogs.draft_prob import DraftLotteryCog 
+from cogs.scheduling import EnhancedSchedulingCog
 # from models.player import initialize_db
 from loguru import logger
 
