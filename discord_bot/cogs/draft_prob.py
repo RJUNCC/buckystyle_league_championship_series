@@ -1176,18 +1176,21 @@ class DraftLotteryCog(commands.Cog):
             description=(
                 f"**Scheduling game between {team1} and {team2}**\n\n"
                 f"📋 **What Players Need to Do:**\n"
-                f"All **6 players** (3 from each team) must use: `/my_schedule`\n\n"
-                f"🕐 **Interactive System:**\n"
-                f"• Select days and times using dropdown menus\n"
-                f"• Times range from 12 PM to 12 AM\n"
-                f"• Easy buttons for 'Not Available' and 'All Day'\n"
-                f"• View and modify your schedule anytime\n\n"
+                f"All **6 players** (3 from each team) choose an interface:\n"
+                f"• `/my_schedule` - Dropdown interface\n"
+                f"• `/my_schedule2` - Visual calendar interface ⭐\n\n"
+                f"🕐 **Two Interface Options:**\n"
+                f"• **Dropdown**: Select days and times using dropdown menus\n"
+                f"• **Calendar**: Click time buttons in a visual day-by-day layout\n"
+                f"• Times range from 6 PM to 12 AM (7 time slots)\n"
+                f"• Easy buttons for 'Not Available' and 'All Day'\n\n"
                 f"🎯 **Process:**\n"
                 f"1️⃣ All 6 players set their weekly availability\n"
                 f"2️⃣ Bot finds common times and proposes game time\n"
                 f"3️⃣ All players confirm with ✅/❌ buttons\n"
                 f"4️⃣ If anyone declines, they update schedule and repeat\n\n"
-                f"⏳ **Progress:** Waiting for {session.expected_players} players..."
+                f"⏳ **Progress:** Waiting for {session.expected_players} players...\n"
+                f"💡 **Tip:** Try `/my_schedule2` for the new visual calendar!"
             ),
             color=0x00ff00
         )
@@ -1444,12 +1447,12 @@ class DraftLotteryCog(commands.Cog):
         if remaining > 0:
             embed.add_field(
                 name="Remaining",
-                value=f"Waiting for {remaining} more players to use `/my_schedule`",
+                value=f"Waiting for {remaining} more players to use `/my_schedule` or `/my_schedule2`",
                 inline=False
             )
         else:
             embed.add_field(
-                name="Status",
+                name="Status", 
                 value="All schedules received! Processing game time...",
                 inline=False
             )
