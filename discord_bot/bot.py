@@ -15,10 +15,15 @@ from cogs.draft_prob import DraftLotteryCog
 from cogs.player_profiles import PlayerProfilesCog
 from cogs.profile_linking import ProfileLinkingCog
 from cogs.blcsx_profiles import BLCSXProfilesCog
+from cogs.enhanced_profiles import EnhancedProfilesCog
+from cogs.blcs_stats import BLCSStatsCog  
 
 # Import database setup
 # from models.scheduling import initialize_database
 from models.player_profile import Base, engine
+
+# Import ballchasing integration
+from services.ballchasing_stats_updater import initialize_ballchasing_updater
 
 class RocketLeagueBot(commands.Bot):
     def __init__(self):
@@ -29,7 +34,7 @@ class RocketLeagueBot(commands.Bot):
         super().__init__(
             command_prefix='!',
             intents=intents,
-            description='Rocket League Discord Bot with Advanced Profiles'
+            description='Rocket League Discord Bot with BLCS Integration'
         )
     
     async def on_ready(self):
@@ -61,7 +66,9 @@ class RocketLeagueBot(commands.Bot):
             DraftLotteryCog,        # Draft lottery + scheduling
             PlayerProfilesCog,      # Basic player profiles
             ProfileLinkingCog,      # Ballchasing.com linking
-            BLCSXProfilesCog        # Advanced BLCSX profiles
+            BLCSXProfilesCog,       # Advanced BLCSX profiles
+            EnhancedProfilesCog,    # Creative themed profiles
+            BLCSStatsCog            # NEW: BLCS stats integration
         ]
         
         for cog in cogs:
@@ -132,22 +139,34 @@ async def main():
     #     print(f"❌ Database initialization failed: {e}")
     #     return
     
+    # Initialize BLCS ballchasing integration
+    try:
+        ballchasing_api_key = os.getenv('BALLCHASING_API_KEY')
+        if ballchasing_api_key:
+            ballchasing_updater = initialize_ballchasing_updater(ballchasing_api_key)
+            print("✅ BLCS ballchasing integration initialized")
+            print("   Group: blcs-4-qz9e63f182")
+            print("   🔗 Players can now use /link_blcs to connect their accounts")
+        else:
+            print("⚠️ BALLCHASING_API_KEY not found - BLCS features disabled")
+            print("   Add BALLCHASING_API_KEY to .env file to enable BLCS stats")
+    except Exception as e:
+        print(f"⚠️ BLCS integration failed to initialize: {e}")
+    
     # Load cogs
     bot.load_cogs()
     
-    # Optional: Start ballchasing.com monitoring
+    # Optional: Start general ballchasing.com monitoring (if you have other groups)
     try:
         from services.ballchasing_service import start_monitoring_group
-        group_id = os.getenv('BALLCHASING_GROUP_ID')
+        other_group_id = os.getenv('BALLCHASING_GROUP_ID')  # Different from BLCS group
         api_key = os.getenv('BALLCHASING_API_KEY')
         
-        if group_id and api_key:
-            start_monitoring_group(group_id)
-            print(f"✅ Started monitoring ballchasing group: {group_id}")
-        else:
-            print("⚠️ Ballchasing monitoring disabled (missing GROUP_ID or API_KEY)")
+        if other_group_id and api_key and other_group_id != "blcs-4-qz9e63f182":
+            start_monitoring_group(other_group_id)
+            print(f"✅ Started monitoring additional ballchasing group: {other_group_id}")
     except Exception as e:
-        print(f"⚠️ Ballchasing monitoring not started: {e}")
+        print(f"⚠️ Additional ballchasing monitoring not started: {e}")
     
     # Start the bot
     async with bot:
@@ -160,8 +179,8 @@ async def main():
             print(f"❌ Failed to start bot: {e}")
 
 if __name__ == "__main__":
-    print("🎮 Rocket League Discord Bot Starting...")
-    print("=" * 50)
+    print("🎮 Rocket League Discord Bot with BLCS Integration")
+    print("=" * 55)
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
