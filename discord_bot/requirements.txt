@@ -15,6 +15,7 @@ loguru==0.7.3
 motor==3.7.1
 multidict==6.6.3
 propcache==0.3.2
+psycopg2-binary==2.9.9
 py-cord==2.6.1
 pymongo==4.13.2
 python-dotenv==1.1.1
