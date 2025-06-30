@@ -5,14 +5,14 @@ RUN pip install uv
 
 WORKDIR /app
 
-# Copy requirements first (for layer caching)
-COPY requirements.txt .
+# Copy pyproject.toml
+COPY discord_bot/pyproject.toml ./
 
 # Install dependencies with uv
-RUN uv pip install --system --no-cache-dir -r requirements.txt
+RUN uv sync --frozen --no-dev
 
 # Copy app code
-COPY . .
+COPY discord_bot/ ./
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data

@@ -1,11 +1,12 @@
 name: discord-bot
 services:
 - name: bot
-  dockerfile_path: dockerfile  # This line switches to Docker
-  source_dir: /
+  dockerfile_path: discord_bot/Dockerfile
+  source_dir: /discord_bot  # KEY CHANGE: Point to subdirectory
   github:
     repo: RJUNCC/buckystyle_league_championship_series
     branch: main
+    deploy_on_push: true
   instance_count: 1
   instance_size_slug: basic-xxs
   http_port: 8080
