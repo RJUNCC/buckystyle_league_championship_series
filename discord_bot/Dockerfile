@@ -9,7 +9,8 @@ WORKDIR /app
 COPY pyproject.toml ./
 
 # Install dependencies with uv without requiring lock file
-RUN uv pip install --system -r pyproject.toml
+# RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system --no-deps -e .
 
 # Copy app code
 COPY . ./
