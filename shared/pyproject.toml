@@ -1,0 +1,25 @@
+[project]
+name = "shared-components"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { email = "20bigal04@ryeguytech.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv>=1.0.1",
+    "sqlalchemy>=2.0.41",
+]
+
+[project.scripts]
+shared-components = "shared_components:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]
