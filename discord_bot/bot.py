@@ -94,8 +94,9 @@ if __name__ == "__main__":
     logger.info("\n🚀 Starting bot...")
     
     try:
+        logger.info("\n Asyncio Running...")
         asyncio.run(main())
-        logger.info("\n Bot started!")
+        
     except KeyboardInterrupt:
         print("\n👋 Bot stopped by user")
     except Exception as e:
