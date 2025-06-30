@@ -1,24 +1,19 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Install uv
-RUN pip install uv
-
+# Set working directory
 WORKDIR /app
 
-# Copy pyproject.toml
-COPY pyproject.toml ./
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies with uv without requiring lock file
-# RUN uv pip install --system -r pyproject.toml
-RUN uv pip install --system --no-deps -e .
+# Copy all source code
+COPY . .
 
-# Copy app code
-COPY . ./
-
-# Create data directory for SQLite
+# Create data directory
 RUN mkdir -p /app/data
 
 EXPOSE 8080
 
 # Run the bot
-CMD ["uv", "run", "bot.py"]
+CMD ["python", "bot.py"]
