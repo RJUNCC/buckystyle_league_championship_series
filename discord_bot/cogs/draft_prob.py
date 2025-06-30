@@ -1665,7 +1665,7 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond(f"Error reloading sessions: {str(e)}", ephemeral=True)
 
     @discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
-    @commands.has_permissions(administrator=True)
+    # @commands.has_permissions(administrator=True)
     async def view_all_schedules(self, ctx):
         """Admin command to view all players' schedules in the current session"""
         channel_id = ctx.channel.id
@@ -1763,7 +1763,7 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
 
     @discord.slash_command(name="schedule_summary", description="View condensed summary of all players' availability")
-    @commands.has_permissions(administrator=True)
+    # @commands.has_permissions(administrator=True)
     async def schedule_summary(self, ctx):
         """Admin command to view a condensed summary of player availability"""
         channel_id = ctx.channel.id
@@ -1870,7 +1870,7 @@ class DraftLotteryCog(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=True)
 
     @discord.slash_command(name="export_schedules", description="Export all schedules as a file")
-    @commands.has_permissions(administrator=True)
+    # @commands.has_permissions(administrator=True)
     async def export_schedules(self, ctx):
         """Export all player schedules as a JSON file"""
         channel_id = ctx.channel.id
