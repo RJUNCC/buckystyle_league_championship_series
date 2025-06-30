@@ -9,14 +9,14 @@ import threading
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
-from cogs.availability import AvailabilityCog
-from cogs.admin import AdminCog
-from cogs.team_management import TeamManagementCog
-from cogs.series_management import SeriesManagementCog
-from cogs.statistics import StatisticsCog
-from cogs.season_management import SeasonManagementCog
-from cogs.playoff_management import PlayoffManagementCog
-from cogs.season_summary import SeasonSummaryCog
+# from cogs.availability import AvailabilityCog
+# from cogs.admin import AdminCog
+# from cogs.team_management import TeamManagementCog
+# from cogs.series_management import SeriesManagementCog
+# # from cogs.statistics import StatisticsCog
+# from cogs.season_management import SeasonManagementCog
+# from cogs.playoff_management import PlayoffManagementCog
+# from cogs.season_summary import SeasonSummaryCog
 from cogs.draft_prob import DraftLotteryCog 
 from models.player import initialize_db
 
@@ -33,10 +33,7 @@ class MyBot(discord.Bot):
 
     def load_cogs(self):
         """Load all cogs with error handling"""
-        cogs = [
-            AdminCog, AvailabilityCog, TeamManagementCog, SeriesManagementCog,
-            StatisticsCog, SeasonManagementCog,
-            PlayoffManagementCog, SeasonSummaryCog, DraftLotteryCog  # This handles both features
+        cogs = [ DraftLotteryCog  # This handles both features
         ]
         for cog in cogs:
             try:
