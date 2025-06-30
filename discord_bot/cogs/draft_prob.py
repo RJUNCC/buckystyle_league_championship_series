@@ -1473,7 +1473,7 @@ class DraftLotteryCog(commands.Cog):
     #         await ctx.respond(f"❌ Error reloading cog: {str(e)}", ephemeral=True)
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
-    @commands.has_permissions(administrator=True)
+    # @commands.has_permissions(administrator=True)
     async def db_health(self, ctx):
         """Check database health and connection status"""
         try:
