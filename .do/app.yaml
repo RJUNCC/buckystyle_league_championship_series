@@ -1,7 +1,7 @@
 name: discord-bot
 services:
 - name: bot
-  dockerfile_path: Dockerfile
+  dockerfile_path: Dockerfile  # This line switches to Docker
   source_dir: /
   github:
     repo: RJUNCC/buckystyle_league_championship_series
@@ -9,10 +9,6 @@ services:
   instance_count: 1
   instance_size_slug: basic-xxs
   http_port: 8080
-  volumes:
-  - name: bot-data
-    mount_path: /app/data
-    size_gb: 1
   envs:
   - key: DATABASE_URL
     value: sqlite:////app/data/scheduling.db
