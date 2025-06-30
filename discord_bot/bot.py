@@ -35,7 +35,7 @@ class MyBot(discord.Bot):
 
     def load_cogs(self):
         """Load all cogs with error handling"""
-        cogs = [ DraftLotteryCog  # This handles both features
+        cogs = [ DraftLotteryCog, EnhancedSchedulingCog  # This handles both features
         ]
         for cog in cogs:
             try:
