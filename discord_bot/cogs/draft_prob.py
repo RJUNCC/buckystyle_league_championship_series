@@ -1463,11 +1463,14 @@ class DraftLotteryCog(commands.Cog):
 
 # Add this class to your cogs/draft_prob.py file
 
+# Add this class to your cogs/draft_prob.py file
+
 class CalendarScheduleView(discord.ui.View):
     def __init__(self, user_id, session):
         super().__init__(timeout=600)  # 10 minute timeout
         self.user_id = user_id
         self.session = session
+        self.current_day_index = 0  # Start with first day
         
         # Track schedule state: {day: {time: selected_state}}
         # selected_state: None, 'available', 'all_day', 'not_available', 'unsure'
@@ -1496,90 +1499,131 @@ class CalendarScheduleView(discord.ui.View):
         self.create_calendar_buttons()
     
     def create_calendar_buttons(self):
-        """Create the calendar grid of buttons"""
+        """Create a simplified calendar that fits Discord's 5-row limit"""
+        # We'll use a day-by-day approach instead of a full grid
+        # Show current day being edited
+        
+        current_day_index = getattr(self, 'current_day_index', 0)
+        if current_day_index >= len(self.session.schedule_dates):
+            current_day_index = 0
+            
+        current_date_info = self.session.schedule_dates[current_day_index]
+        current_day_name = current_date_info['day_name']
+        
+        # Row 0: Day navigation
+        prev_button = discord.ui.Button(
+            label="◀ Prev Day", 
+            style=discord.ButtonStyle.secondary,
+            row=0
+        )
+        prev_button.callback = self.prev_day_callback
+        self.add_item(prev_button)
+        
+        day_display_button = discord.ui.Button(
+            label=f"{current_date_info['day_name']}, {current_date_info['date']}",
+            style=discord.ButtonStyle.primary,
+            disabled=True,
+            row=0
+        )
+        self.add_item(day_display_button)
+        
+        next_button = discord.ui.Button(
+            label="Next Day ▶",
+            style=discord.ButtonStyle.secondary, 
+            row=0
+        )
+        next_button.callback = self.next_day_callback
+        self.add_item(next_button)
+        
+        # Row 1 & 2: Time slots (3-4 per row)
         time_slots = ['6PM', '7PM', '8PM', '9PM', '10PM', '11PM', '12AM']
         time_values = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
         
-        # Create header with day names
-        for i, date_info in enumerate(self.session.schedule_dates):
-            day_display = f"{date_info['day_name']}\n({date_info['date']})"
+        for i, (time_label, time_value) in enumerate(zip(time_slots, time_values)):
+            # Determine button style
+            is_selected = self.schedule_state[current_day_name].get(time_value, False)
+            day_status = self.schedule_state[current_day_name].get('status')
             
-            # Day header button (non-clickable, just for display)
-            day_button = discord.ui.Button(
-                label=day_display,
-                style=discord.ButtonStyle.secondary,
-                disabled=True,
-                row=0
+            if day_status == 'all_day':
+                style = discord.ButtonStyle.green
+            elif day_status == 'not_available':
+                style = discord.ButtonStyle.red
+            elif day_status == 'unsure':
+                style = discord.ButtonStyle.secondary
+            elif is_selected:
+                style = discord.ButtonStyle.green
+            else:
+                style = discord.ButtonStyle.gray
+            
+            row = 1 if i < 4 else 2  # First 4 in row 1, rest in row 2
+            
+            time_button = TimeSlotButton(
+                label=time_label,
+                time_value=time_value,
+                day_name=current_day_name,
+                style=style,
+                row=row
             )
-            self.add_item(day_button)
+            self.add_item(time_button)
+        
+        # Row 3: Day action buttons
+        all_day_button = DayActionButton(
+            label="All Day Available",
+            action="all_day",
+            day_name=current_day_name,
+            style=discord.ButtonStyle.blurple,
+            row=3
+        )
+        self.add_item(all_day_button)
+        
+        not_available_button = DayActionButton(
+            label="Not Available",
+            action="not_available",
+            day_name=current_day_name,
+            style=discord.ButtonStyle.red,
+            row=3
+        )
+        self.add_item(not_available_button)
+        
+        unsure_button = DayActionButton(
+            label="Unsure",
+            action="unsure",
+            day_name=current_day_name,
+            style=discord.ButtonStyle.secondary,
+            row=3
+        )
+        self.add_item(unsure_button)
+        
+        # Row 4: Control buttons
+        cancel_button = CancelButton()
+        self.add_item(cancel_button)
+        
+        finalize_button = FinalizeButton()
+        self.add_item(finalize_button)
+    
+    async def prev_day_callback(self, interaction):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
             
-            if i >= 4:  # Discord only allows 5 buttons per row
-                break
-        
-        # Create time slot buttons for first 5 days
-        for time_idx, (time_label, time_value) in enumerate(zip(time_slots, time_values)):
-            for day_idx, date_info in enumerate(self.session.schedule_dates[:5]):  # First 5 days
-                day_name = date_info['day_name']
-                
-                # Determine button style based on state
-                is_selected = self.schedule_state[day_name].get(time_value, False)
-                day_status = self.schedule_state[day_name].get('status')
-                
-                if day_status == 'all_day':
-                    style = discord.ButtonStyle.green
-                elif day_status == 'not_available':
-                    style = discord.ButtonStyle.red
-                elif day_status == 'unsure':
-                    style = discord.ButtonStyle.secondary
-                elif is_selected:
-                    style = discord.ButtonStyle.green
-                else:
-                    style = discord.ButtonStyle.gray
-                
-                # Create time button
-                time_button = TimeSlotButton(
-                    label=time_label if day_idx == 0 else "",  # Only show time label on first column
-                    time_value=time_value,
-                    day_name=day_name,
-                    style=style,
-                    row=time_idx + 1
-                )
-                self.add_item(time_button)
-        
-        # Add special action buttons for each day (first 5 days)
-        for day_idx, date_info in enumerate(self.session.schedule_dates[:5]):
-            if day_idx < 5:  # Only first 5 days fit
-                day_name = date_info['day_name']
-                
-                # All day button
-                all_day_button = DayActionButton(
-                    label="All day",
-                    action="all_day",
-                    day_name=day_name,
-                    style=discord.ButtonStyle.blurple,
-                    row=8
-                )
-                self.add_item(all_day_button)
-                
-                # Not available button
-                not_available_button = DayActionButton(
-                    label="Not Available" if day_idx == 0 else "N/A",
-                    action="not_available", 
-                    day_name=day_name,
-                    style=discord.ButtonStyle.red,
-                    row=9
-                )
-                self.add_item(not_available_button)
-                
-                # Unsure button
-                unsure_button = DayActionButton(
-                    label="Unsure" if day_idx == 0 else "?",
-                    action="unsure",
-                    day_name=day_name,
-                    style=discord.ButtonStyle.secondary,
-                    row=10
-                )
-                self.add_item(unsure_button)
+        self.current_day_index = getattr(self, 'current_day_index', 0) - 1
+        if self.current_day_index < 0:
+            self.current_day_index = len(self.session.schedule_dates) - 1
+            
+        self.update_schedule_display()
+        await self.update_message(interaction)
+    
+    async def next_day_callback(self, interaction):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        self.current_day_index = getattr(self, 'current_day_index', 0) + 1
+        if self.current_day_index >= len(self.session.schedule_dates):
+            self.current_day_index = 0
+            
+        self.update_schedule_display()
+        await self.update_message(interaction)
     
     def update_schedule_display(self):
         """Update the visual state of all buttons"""
@@ -1776,6 +1820,3 @@ class FinalizeButton(discord.ui.Button):
                 await draft_cog.finalize_scheduling(channel, self.view.session)
         else:
             await interaction.response.send_message("Error finding scheduling session", ephemeral=True)
-
-def setup(bot):
-    bot.add_cog(DraftLotteryCog(bot))
