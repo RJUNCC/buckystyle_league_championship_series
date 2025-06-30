@@ -1594,7 +1594,7 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond(f"Error creating backup: {str(e)}", ephemeral=True)
 
     @discord.slash_command(name="debug_sessions", description="Debug database sessions")
-    @commands.has_permissions(administrator=True)
+    # @commands.has_permissions(administrator=True)
     async def debug_sessions(self, ctx):
         """Debug what sessions are in database vs memory"""
         try:
@@ -1628,7 +1628,7 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond(f"Error: {str(e)}", ephemeral=True)
 
     @discord.slash_command(name="reload_sessions", description="Manually reload sessions from database")
-    @commands.has_permissions(administrator=True)
+    # @commands.has_permissions(administrator=True)
     async def reload_sessions(self, ctx):
         """Manually reload sessions from database"""
         try:
