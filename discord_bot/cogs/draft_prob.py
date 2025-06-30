@@ -1592,6 +1592,75 @@ class DraftLotteryCog(commands.Cog):
             
         except Exception as e:
             await ctx.respond(f"Error creating backup: {str(e)}", ephemeral=True)
+
+    @discord.slash_command(name="debug_sessions", description="Debug database sessions")
+    @commands.has_permissions(administrator=True)
+    async def debug_sessions(self, ctx):
+        """Debug what sessions are in database vs memory"""
+        try:
+            from models.scheduling import get_all_active_sessions
+            
+            # Get from database
+            db_sessions = get_all_active_sessions()
+            
+            embed = discord.Embed(
+                title="🔍 Session Debug",
+                color=0x0099ff
+            )
+            
+            embed.add_field(
+                name="Memory Sessions",
+                value=f"{len(self.active_sessions)} sessions\n" + 
+                    "\n".join([f"Channel {cid}" for cid in self.active_sessions.keys()]) if self.active_sessions else "None",
+                inline=False
+            )
+            
+            embed.add_field(
+                name="Database Sessions", 
+                value=f"{len(db_sessions)} sessions\n" +
+                    "\n".join([f"Channel {s.channel_id}: {s.team1} vs {s.team2}" for s in db_sessions]) if db_sessions else "None",
+                inline=False
+            )
+            
+            await ctx.respond(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            await ctx.respond(f"Error: {str(e)}", ephemeral=True)
+
+    @discord.slash_command(name="reload_sessions", description="Manually reload sessions from database")
+    @commands.has_permissions(administrator=True)
+    async def reload_sessions(self, ctx):
+        """Manually reload sessions from database"""
+        try:
+            from models.scheduling import get_all_active_sessions
+            
+            # Clear current sessions
+            old_count = len(self.active_sessions)
+            self.active_sessions.clear()
+            
+            # Load from database
+            db_sessions = get_all_active_sessions()
+            loaded_count = 0
+            
+            for db_session in db_sessions:
+                try:
+                    session = SchedulingSession.from_db(db_session)
+                    self.active_sessions[int(db_session.channel_id)] = session
+                    loaded_count += 1
+                except Exception as e:
+                    print(f"Error loading session {db_session.channel_id}: {e}")
+            
+            embed = discord.Embed(
+                title="🔄 Sessions Reloaded",
+                description=f"Cleared {old_count} memory sessions\nLoaded {loaded_count} from database",
+                color=0x00ff00
+            )
+            
+            await ctx.respond(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            await ctx.respond(f"Error reloading sessions: {str(e)}", ephemeral=True)
+
 class CalendarScheduleView(discord.ui.View):
     def __init__(self, user_id, session):
         super().__init__(timeout=600)  # 10 minute timeout
