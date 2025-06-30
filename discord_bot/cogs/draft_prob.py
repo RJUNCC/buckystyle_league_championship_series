@@ -656,19 +656,46 @@ class DraftLotteryCog(commands.Cog):
         self.lottery = DraftLottery()
         self.last_result = None
         self.active_sessions = {}
+        self.background_task = None  # Track the task for proper cleanup
         
-        # Load active sessions from database on startup
-        self.bot.loop.create_task(self.load_active_sessions())
+        # Don't create the task in __init__ - use cog_load instead
+    
+    async def cog_load(self):
+        """Called when the cog is loaded - safer place for async tasks"""
+        try:
+            self.background_task = asyncio.create_task(self.load_active_sessions())
+            print("✅ Background task for loading sessions started")
+        except Exception as e:
+            print(f"Error starting background task: {e}")
+    
+    async def cog_unload(self):
+        """Called when the cog is unloaded - clean up tasks"""
+        if self.background_task and not self.background_task.done():
+            self.background_task.cancel()
+            try:
+                await self.background_task
+            except asyncio.CancelledError:
+                print("✅ Background task cancelled successfully")
+            except Exception as e:
+                print(f"Error cancelling background task: {e}")
     
     async def load_active_sessions(self):
         """Load all active sessions from database on startup"""
         try:
-            await asyncio.sleep(2)  # Wait a bit for bot to be ready
+            # Wait for bot to be ready
+            await self.bot.wait_until_ready()
+            await asyncio.sleep(2)  # Additional safety delay
+            
             active_sessions = get_all_active_sessions()
             for db_session in active_sessions:
                 session = SchedulingSession.from_db(db_session)
                 self.active_sessions[int(db_session.channel_id)] = session
                 print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
+                
+        except asyncio.CancelledError:
+            # Handle graceful cancellation
+            print("📝 Session loading cancelled")
+            raise
         except Exception as e:
             print(f"Error loading sessions: {e}")
 
