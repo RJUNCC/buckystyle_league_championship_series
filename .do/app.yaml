@@ -1,0 +1,27 @@
+name: discord-bot
+services:
+- name: bot
+  source_dir: /
+  github:
+    repo: RJUNCC/buckystyle_league_championship_series
+    branch: main
+  run_command: python discord_bot/bot.py
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 8080
+  # Add persistent storage for SQLite
+  volumes:
+  - name: bot-data
+    mount_path: /app/data
+    size_gb: 1
+  envs:
+  - key: DISCORD_TOKEN
+    scope: RUN_TIME
+    type: SECRET
+  - key: DATABASE_URL
+    value: sqlite:////app/data/scheduling.db
+    scope: RUN_TIME
+  - key: PORT
+    value: "8080"
+    scope: RUN_TIME
