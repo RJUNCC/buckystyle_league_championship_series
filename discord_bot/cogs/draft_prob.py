@@ -1,5 +1,6 @@
 # cogs/draft_prob.py
 import discord
+import json
 from discord.ext import commands
 import asyncio
 import random
@@ -1471,6 +1472,120 @@ class DraftLotteryCog(commands.Cog):
     #     except Exception as e:
     #         await ctx.respond(f"❌ Error reloading cog: {str(e)}", ephemeral=True)
 
+    @discord.slash_command(name="db_health", description="Check database health and connection")
+    @commands.has_permissions(administrator=True)
+    async def db_health(self, ctx):
+        """Check database health and connection status"""
+        try:
+            from models.scheduling import engine
+            import time
+            
+            # Test connection
+            start_time = time.time()
+            
+            # Try a simple query
+            with engine.connect() as conn:
+                result = conn.execute("SELECT 1")
+                result.fetchone()
+            
+            connection_time = (time.time() - start_time) * 1000  # Convert to ms
+            
+            # Get database info
+            db_url = str(engine.url)
+            db_type = "PostgreSQL" if "postgresql" in db_url else "SQLite"
+            
+            # Count active sessions
+            try:
+                active_sessions = get_all_active_sessions()
+                session_count = len(active_sessions)
+            except Exception as e:
+                session_count = f"Error: {e}"
+            
+            embed = discord.Embed(
+                title="🏥 Database Health Check",
+                color=0x00ff00
+            )
+            embed.add_field(name="Database Type", value=db_type, inline=True)
+            embed.add_field(name="Connection Time", value=f"{connection_time:.2f}ms", inline=True)
+            embed.add_field(name="Status", value="✅ Healthy", inline=True)
+            embed.add_field(name="Active Sessions", value=str(session_count), inline=True)
+            embed.add_field(name="Memory Sessions", value=str(len(self.active_sessions)), inline=True)
+            
+            if db_type == "PostgreSQL":
+                embed.add_field(name="💾 Persistence", value="✅ Full persistence across deployments", inline=False)
+            else:
+                embed.add_field(name="⚠️ Persistence", value="Limited - consider upgrading to PostgreSQL", inline=False)
+            
+            await ctx.respond(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            embed = discord.Embed(
+                title="🏥 Database Health Check",
+                description=f"❌ Database connection failed: {str(e)}",
+                color=0xff0000
+            )
+            await ctx.respond(embed=embed, ephemeral=True)
+
+    @discord.slash_command(name="backup_sessions", description="Backup current scheduling sessions")
+    @commands.has_permissions(administrator=True)
+    async def backup_sessions(self, ctx):
+        """Export current sessions for backup"""
+        try:
+            import io
+            
+            sessions_data = {}
+            
+            # Get active sessions from memory
+            for channel_id, session in self.active_sessions.items():
+                sessions_data[str(channel_id)] = {
+                    'teams': session.teams,
+                    'player_schedules': session.player_schedules,
+                    'players_responded': list(session.players_responded),
+                    'schedule_dates': session.schedule_dates,
+                    'expected_players': session.expected_players,
+                    'confirmations': getattr(session, 'confirmations', {})
+                }
+            
+            # Also get sessions from database
+            try:
+                db_sessions = get_all_active_sessions()
+                for db_session in db_sessions:
+                    if str(db_session.channel_id) not in sessions_data:
+                        sessions_data[str(db_session.channel_id)] = {
+                            'teams': [db_session.team1, db_session.team2],
+                            'player_schedules': db_session.player_schedules or {},
+                            'players_responded': db_session.players_responded or [],
+                            'schedule_dates': db_session.schedule_dates or [],
+                            'expected_players': db_session.expected_players,
+                            'confirmations': db_session.confirmations or {}
+                        }
+            except Exception as e:
+                print(f"Error getting database sessions: {e}")
+            
+            if not sessions_data:
+                await ctx.respond("No active sessions to backup.", ephemeral=True)
+                return
+            
+            # Create backup file
+            json_data = json.dumps(sessions_data, indent=2, default=str)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"sessions_backup_{timestamp}.json"
+            
+            file = discord.File(
+                io.StringIO(json_data), 
+                filename=filename
+            )
+            
+            embed = discord.Embed(
+                title="💾 Sessions Backup Created",
+                description=f"Backed up {len(sessions_data)} active sessions.",
+                color=0x0099ff
+            )
+            
+            await ctx.respond(embed=embed, file=file, ephemeral=True)
+            
+        except Exception as e:
+            await ctx.respond(f"Error creating backup: {str(e)}", ephemeral=True)
 class CalendarScheduleView(discord.ui.View):
     def __init__(self, user_id, session):
         super().__init__(timeout=600)  # 10 minute timeout

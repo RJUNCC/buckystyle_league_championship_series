@@ -1,25 +1,14 @@
-# bot.py
 import discord
 import os
 import sys
 import asyncio
 from aiohttp import web
-import threading
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dotenv import load_dotenv
-# from cogs.availability import AvailabilityCog
-# from cogs.admin import AdminCog
-# from cogs.team_management import TeamManagementCog
-# from cogs.series_management import SeriesManagementCog
-# # from cogs.statistics import StatisticsCog
-# from cogs.season_management import SeasonManagementCog
-# from cogs.playoff_management import PlayoffManagementCog
-# from cogs.season_summary import SeasonSummaryCog
 from cogs.draft_prob import DraftLotteryCog 
-from cogs.scheduling import EnhancedSchedulingCog
-# from models.player import initialize_db
+# REMOVE THIS LINE: from cogs.scheduling import EnhancedSchedulingCog
 from loguru import logger
 
 load_dotenv()
@@ -35,7 +24,8 @@ class MyBot(discord.Bot):
 
     def load_cogs(self):
         """Load all cogs with error handling"""
-        cogs = [ DraftLotteryCog, EnhancedSchedulingCog  # This handles both features
+        cogs = [
+            DraftLotteryCog
         ]
         for cog in cogs:
             try:
