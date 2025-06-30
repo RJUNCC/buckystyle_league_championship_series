@@ -66,7 +66,7 @@ class SchedulingSession:
                 'day_name': current_date.strftime('%A'),  # Monday, Tuesday, etc.
                 'date': current_date.strftime('%m/%d'),    # 06/29
                 'full_date': current_date.strftime('%A, %B %d'),  # Monday, June 29
-                'datetime': current_date
+                # Don't include datetime object as it's not JSON serializable
             })
         
         return dates
