@@ -1,10 +1,11 @@
-# models/scheduling.py
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Boolean
+# models/scheduling.py - Updated with PostgreSQL support
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
+from pathlib import Path
 
 Base = declarative_base()
 
@@ -18,18 +19,80 @@ class SchedulingSession(Base):
     player_schedules = Column(JSON)  # Store as JSON
     players_responded = Column(JSON)  # List of user IDs
     expected_players = Column(Integer, default=6)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
     schedule_dates = Column(JSON)  # Store the date info
     confirmations = Column(JSON, default={})
     is_active = Column(Boolean, default=True)
 
+def get_database_url():
+    """Get database URL with PostgreSQL support"""
+    database_url = os.getenv('DATABASE_URL')
+    
+    if not database_url:
+        # Default to SQLite with persistent path
+        ensure_data_directory()
+        return 'sqlite:////app/data/scheduling.db'
+    
+    # Handle PostgreSQL URL format (DigitalOcean sometimes uses postgres://)
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    return database_url
+
+def ensure_data_directory():
+    """Ensure the data directory exists for SQLite"""
+    try:
+        data_path = Path("/app/data")
+        data_path.mkdir(parents=True, exist_ok=True)
+        return data_path
+    except Exception as e:
+        print(f"Warning: Could not create data directory: {e}")
+        return Path("/tmp")
+
+def create_database_engine():
+    """Create database engine with appropriate settings"""
+    database_url = get_database_url()
+    
+    print(f"🔗 Connecting to database: {database_url.split('@')[0]}@***" if '@' in database_url else database_url)
+    
+    if database_url.startswith('postgresql://'):
+        # PostgreSQL settings
+        engine = create_engine(
+            database_url,
+            pool_pre_ping=True,        # Verify connections before use
+            pool_recycle=300,          # Recycle connections every 5 minutes
+            pool_size=5,               # Connection pool size
+            max_overflow=10,           # Max additional connections
+            echo=False                 # Set to True for SQL debugging
+        )
+        print("✅ Using PostgreSQL with connection pooling")
+    else:
+        # SQLite settings
+        engine = create_engine(
+            database_url,
+            pool_pre_ping=True,
+            echo=False
+        )
+        print("✅ Using SQLite database")
+    
+    return engine
+
 # Database setup
-engine = create_engine(os.getenv('DATABASE_URL', 'sqlite:///scheduling.db'))
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
+try:
+    engine = create_database_engine()
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    print("✅ Database tables created/verified")
+except Exception as e:
+    print(f"❌ Database initialization error: {e}")
+    # Fallback to in-memory SQLite for development
+    engine = create_engine('sqlite:///:memory:', echo=False)
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    print("⚠️ Using in-memory database as fallback")
 
 def save_session(session_obj):
-    """Save or update a scheduling session"""
+    """Save or update a scheduling session with better error handling"""
     db = Session()
     try:
         # Convert sets to lists for JSON serialization
@@ -42,7 +105,7 @@ def save_session(session_obj):
                 player_schedules_str[str(user_id)] = schedule
         
         confirmations_str = {}
-        if session_obj.confirmations:
+        if hasattr(session_obj, 'confirmations') and session_obj.confirmations:
             for user_id, confirmed in session_obj.confirmations.items():
                 confirmations_str[str(user_id)] = confirmed
         
@@ -51,47 +114,61 @@ def save_session(session_obj):
         ).first()
         
         if existing:
+            # Update existing session
             existing.player_schedules = player_schedules_str
             existing.players_responded = players_responded_list
             existing.confirmations = confirmations_str
-            existing.schedule_dates = session_obj.schedule_dates
+            existing.schedule_dates = getattr(session_obj, 'schedule_dates', [])
             existing.team1 = session_obj.teams[0]
             existing.team2 = session_obj.teams[1]
+            existing.expected_players = getattr(session_obj, 'expected_players', 6)
+            print(f"📝 Updated session for channel {session_obj.channel_id}")
         else:
+            # Create new session
             new_session = SchedulingSession(
                 channel_id=str(session_obj.channel_id),
                 team1=session_obj.teams[0],
                 team2=session_obj.teams[1],
                 player_schedules=player_schedules_str,
                 players_responded=players_responded_list,
-                expected_players=session_obj.expected_players,
-                schedule_dates=session_obj.schedule_dates,
+                expected_players=getattr(session_obj, 'expected_players', 6),
+                schedule_dates=getattr(session_obj, 'schedule_dates', []),
                 confirmations=confirmations_str
             )
             db.add(new_session)
+            print(f"💾 Created new session for channel {session_obj.channel_id}")
         
         db.commit()
+        print(f"✅ Session saved successfully to database")
+        
     except Exception as e:
         db.rollback()
-        print(f"Error saving session: {e}")
+        print(f"❌ Error saving session: {e}")
         raise
     finally:
         db.close()
 
 def load_session(channel_id):
-    """Load a scheduling session from database"""
+    """Load a scheduling session from database with error handling"""
     db = Session()
     try:
         session_data = db.query(SchedulingSession).filter_by(
             channel_id=str(channel_id),
             is_active=True
         ).first()
+        
+        if session_data:
+            print(f"📖 Loaded session for channel {channel_id}")
+        
         return session_data
+    except Exception as e:
+        print(f"❌ Error loading session: {e}")
+        return None
     finally:
         db.close()
 
 def delete_session(channel_id):
-    """Mark a session as inactive"""
+    """Mark a session as inactive with error handling"""
     db = Session()
     try:
         session_data = db.query(SchedulingSession).filter_by(
@@ -100,16 +177,25 @@ def delete_session(channel_id):
         if session_data:
             session_data.is_active = False
             db.commit()
+            print(f"🗑️ Deactivated session for channel {channel_id}")
+        else:
+            print(f"⚠️ No session found to delete for channel {channel_id}")
     except Exception as e:
-        print(f"Error deleting session: {e}")
+        db.rollback()
+        print(f"❌ Error deleting session: {e}")
     finally:
         db.close()
 
 def get_all_active_sessions():
-    """Get all active sessions"""
+    """Get all active sessions with error handling"""
     db = Session()
     try:
-        return db.query(SchedulingSession).filter_by(is_active=True).all()
+        sessions = db.query(SchedulingSession).filter_by(is_active=True).all()
+        print(f"📋 Retrieved {len(sessions)} active sessions")
+        return sessions
+    except Exception as e:
+        print(f"❌ Error getting active sessions: {e}")
+        return []
     finally:
         db.close()
 
@@ -117,7 +203,7 @@ def cleanup_old_sessions(days_old=7):
     """Clean up sessions older than specified days"""
     db = Session()
     try:
-        cutoff_date = datetime.utcnow() - timedelta(days=days_old)
+        cutoff_date = datetime.now() - timedelta(days=days_old)
         old_sessions = db.query(SchedulingSession).filter(
             SchedulingSession.created_at < cutoff_date,
             SchedulingSession.is_active == True
@@ -127,13 +213,26 @@ def cleanup_old_sessions(days_old=7):
             session.is_active = False
         
         db.commit()
+        print(f"🧹 Cleaned up {len(old_sessions)} old sessions")
         return len(old_sessions)
     except Exception as e:
         db.rollback()
-        print(f"Error cleaning up old sessions: {e}")
+        print(f"❌ Error cleaning up old sessions: {e}")
         return 0
     finally:
         db.close()
 
-# Import timedelta for cleanup function
-from datetime import timedelta
+def test_database_connection():
+    """Test database connection and return status"""
+    try:
+        db = Session()
+        db.execute("SELECT 1")
+        db.close()
+        return True, "Database connection successful"
+    except Exception as e:
+        return False, f"Database connection failed: {str(e)}"
+
+# Initialize and test connection
+if __name__ == "__main__":
+    success, message = test_database_connection()
+    print(f"🔍 Database test: {message}")
