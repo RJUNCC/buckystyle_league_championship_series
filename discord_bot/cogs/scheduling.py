@@ -40,7 +40,7 @@ class EnhancedSchedulingCog(commands.Cog):
         except Exception as e:
             print(f"Error loading sessions: {e}")
 
-    @discord.slash_command(name="schedule_game", description="Start a game scheduling session between two teams")
+    @discord.slash_command(name="schedule_game_v2", description="Start a game scheduling session between two teams")
     async def schedule_game(self, ctx, team1: str, team2: str):
         """Start a game scheduling session with persistent database storage"""
         channel_id = ctx.channel.id
@@ -78,7 +78,7 @@ class EnhancedSchedulingCog(commands.Cog):
         
         await ctx.respond(embed=embed)
 
-    @discord.slash_command(name="schedule_status", description="Check the status of the current scheduling session")
+    @discord.slash_command(name="schedule_status_v2", description="Check the status of the current scheduling session")
     async def schedule_status(self, ctx):
         """Check the status with database persistence info"""
         channel_id = ctx.channel.id
@@ -158,7 +158,7 @@ class EnhancedSchedulingCog(commands.Cog):
         
         await ctx.respond(embed=embed)
 
-    @discord.slash_command(name="cancel_schedule", description="Cancel the current scheduling session")
+    @discord.slash_command(name="cancel_schedule_v2", description="Cancel the current scheduling session")
     async def cancel_schedule(self, ctx):
         """Cancel the current scheduling session and clean up database"""
         channel_id = ctx.channel.id
