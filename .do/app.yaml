@@ -1,7 +1,7 @@
 name: discord-bot
 services:
 - name: bot
-  dockerfile_path: Dockerfile  # This line switches to Docker
+  dockerfile_path: dockerfile  # This line switches to Docker
   source_dir: /
   github:
     repo: RJUNCC/buckystyle_league_championship_series
