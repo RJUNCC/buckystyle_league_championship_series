@@ -33,4 +33,5 @@ dependencies = [
     "pydantic>=2.11.3",
     "fastapi[standard]>=0.115.12",
     "sqlalchemy>=2.0.41",
+    "pexpect==4.9.0",
 ]
