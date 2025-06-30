@@ -82,14 +82,14 @@ async def main():
         print("Please add your Discord bot token to the .env file")
         return
     
-    # Initialize databases
-    try:
-        initialize_database()  # Your existing scheduling database
-        Base.metadata.create_all(engine)  # Player profiles database
-        print("✅ Databases initialized successfully")
-    except Exception as e:
-        print(f"❌ Database initialization failed: {e}")
-        return
+    # # Initialize databases
+    # try:
+    #     initialize_database()  # Your existing scheduling database
+    #     Base.metadata.create_all(engine)  # Player profiles database
+    #     print("✅ Databases initialized successfully")
+    # except Exception as e:
+    #     print(f"❌ Database initialization failed: {e}")
+    #     return
     
     # Load cogs
     bot.load_cogs()
