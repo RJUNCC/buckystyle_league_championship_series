@@ -1157,6 +1157,7 @@ class DraftLotteryCog(commands.Cog):
     # ======================
 
     @discord.slash_command(name="schedule_game", description="Start a game scheduling session between two teams")
+    @commands.has_permissions(administrator=True)
     async def schedule_game(self, ctx, team1: str, team2: str):
         """Start a game scheduling session"""
         channel_id = ctx.channel.id

@@ -1,32 +1,67 @@
+# File: discord_bot/bot.py (FINAL VERSION)
+
 import discord
-import os
-import sys
+from discord.ext import commands
 import asyncio
-from aiohttp import web
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+import os
 from dotenv import load_dotenv
-from cogs.draft_prob import DraftLotteryCog 
-# REMOVE THIS LINE: from cogs.scheduling import EnhancedSchedulingCog
-from loguru import logger
 
+# Load environment variables
 load_dotenv()
 
-class MyBot(discord.Bot):
+# Import your cogs
+from cogs.draft_prob import DraftLotteryCog
+from cogs.player_profiles import PlayerProfilesCog
+from cogs.profile_linking import ProfileLinkingCog
+from cogs.blcsx_profiles import BLCSXProfilesCog
+
+# Import database setup
+from models.scheduling import initialize_database
+from models.player_profile import Base, engine
+
+class RocketLeagueBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
-        intents.members = True
         intents.message_content = True
-        super().__init__(intents=intents)
+        intents.members = True  # Important for profile features
         
-        self.load_cogs()
-
+        super().__init__(
+            command_prefix='!',
+            intents=intents,
+            description='Rocket League Discord Bot with Player Profiles'
+        )
+    
+    async def on_ready(self):
+        """Called when bot is ready"""
+        print(f'✅ {self.user} has connected to Discord!')
+        print(f'📊 Connected to {len(self.guilds)} servers')
+        
+        # Sync slash commands
+        try:
+            synced = await self.tree.sync()
+            print(f'✅ Synced {len(synced)} command(s)')
+        except Exception as e:
+            print(f'❌ Failed to sync commands: {e}')
+    
+    async def on_guild_join(self, guild):
+        """Called when bot joins a new server"""
+        print(f'🆕 Joined new server: {guild.name} (ID: {guild.id})')
+        
+        # Try to sync commands for the new server
+        try:
+            await self.tree.sync(guild=guild)
+            print(f'✅ Synced commands for {guild.name}')
+        except Exception as e:
+            print(f'❌ Failed to sync commands for {guild.name}: {e}')
+    
     def load_cogs(self):
-        """Load all cogs with error handling"""
         cogs = [
-            DraftLotteryCog
+            DraftLotteryCog,        # Your existing
+            PlayerProfilesCog,      # Your existing  
+            ProfileLinkingCog,      # Your existing
+            BLCSXProfilesCog        # NEW: Advanced BLCSX system
         ]
+        
         for cog in cogs:
             try:
                 self.add_cog(cog(self))
@@ -34,70 +69,56 @@ class MyBot(discord.Bot):
             except Exception as e:
                 print(f"❌ Error loading {cog.__name__}: {str(e)}")
 
-    async def on_ready(self):
-        print(f"\n🤖 Logged in as {self.user} (ID: {self.user.id})")
-        print("🔁 Syncing commands globally...")
-        await self.sync_commands()
-        
-        # Start health check server after bot is ready
-        await self.start_health_server()
-        print("✅ Bot ready")
-
-    async def start_health_server(self):
-        """Start health check server for DigitalOcean"""
-        async def health_check(request):
-            return web.Response(text="BLCS Bot is running!", status=200)
-
-        app = web.Application()
-        app.router.add_get('/health', health_check)
-        app.router.add_get('/', health_check)  # For root path too
-        
-        runner = web.AppRunner(app)
-        await runner.setup()
-        
-        # Use PORT environment variable or default to 8080
-        port = int(os.getenv('PORT', 8080))
-        site = web.TCPSite(runner, '0.0.0.0', port)
-        await site.start()
-        print(f"🌐 Health check server running on port {port}")
-
-bot = MyBot()
+# Initialize bot instance
+bot = RocketLeagueBot()
 
 async def main():
     """Main async function to run the bot"""
-    # Initialize player database
-    # try:
-    #     initialize_db()
-    #     print("✅ Player database initialized")
-    # except Exception as e:
-    #     print(f"❌ Player database initialization error: {e}")
     
-    # Initialize scheduling database
+    # Check for required environment variables
+    discord_token = os.getenv('DISCORD_TOKEN')
+    if not discord_token:
+        print("❌ DISCORD_TOKEN not found in environment variables!")
+        print("Please add your Discord bot token to the .env file")
+        return
+    
+    # Initialize databases
     try:
-        from models.scheduling import Base, engine
-        Base.metadata.create_all(engine)
-        print("✅ Scheduling database initialized")
-        
-        # Optional: Clean up old sessions on startup
-        from models.scheduling import cleanup_old_sessions
-        cleaned = cleanup_old_sessions(days_old=30)
-        if cleaned > 0:
-            print(f"🧹 Cleaned up {cleaned} old scheduling sessions")
+        initialize_database()  # Your existing scheduling database
+        Base.metadata.create_all(engine)  # Player profiles database
+        print("✅ Databases initialized successfully")
     except Exception as e:
-        print(f"⚠️ Scheduling database initialization error (non-fatal): {e}")
+        print(f"❌ Database initialization failed: {e}")
+        return
+    
+    # Load cogs
+    bot.load_cogs()
+    
+    # Optional: Start ballchasing.com monitoring
+    try:
+        from services.ballchasing_service import start_monitoring_group
+        group_id = os.getenv('BALLCHASING_GROUP_ID')
+        api_key = os.getenv('BALLCHASING_API_KEY')
+        
+        if group_id and api_key:
+            start_monitoring_group(group_id)
+            print(f"✅ Started monitoring ballchasing group: {group_id}")
+        else:
+            print("⚠️ Ballchasing monitoring disabled (missing GROUP_ID or API_KEY)")
+    except Exception as e:
+        print(f"⚠️ Ballchasing monitoring not started: {e}")
     
     # Start the bot
     async with bot:
-        await bot.start(os.getenv("DISCORD_TOKEN"))
+        try:
+            print("🚀 Starting bot...")
+            await bot.start(discord_token)
+        except discord.LoginFailure:
+            print("❌ Invalid Discord token! Please check your .env file")
+        except Exception as e:
+            print(f"❌ Failed to start bot: {e}")
 
 if __name__ == "__main__":
-    logger.info("\n🚀 Starting bot...")
-    
-    try:
-        logger.info("\n Asyncio Running...")
-        asyncio.run(main())
-        
-    except KeyboardInterrupt:
-        print("\n👋 Bot stopped by user")
-    except Exception as e:
-        print(f"\n❌ Bot crashed: {e}")
+    print("🎮 Rocket League Discord Bot Starting...")
+    print("=" * 50)
+    asyncio.run(main())
