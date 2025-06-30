@@ -164,18 +164,6 @@ class TimeSelectionView(discord.ui.View):
     @discord.ui.select(
         placeholder="Select available times (you can select multiple)",
         options=[
-            discord.SelectOption(label="12:00 PM", value="12:00"),
-            discord.SelectOption(label="12:30 PM", value="12:30"),
-            discord.SelectOption(label="1:00 PM", value="13:00"),
-            discord.SelectOption(label="1:30 PM", value="13:30"),
-            discord.SelectOption(label="2:00 PM", value="14:00"),
-            discord.SelectOption(label="2:30 PM", value="14:30"),
-            discord.SelectOption(label="3:00 PM", value="15:00"),
-            discord.SelectOption(label="3:30 PM", value="15:30"),
-            discord.SelectOption(label="4:00 PM", value="16:00"),
-            discord.SelectOption(label="4:30 PM", value="16:30"),
-            discord.SelectOption(label="5:00 PM", value="17:00"),
-            discord.SelectOption(label="5:30 PM", value="17:30"),
             discord.SelectOption(label="6:00 PM", value="18:00"),
             discord.SelectOption(label="6:30 PM", value="18:30"),
             discord.SelectOption(label="7:00 PM", value="19:00"),
