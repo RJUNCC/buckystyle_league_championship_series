@@ -1464,283 +1464,6 @@ class DraftLotteryCog(commands.Cog):
         )
         
         await ctx.respond(embed=embed)
-
-    # Add this command to your DraftLotteryCog class in draft_prob.py
-
-@discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
-@commands.has_permissions(administrator=True)
-async def view_all_schedules(self, ctx):
-    """Admin command to view all players' schedules in the current session"""
-    channel_id = ctx.channel.id
-    
-    if channel_id not in self.active_sessions:
-        await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-        return
-    
-    session = self.active_sessions[channel_id]
-    
-    if not session.player_schedules:
-        await ctx.respond("No players have submitted schedules yet.", ephemeral=True)
-        return
-    
-    # Create main embed
-    embed = discord.Embed(
-        title="📊 All Players' Schedules",
-        description=f"**{session.teams[0]} vs {session.teams[1]}**\n{len(session.player_schedules)}/{session.expected_players} players completed",
-        color=0x0099ff
-    )
-    
-    # Time slots for reference
-    time_slots = {
-        '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM', 
-        '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
-    }
-    
-    schedule_text = ""
-    
-    for user_id, player_schedule in session.player_schedules.items():
-        try:
-            # Get user display name
-            user = self.bot.get_user(int(user_id))
-            player_name = user.display_name if user else f"User {user_id}"
-            
-            schedule_text += f"\n**{player_name}:**\n"
-            
-            # Show availability for each day
-            for date_info in session.schedule_dates:
-                day_name = date_info['day_name']
-                day_display = f"{date_info['day_name']}, {date_info['date']}"
-                
-                if day_name in player_schedule:
-                    available_times = player_schedule[day_name]
-                    
-                    if not available_times:
-                        schedule_text += f"  • {day_display}: ❌ Not available\n"
-                    elif len(available_times) >= 6:
-                        schedule_text += f"  • {day_display}: ✅ All day available\n"
-                    else:
-                        # Show specific times
-                        time_display = []
-                        for time_24h in available_times:
-                            if time_24h in time_slots:
-                                time_display.append(time_slots[time_24h])
-                        
-                        if time_display:
-                            schedule_text += f"  • {day_display}: ✅ {', '.join(time_display)}\n"
-                        else:
-                            schedule_text += f"  • {day_display}: ⚠️ Invalid times\n"
-                else:
-                    schedule_text += f"  • {day_display}: ⏳ Not set\n"
-            
-            schedule_text += "\n"  # Add spacing between players
-            
-        except Exception as e:
-            schedule_text += f"\n**User {user_id}:** Error loading schedule ({str(e)})\n\n"
-    
-    # Split into multiple embeds if too long (Discord limit is 4096 characters)
-    if len(schedule_text) > 3500:
-        # Send summary first
-        embed.add_field(
-            name="📋 Summary",
-            value=f"Schedules are too long to display in one message. Use `/schedule_summary` for a condensed view.",
-            inline=False
-        )
-        await ctx.respond(embed=embed, ephemeral=True)
-        
-        # Send detailed view in chunks
-        chunks = [schedule_text[i:i+3500] for i in range(0, len(schedule_text), 3500)]
-        
-        for i, chunk in enumerate(chunks):
-            chunk_embed = discord.Embed(
-                title=f"📊 Detailed Schedules (Part {i+1}/{len(chunks)})",
-                description=chunk,
-                color=0x0099ff
-            )
-            await ctx.followup.send(embed=chunk_embed, ephemeral=True)
-    else:
-        embed.add_field(
-            name="📋 Player Availability",
-            value=schedule_text or "No schedules found.",
-            inline=False
-        )
-        await ctx.respond(embed=embed, ephemeral=True)
-
-@discord.slash_command(name="schedule_summary", description="View condensed summary of all players' availability")
-@commands.has_permissions(administrator=True)
-async def schedule_summary(self, ctx):
-    """Admin command to view a condensed summary of player availability"""
-    channel_id = ctx.channel.id
-    
-    if channel_id not in self.active_sessions:
-        await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-        return
-    
-    session = self.active_sessions[channel_id]
-    
-    if not session.player_schedules:
-        await ctx.respond("No players have submitted schedules yet.", ephemeral=True)
-        return
-    
-    embed = discord.Embed(
-        title="📊 Schedule Summary",
-        description=f"**{session.teams[0]} vs {session.teams[1]}**",
-        color=0x0099ff
-    )
-    
-    # Create availability matrix
-    summary_text = "```\n"
-    summary_text += "Player".ljust(15) + " | "
-    
-    # Header with day abbreviations
-    for date_info in session.schedule_dates:
-        day_abbr = date_info['day_name'][:3]  # Mon, Tue, etc.
-        summary_text += f"{day_abbr}".ljust(6)
-    summary_text += "\n" + "-" * 65 + "\n"
-    
-    # Player rows
-    for user_id, player_schedule in session.player_schedules.items():
-        try:
-            user = self.bot.get_user(int(user_id))
-            player_name = (user.display_name if user else f"User{user_id}")[:14]  # Truncate long names
-            
-            summary_text += player_name.ljust(15) + " | "
-            
-            for date_info in session.schedule_dates:
-                day_name = date_info['day_name']
-                
-                if day_name in player_schedule:
-                    available_times = player_schedule[day_name]
-                    
-                    if not available_times:
-                        summary_text += "❌".ljust(6)
-                    elif len(available_times) >= 6:
-                        summary_text += "✅✅".ljust(6)
-                    else:
-                        summary_text += f"✅{len(available_times)}".ljust(6)
-                else:
-                    summary_text += "⏳".ljust(6)
-            
-            summary_text += "\n"
-            
-        except Exception as e:
-            summary_text += f"Error".ljust(15) + " | " + "❌".ljust(6) * 7 + "\n"
-    
-    summary_text += "```"
-    
-    embed.add_field(
-        name="Legend",
-        value="❌ = Not available | ✅✅ = All day | ✅3 = 3 time slots | ⏳ = Not set",
-        inline=False
-    )
-    
-    embed.add_field(
-        name="Availability Matrix",
-        value=summary_text,
-        inline=False
-    )
-    
-    # Add common times analysis
-    common_times = session.find_common_times()
-    if common_times:
-        common_text = ""
-        for day_name, times in common_times.items():
-            date_info = session.get_date_info(day_name)
-            day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
-            
-            time_slots = {
-                '18:00': '6PM', '19:00': '7PM', '20:00': '8PM', 
-                '21:00': '9PM', '22:00': '10PM', '23:00': '11PM', '00:00': '12AM'
-            }
-            
-            time_display = [time_slots.get(t, t) for t in times[:3]]  # Show first 3
-            if len(times) > 3:
-                time_display.append(f"+{len(times)-3} more")
-            
-            common_text += f"**{day_display}:** {', '.join(time_display)}\n"
-        
-        embed.add_field(
-            name="🎯 Possible Game Times",
-            value=common_text,
-            inline=False
-        )
-    else:
-        embed.add_field(
-            name="⚠️ No Common Times",
-            value="No times work for all players yet.",
-            inline=False
-        )
-    
-    await ctx.respond(embed=embed, ephemeral=True)
-
-    @discord.slash_command(name="export_schedules", description="Export all schedules as a file")
-    # @commands.has_permissions(administrator=True)
-    async def export_schedules(self, ctx):
-        """Export all player schedules as a JSON file"""
-        channel_id = ctx.channel.id
-        
-        if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-            return
-        
-        session = self.active_sessions[channel_id]
-        
-        if not session.player_schedules:
-            await ctx.respond("No players have submitted schedules yet.", ephemeral=True)
-            return
-        
-        try:
-            import json
-            import io
-            from datetime import datetime
-            
-            # Create export data
-            export_data = {
-                "export_timestamp": datetime.now().isoformat(),
-                "teams": session.teams,
-                "channel_id": str(channel_id),
-                "schedule_dates": session.schedule_dates,
-                "player_count": len(session.player_schedules),
-                "expected_players": session.expected_players,
-                "players": {}
-            }
-            
-            # Add player data with names
-            for user_id, player_schedule in session.player_schedules.items():
-                try:
-                    user = self.bot.get_user(int(user_id))
-                    player_name = user.display_name if user else f"User {user_id}"
-                    
-                    export_data["players"][str(user_id)] = {
-                        "name": player_name,
-                        "schedule": player_schedule
-                    }
-                except Exception as e:
-                    export_data["players"][str(user_id)] = {
-                        "name": f"User {user_id}",
-                        "schedule": player_schedule,
-                        "error": str(e)
-                    }
-            
-            # Create file
-            json_data = json.dumps(export_data, indent=2, default=str)
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"schedules_{session.teams[0].replace(' ', '_')}_vs_{session.teams[1].replace(' ', '_')}_{timestamp}.json"
-            
-            file = discord.File(
-                io.StringIO(json_data),
-                filename=filename
-            )
-            
-            embed = discord.Embed(
-                title="📁 Schedules Exported",
-                description=f"Exported {len(session.player_schedules)} player schedules",
-                color=0x00ff00
-            )
-            
-            await ctx.respond(embed=embed, file=file, ephemeral=True)
-            
-        except Exception as e:
-            await ctx.respond(f"Error exporting schedules: {str(e)}", ephemeral=True)
     
     # @discord.slash_command(name="reload_cog", description="Reload the draft/scheduling cog")
     # @commands.has_permissions(administrator=True)
@@ -1940,6 +1663,281 @@ async def schedule_summary(self, ctx):
             
         except Exception as e:
             await ctx.respond(f"Error reloading sessions: {str(e)}", ephemeral=True)
+
+    @discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
+    @commands.has_permissions(administrator=True)
+    async def view_all_schedules(self, ctx):
+        """Admin command to view all players' schedules in the current session"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        
+        if not session.player_schedules:
+            await ctx.respond("No players have submitted schedules yet.", ephemeral=True)
+            return
+        
+        # Create main embed
+        embed = discord.Embed(
+            title="📊 All Players' Schedules",
+            description=f"**{session.teams[0]} vs {session.teams[1]}**\n{len(session.player_schedules)}/{session.expected_players} players completed",
+            color=0x0099ff
+        )
+        
+        # Time slots for reference
+        time_slots = {
+            '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM', 
+            '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
+        }
+        
+        schedule_text = ""
+        
+        for user_id, player_schedule in session.player_schedules.items():
+            try:
+                # Get user display name
+                user = self.bot.get_user(int(user_id))
+                player_name = user.display_name if user else f"User {user_id}"
+                
+                schedule_text += f"\n**{player_name}:**\n"
+                
+                # Show availability for each day
+                for date_info in session.schedule_dates:
+                    day_name = date_info['day_name']
+                    day_display = f"{date_info['day_name']}, {date_info['date']}"
+                    
+                    if day_name in player_schedule:
+                        available_times = player_schedule[day_name]
+                        
+                        if not available_times:
+                            schedule_text += f"  • {day_display}: ❌ Not available\n"
+                        elif len(available_times) >= 6:
+                            schedule_text += f"  • {day_display}: ✅ All day available\n"
+                        else:
+                            # Show specific times
+                            time_display = []
+                            for time_24h in available_times:
+                                if time_24h in time_slots:
+                                    time_display.append(time_slots[time_24h])
+                            
+                            if time_display:
+                                schedule_text += f"  • {day_display}: ✅ {', '.join(time_display)}\n"
+                            else:
+                                schedule_text += f"  • {day_display}: ⚠️ Invalid times\n"
+                    else:
+                        schedule_text += f"  • {day_display}: ⏳ Not set\n"
+                
+                schedule_text += "\n"  # Add spacing between players
+                
+            except Exception as e:
+                schedule_text += f"\n**User {user_id}:** Error loading schedule ({str(e)})\n\n"
+        
+        # Split into multiple embeds if too long (Discord limit is 4096 characters)
+        if len(schedule_text) > 3500:
+            # Send summary first
+            embed.add_field(
+                name="📋 Summary",
+                value=f"Schedules are too long to display in one message. Use `/schedule_summary` for a condensed view.",
+                inline=False
+            )
+            await ctx.respond(embed=embed, ephemeral=True)
+            
+            # Send detailed view in chunks
+            chunks = [schedule_text[i:i+3500] for i in range(0, len(schedule_text), 3500)]
+            
+            for i, chunk in enumerate(chunks):
+                chunk_embed = discord.Embed(
+                    title=f"📊 Detailed Schedules (Part {i+1}/{len(chunks)})",
+                    description=chunk,
+                    color=0x0099ff
+                )
+                await ctx.followup.send(embed=chunk_embed, ephemeral=True)
+        else:
+            embed.add_field(
+                name="📋 Player Availability",
+                value=schedule_text or "No schedules found.",
+                inline=False
+            )
+            await ctx.respond(embed=embed, ephemeral=True)
+
+    @discord.slash_command(name="schedule_summary", description="View condensed summary of all players' availability")
+    @commands.has_permissions(administrator=True)
+    async def schedule_summary(self, ctx):
+        """Admin command to view a condensed summary of player availability"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        
+        if not session.player_schedules:
+            await ctx.respond("No players have submitted schedules yet.", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="📊 Schedule Summary",
+            description=f"**{session.teams[0]} vs {session.teams[1]}**",
+            color=0x0099ff
+        )
+        
+        # Create availability matrix
+        summary_text = "```\n"
+        summary_text += "Player".ljust(15) + " | "
+        
+        # Header with day abbreviations
+        for date_info in session.schedule_dates:
+            day_abbr = date_info['day_name'][:3]  # Mon, Tue, etc.
+            summary_text += f"{day_abbr}".ljust(6)
+        summary_text += "\n" + "-" * 65 + "\n"
+        
+        # Player rows
+        for user_id, player_schedule in session.player_schedules.items():
+            try:
+                user = self.bot.get_user(int(user_id))
+                player_name = (user.display_name if user else f"User{user_id}")[:14]  # Truncate long names
+                
+                summary_text += player_name.ljust(15) + " | "
+                
+                for date_info in session.schedule_dates:
+                    day_name = date_info['day_name']
+                    
+                    if day_name in player_schedule:
+                        available_times = player_schedule[day_name]
+                        
+                        if not available_times:
+                            summary_text += "❌".ljust(6)
+                        elif len(available_times) >= 6:
+                            summary_text += "✅✅".ljust(6)
+                        else:
+                            summary_text += f"✅{len(available_times)}".ljust(6)
+                    else:
+                        summary_text += "⏳".ljust(6)
+                
+                summary_text += "\n"
+                
+            except Exception as e:
+                summary_text += f"Error".ljust(15) + " | " + "❌".ljust(6) * 7 + "\n"
+        
+        summary_text += "```"
+        
+        embed.add_field(
+            name="Legend",
+            value="❌ = Not available | ✅✅ = All day | ✅3 = 3 time slots | ⏳ = Not set",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Availability Matrix",
+            value=summary_text,
+            inline=False
+        )
+        
+        # Add common times analysis
+        common_times = session.find_common_times()
+        if common_times:
+            common_text = ""
+            for day_name, times in common_times.items():
+                date_info = session.get_date_info(day_name)
+                day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
+                
+                time_slots = {
+                    '18:00': '6PM', '19:00': '7PM', '20:00': '8PM', 
+                    '21:00': '9PM', '22:00': '10PM', '23:00': '11PM', '00:00': '12AM'
+                }
+                
+                time_display = [time_slots.get(t, t) for t in times[:3]]  # Show first 3
+                if len(times) > 3:
+                    time_display.append(f"+{len(times)-3} more")
+                
+                common_text += f"**{day_display}:** {', '.join(time_display)}\n"
+            
+            embed.add_field(
+                name="🎯 Possible Game Times",
+                value=common_text,
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="⚠️ No Common Times",
+                value="No times work for all players yet.",
+                inline=False
+            )
+        
+        await ctx.respond(embed=embed, ephemeral=True)
+
+    @discord.slash_command(name="export_schedules", description="Export all schedules as a file")
+    @commands.has_permissions(administrator=True)
+    async def export_schedules(self, ctx):
+        """Export all player schedules as a JSON file"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        
+        if not session.player_schedules:
+            await ctx.respond("No players have submitted schedules yet.", ephemeral=True)
+            return
+        
+        try:
+            import json
+            import io
+            from datetime import datetime
+            
+            # Create export data
+            export_data = {
+                "export_timestamp": datetime.now().isoformat(),
+                "teams": session.teams,
+                "channel_id": str(channel_id),
+                "schedule_dates": session.schedule_dates,
+                "player_count": len(session.player_schedules),
+                "expected_players": session.expected_players,
+                "players": {}
+            }
+            
+            # Add player data with names
+            for user_id, player_schedule in session.player_schedules.items():
+                try:
+                    user = self.bot.get_user(int(user_id))
+                    player_name = user.display_name if user else f"User {user_id}"
+                    
+                    export_data["players"][str(user_id)] = {
+                        "name": player_name,
+                        "schedule": player_schedule
+                    }
+                except Exception as e:
+                    export_data["players"][str(user_id)] = {
+                        "name": f"User {user_id}",
+                        "schedule": player_schedule,
+                        "error": str(e)
+                    }
+            
+            # Create file
+            json_data = json.dumps(export_data, indent=2, default=str)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"schedules_{session.teams[0].replace(' ', '_')}_vs_{session.teams[1].replace(' ', '_')}_{timestamp}.json"
+            
+            file = discord.File(
+                io.StringIO(json_data),
+                filename=filename
+            )
+            
+            embed = discord.Embed(
+                title="📁 Schedules Exported",
+                description=f"Exported {len(session.player_schedules)} player schedules",
+                color=0x00ff00
+            )
+            
+            await ctx.respond(embed=embed, file=file, ephemeral=True)
+            
+        except Exception as e:
+            await ctx.respond(f"Error exporting schedules: {str(e)}", ephemeral=True)
 
 class CalendarScheduleView(discord.ui.View):
     def __init__(self, user_id, session):
