@@ -16,7 +16,7 @@ from cogs.profile_linking import ProfileLinkingCog
 from cogs.blcsx_profiles import BLCSXProfilesCog
 
 # Import database setup
-from models.scheduling import initialize_database
+# from models.scheduling import initialize_database
 from models.player_profile import Base, engine
 
 class RocketLeagueBot(commands.Bot):
