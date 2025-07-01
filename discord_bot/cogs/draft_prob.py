@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 # Import database functions
 try:
-    from discord_bot.models.scheduling import save_session, delete_session, get_all_active_sessions
+    from discord_bot.models.scheduling import save_session, delete_session, get_all_active_sessions, load_session, SchedulingSession as DBSchedulingSession
 except ImportError:
     print("Warning: scheduling module not found. Database persistence disabled.")
     save_session = lambda x: None
@@ -1594,7 +1594,7 @@ class DraftLotteryCog(commands.Cog):
             
             for db_session in db_sessions:
                 try:
-                    session = SchedulingSession.from_db(db_session)
+                    session = DBSchedulingSession.from_db(db_session)
                     self.active_sessions[int(db_session.channel_id)] = session
                     loaded_count += 1
                 except Exception as e:
@@ -1607,15 +1607,14 @@ class DraftLotteryCog(commands.Cog):
                 color=0x00ff00
             )
             
-            await ctx.respond(embed=embed, ephemeral=True)
-            
         except Exception as e:
-            error_embed = discord.Embed(
+            embed = discord.Embed(
                 title="❌ Error Reloading Sessions",
                 description=f"An error occurred while reloading sessions: {str(e)}",
                 color=0xff0000
             )
-            await ctx.respond(embed=error_embed, ephemeral=True)
+            
+        await ctx.respond(embed=embed, ephemeral=True)
 
     @discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
     @commands.has_permissions(administrator=True)
