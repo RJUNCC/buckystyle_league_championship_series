@@ -1425,7 +1425,7 @@ class DraftLotteryCog(commands.Cog):
     async def db_health(self, ctx):
         """Check database health and connection status"""
         try:
-            from models.scheduling import engine
+            from discord_bot.models.scheduling import engine, get_all_active_sessions
             from sqlalchemy import text
             import time
             
@@ -1445,7 +1445,6 @@ class DraftLotteryCog(commands.Cog):
             
             # Count active sessions
             try:
-                from models.scheduling import get_all_active_sessions
                 active_sessions = get_all_active_sessions()
                 session_count = len(active_sessions)
             except Exception as e:
@@ -1547,7 +1546,7 @@ class DraftLotteryCog(commands.Cog):
     async def debug_sessions(self, ctx):
         """Debug what sessions are in database vs memory"""
         try:
-            from models.scheduling import get_all_active_sessions
+            from discord_bot.models.scheduling import get_all_active_sessions
             
             # Get from database
             db_sessions = get_all_active_sessions()
@@ -1587,7 +1586,7 @@ class DraftLotteryCog(commands.Cog):
             color=0x00ff00
         )
         try:
-            from models.scheduling import get_all_active_sessions
+            from discord_bot.models.scheduling import get_all_active_sessions, SchedulingSession as DBSchedulingSession
             
             # Clear current sessions
             old_count = len(self.active_sessions)
@@ -1654,6 +1653,11 @@ class DraftLotteryCog(commands.Cog):
                 
                 schedule_text += f"\n**{player_name}:**\n"
                 
+                # Gracefully handle corrupted or non-dict schedule data
+                if not isinstance(player_schedule, dict):
+                    schedule_text += f"  • ⚠️ Corrupted schedule data. Please use `/my_schedule` to reset.\n\n"
+                    continue
+
                 # Show availability for each day
                 for date_info in session.schedule_dates:
                     day_name = date_info['day_name']
@@ -1683,7 +1687,7 @@ class DraftLotteryCog(commands.Cog):
                 schedule_text += "\n"  # Add spacing between players
                 
             except Exception as e:
-                schedule_text += f"\n**User {user_id}:** Error loading schedule ({str(e)})\n\n"
+                schedule_text += f"\n**User {user_id}:** Error loading schedule (`{type(e).__name__}: {e}`)\n\n"
         
         # Split into multiple embeds if too long (Discord limit is 4096 characters)
         if len(schedule_text) > 3500:
