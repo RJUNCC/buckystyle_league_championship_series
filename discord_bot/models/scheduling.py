@@ -25,13 +25,15 @@ class SchedulingSession(Base):
     is_active = Column(Boolean, default=True)
 
 def get_database_url():
-    """Get database URL with PostgreSQL support"""
+    """Get database URL with PostgreSQL support and robust local fallback."""
     database_url = os.getenv('DATABASE_URL')
     
     if not database_url:
-        # Default to SQLite with persistent path
-        ensure_data_directory()
-        return 'sqlite:////app/data/scheduling.db'
+        # Default to a persistent SQLite database in the project's /data directory
+        data_dir = ensure_data_directory()
+        db_path = data_dir / "scheduling.db"
+        print(f"💽 No DATABASE_URL env var found. Defaulting to SQLite at: {db_path}")
+        return f'sqlite:///{db_path}'
     
     # Handle PostgreSQL URL format (DigitalOcean sometimes uses postgres://)
     if database_url.startswith('postgres://'):
@@ -40,14 +42,20 @@ def get_database_url():
     return database_url
 
 def ensure_data_directory():
-    """Ensure the data directory exists for SQLite"""
+    """Ensure the data directory exists for SQLite, creating it if necessary."""
     try:
-        data_path = Path("/app/data")
+        # Assumes this file is in project_root/discord_bot/models/
+        project_root = Path(__file__).resolve().parents[2]
+        data_path = project_root / "data"
         data_path.mkdir(parents=True, exist_ok=True)
+        print(f"✅ Data directory ensured at: {data_path}")
         return data_path
     except Exception as e:
-        print(f"Warning: Could not create data directory: {e}")
-        return Path("/tmp")
+        print(f"⚠️ Warning: Could not create data directory: {e}. Using /tmp as fallback.")
+        # Fallback for environments where this might fail
+        tmp_path = Path("/tmp")
+        tmp_path.mkdir(exist_ok=True)
+        return tmp_path
 
 def create_database_engine():
     """Create database engine with appropriate settings"""

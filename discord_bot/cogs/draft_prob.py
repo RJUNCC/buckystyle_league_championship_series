@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 # Import database functions
 try:
-    from models.scheduling import save_session, load_session, delete_session, get_all_active_sessions
+    from discord_bot.models.scheduling import save_session, delete_session, get_all_active_sessions
 except ImportError:
     print("Warning: scheduling module not found. Database persistence disabled.")
     save_session = lambda x: None
@@ -49,11 +49,14 @@ class SchedulingSession:
     def from_db(cls, db_session):
         """Create a SchedulingSession from database data"""
         session = cls(int(db_session.channel_id), [db_session.team1, db_session.team2])
-        session.player_schedules = db_session.player_schedules or {}
-        session.players_responded = set(db_session.players_responded or [])
+        
+        # Convert string keys back to integers
+        session.player_schedules = {int(k): v for k, v in (db_session.player_schedules or {}).items()}
+        session.players_responded = set(int(uid) for uid in (db_session.players_responded or []))
+        session.confirmations = {int(k): v for k, v in (db_session.confirmations or {}).items()}
+
         session.expected_players = db_session.expected_players
         session.schedule_dates = db_session.schedule_dates or session.generate_next_week()
-        session.confirmations = db_session.confirmations or {}
         return session
     
     def generate_next_week(self):
