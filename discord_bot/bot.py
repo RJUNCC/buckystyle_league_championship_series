@@ -57,23 +57,13 @@ class RocketLeagueBot(commands.Bot):
         logger.info(f'✅ {self.user} has connected to Discord!')
         logger.info(f'📊 Connected to {len(self.guilds)} servers')
         
-        # Sync slash commands
-        try:
-            synced = await self.tree.sync()
-            logger.info(f'✅ Synced {len(synced)} command(s)')
-        except Exception as e:
-            logger.error(f'❌ Failed to sync commands: {e}')
+        # Note: py-cord automatically syncs slash commands, no manual sync needed
+        logger.info('✅ Slash commands auto-synced by py-cord')
     
     async def on_guild_join(self, guild):
         """Called when bot joins a new server"""
         logger.info(f'🆕 Joined new server: {guild.name} (ID: {guild.id})')
-        
-        # Try to sync commands for the new server
-        try:
-            await self.tree.sync(guild=guild)
-            logger.info(f'✅ Synced commands for {guild.name}')
-        except Exception as e:
-            logger.error(f'❌ Failed to sync commands for {guild.name}: {e}')
+        # py-cord handles command syncing automatically for new guilds
     
     def load_cogs(self):
         """Load all cogs with error handling"""
@@ -208,9 +198,6 @@ async def main():
             logger.info("   /blcs_leaderboard - Dominance quotient rankings")
             logger.info("   /blcs_link - Link ballchasing.com account")
             logger.info("   /blcs_update - Update stats (admin only)")
-            logger.info("   /blcs_compare - Compare two players")
-            logger.info("   /blcs_stat_leaders - Top performers by stat")
-            logger.info("   /blcs_quickstats - Quick player overview")
         elif not BLCSX_STATS_AVAILABLE:
             logger.warning("⚠️ BLCSX stats unavailable - missing dependencies (psycopg2, pandas, numpy)")
             logger.warning("   Install with: pip install psycopg2-binary pandas numpy aiohttp")
