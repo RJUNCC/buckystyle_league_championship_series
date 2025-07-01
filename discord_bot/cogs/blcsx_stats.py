@@ -744,7 +744,7 @@ class BLCSXStatsCog(commands.Cog):
                     medal = f"**{i}.**"
                 
                 leaderboard_text += f"{medal} **{player_name}** {indicator['emoji']}"
-                leaderboard_text += f"    ⭐ Avg Score: **{player.get('avg_score', 0):.0f}** | 🏆 DQ: {dq:.1f}% | 🎯 {player['games_played']} games | 📈 {win_rate:.1f}% WR"
+                leaderboard_text += f"\n⭐ Avg Score: **{player.get('avg_score', 0):.0f}** | 🏆 DQ: {dq:.1f}% | 🎯 {player['games_played']} games | 📈 {win_rate:.1f}% WR"
             
             embed.add_field(
                 name="📊 Rankings",
