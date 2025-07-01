@@ -1,0 +1,58 @@
+[bot] [2025-07-01 15:56:55] 2025-07-01 15:56:55,987 - matplotlib.font_manager - INFO - generated new fontManager
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,763 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,776 - __main__ - INFO - 🏥 Health check server task created
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,778 - __main__ - INFO - 🔄 Initializing database connection...
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,780 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,853 - models.database_config - INFO - ✅ Database connection successful
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,857 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,885 - models.database_config - INFO - ✅ Database tables created/verified
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,897 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,900 - __main__ - INFO - 🔧 Checking for database migrations...
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,924 - __main__ - INFO - ✅ Database schema is up to date
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,928 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,928 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,928 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,929 - __main__ - INFO -    🎮 BLCSX Stats commands available:
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,929 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,929 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,929 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,929 - __main__ - INFO -    /blcs_update - Update stats (admin only)
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,930 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,932 - __main__ - INFO - ✅ DraftLotteryCog loaded successfully
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,933 - __main__ - INFO - ✅ PlayerProfilesCog loaded successfully
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,934 - __main__ - INFO - ✅ ProfileLinkingCog loaded successfully
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,936 - __main__ - INFO - ✅ BLCSXProfilesCog loaded successfully
+[bot] [2025-07-01 15:56:56] 2025-07-01 15:56:56,937 - __main__ - INFO - ✅ EnhancedProfilesCog loaded successfully
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,025 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,026 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,028 - __main__ - INFO - ✅ BLCSXStatsCog loaded successfully
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,029 - __main__ - INFO - 🚀 Starting Discord bot...
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,029 - discord.client - INFO - logging in using static token
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,045 - __main__ - INFO - ✅ Health check server started on port 8080
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,401 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
+[bot] [2025-07-01 15:56:57] 2025-07-01 15:56:57,508 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-d-3mzm",{"micros":82957,"calls":["id_created",{"micros":342,"calls":[]},"session_lookup_time",{"micros":2012,"calls":[]},"session_lookup_finished",{"micros":11,"calls":[]},"discord-sessions-prd-2-141",{"micros":79826,"calls":["start_session",{"micros":67136,"calls":["discord-api-rpc-78fbc5b697-482zn",{"micros":53183,"calls":["get_user",{"micros":7215},"get_guilds",{"micros":4050},"send_scheduled_deletion_message",{"micros":17},"guild_join_requests",{"micros":3},"authorized_ip_coro",{"micros":14},"pending_payments",{"micros":2117},"apex_experiments",{"micros":5},"user_activities",{"micros":2},"played_application_ids",{"micros":2}]}]},"starting_guild_connect",{"micros":24,"calls":[]},"presence_started",{"micros":359,"calls":[]},"guilds_started",{"micros":91,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":1,"calls":[]},"presence_connect",{"micros":12198,"calls":[]},"connect_finished",{"micros":12201,"calls":[]},"build_ready",{"micros":12,"calls":[]},"clean_ready",{"micros":0,"calls":[]},"optimize_ready",{"micros":1,"calls":[]},"split_ready",{"micros":0,"calls":[]}]}]}] (Session ID: 5a2da2102959c6d51dacb425a7dc1d64).
+[bot] [2025-07-01 15:56:59] 2025-07-01 15:56:59,539 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
+[bot] [2025-07-01 15:56:59] 2025-07-01 15:56:59,539 - __main__ - INFO - 📊 Connected to 2 servers
+[bot] [2025-07-01 15:56:59] 2025-07-01 15:56:59,540 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
+[bot] [2025-07-01 16:01:34] Ignoring exception in command view_all_schedules:
+[bot] [2025-07-01 16:01:34] Traceback (most recent call last):
+[bot] [2025-07-01 16:01:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
+[bot] [2025-07-01 16:01:34]     ret = await coro(arg)
+[bot] [2025-07-01 16:01:34]           ^^^^^^^^^^^^^^^
+[bot] [2025-07-01 16:01:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
+[bot] [2025-07-01 16:01:34]     await self.callback(self.cog, ctx, **kwargs)
+[bot] [2025-07-01 16:01:34]   File "/app/cogs/draft_prob.py", line 1636, in view_all_schedules
+[bot] [2025-07-01 16:01:34]     description=f"**{session.teams[0]} vs {session.teams[1]}**\n{len(session.player_schedules)}/{session.expected_players} players completed",
+[bot] [2025-07-01 16:01:34]                      ^^^^^^^^^^^^^
+[bot] [2025-07-01 16:01:34] AttributeError: 'SchedulingSession' object has no attribute 'teams'. Did you mean: 'team1'?
+[bot] [2025-07-01 16:01:34] 
+[bot] [2025-07-01 16:01:34] The above exception was the direct cause of the following exception:
+[bot] [2025-07-01 16:01:34] 
+[bot] [2025-07-01 16:01:34] Traceback (most recent call last):
+[bot] [2025-07-01 16:01:34]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
+[bot] [2025-07-01 16:01:34]     await ctx.command.invoke(ctx)
+[bot] [2025-07-01 16:01:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
+[bot] [2025-07-01 16:01:34]     await injected(ctx)
+[bot] [2025-07-01 16:01:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
+[bot] [2025-07-01 16:01:34]     raise ApplicationCommandInvokeError(exc) from exc
+[bot] [2025-07-01 16:01:34] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: AttributeError: 'SchedulingSession' object has no attribute 'teams'

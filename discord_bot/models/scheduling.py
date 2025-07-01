@@ -38,6 +38,11 @@ class SchedulingSession(Base):
         self.created_at = datetime.now()
         self.is_active = True
 
+    @property
+    def teams(self):
+        """Returns team1 and team2 as a list."""
+        return [self.team1, self.team2]
+
     def generate_next_week(self):
         """Generate the next 7 days starting from current day"""
         dates = []
@@ -207,8 +212,9 @@ def save_session(session_obj):
             existing.players_responded = players_responded_list
             existing.confirmations = confirmations_str
             existing.schedule_dates = getattr(session_obj, 'schedule_dates', [])
-            existing.team1 = session_obj.teams[0]
-            existing.team2 = session_obj.teams[1]
+            if hasattr(session_obj, 'teams') and len(session_obj.teams) == 2:
+                existing.team1 = session_obj.teams[0]
+                existing.team2 = session_obj.teams[1]
             existing.expected_players = getattr(session_obj, 'expected_players', 6)
             print(f"📝 Updated session for channel {session_obj.channel_id}")
         else:
