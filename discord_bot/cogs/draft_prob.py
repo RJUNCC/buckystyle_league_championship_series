@@ -1567,7 +1567,7 @@ class DraftLotteryCog(commands.Cog):
             embed.add_field(
                 name="Database Sessions", 
                 value=f"{len(db_sessions)} sessions\n" +
-                    "
+                    f"
 ".join([f"Channel {s.channel_id}: {s.team1} vs {s.team2} (Active: {s.is_active})" for s in db_sessions]) if db_sessions else "None",
                 inline=False
             )

@@ -1,0 +1,84 @@
+[bot] [2025-07-01 05:27:48] 2025-07-01 05:27:48,158 - matplotlib.font_manager - INFO - generated new fontManager
+[bot] [2025-07-01 05:27:48] 2025-07-01 05:27:48,984 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
+[bot] [2025-07-01 05:27:48] 2025-07-01 05:27:48,995 - __main__ - INFO - 🏥 Health check server task created
+[bot] [2025-07-01 05:27:48] 2025-07-01 05:27:48,997 - __main__ - INFO - 🔄 Initializing database connection...
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,111 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,234 - models.database_config - INFO - ✅ Database connection successful
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,236 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,344 - models.database_config - INFO - ✅ Database tables created/verified
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,355 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,361 - __main__ - INFO - 🔧 Checking for database migrations...
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,387 - __main__ - INFO - ✅ Database schema is up to date
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,392 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,393 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,395 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,395 - __main__ - INFO -    🎮 BLCSX Stats commands available:
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,397 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,398 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,398 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,398 - __main__ - INFO -    /blcs_update - Update stats (admin only)
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,398 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,401 - __main__ - INFO - ✅ DraftLotteryCog loaded successfully
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,402 - __main__ - INFO - ✅ PlayerProfilesCog loaded successfully
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,404 - __main__ - INFO - ✅ ProfileLinkingCog loaded successfully
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,405 - __main__ - INFO - ✅ BLCSXProfilesCog loaded successfully
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,406 - __main__ - INFO - ✅ EnhancedProfilesCog loaded successfully
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,484 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,484 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,485 - __main__ - INFO - ✅ BLCSXStatsCog loaded successfully
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,486 - __main__ - INFO - 🚀 Starting Discord bot...
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,486 - discord.client - INFO - logging in using static token
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,509 - __main__ - INFO - ✅ Health check server started on port 8080
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,780 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
+[bot] [2025-07-01 05:27:49] 2025-07-01 05:27:49,976 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-c-45h3",{"micros":165432,"calls":["id_created",{"micros":393,"calls":[]},"session_lookup_time",{"micros":326,"calls":[]},"session_lookup_finished",{"micros":28,"calls":[]},"discord-sessions-prd-2-83",{"micros":164294,"calls":["start_session",{"micros":137292,"calls":["discord-api-rpc-78fbc5b697-7fp2j",{"micros":102354,"calls":["get_user",{"micros":13608},"get_guilds",{"micros":30381},"send_scheduled_deletion_message",{"micros":22},"guild_join_requests",{"micros":3},"authorized_ip_coro",{"micros":11},"pending_payments",{"micros":2133},"apex_experiments",{"micros":5},"user_activities",{"micros":10},"played_application_ids",{"micros":2}]}]},"starting_guild_connect",{"micros":28,"calls":[]},"presence_started",{"micros":10875,"calls":[]},"guilds_started",{"micros":134,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":1,"calls":[]},"presence_connect",{"micros":15946,"calls":[]},"connect_finished",{"micros":15949,"calls":[]},"build_ready",{"micros":13,"calls":[]},"clean_ready",{"micros":1,"calls":[]},"optimize_ready",{"micros":0,"calls":[]},"split_ready",{"micros":0,"calls":[]}]}]}] (Session ID: 96668483713467a973745f51088ca60c).
+[bot] [2025-07-01 05:27:52] 2025-07-01 05:27:52,003 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
+[bot] [2025-07-01 05:27:52] 2025-07-01 05:27:52,006 - __main__ - INFO - 📊 Connected to 2 servers
+[bot] [2025-07-01 05:27:52] 2025-07-01 05:27:52,006 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
+[bot] [2025-07-01 05:28:14] Ignoring exception in command backup_sessions:
+[bot] [2025-07-01 05:28:14] Traceback (most recent call last):
+[bot] [2025-07-01 05:28:14]   File "/app/cogs/draft_prob.py", line 1601, in backup_sessions
+[bot] [2025-07-01 05:28:14]     await ctx.respond("No active sessions to backup.", ephemeral=True)
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/interactions.py", line 620, in respond
+[bot] [2025-07-01 05:28:14]     return await self.response.send_message(*args, **kwargs)
+[bot] [2025-07-01 05:28:14]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/interactions.py", line 961, in send_message
+[bot] [2025-07-01 05:28:14]     await self._locked_response(
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/interactions.py", line 1292, in _locked_response
+[bot] [2025-07-01 05:28:14]     await coro
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/webhook/async_.py", line 222, in request
+[bot] [2025-07-01 05:28:14]     raise NotFound(response, data)
+[bot] [2025-07-01 05:28:14] discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+[bot] [2025-07-01 05:28:14] 
+[bot] [2025-07-01 05:28:14] During handling of the above exception, another exception occurred:
+[bot] [2025-07-01 05:28:14] 
+[bot] [2025-07-01 05:28:14] Traceback (most recent call last):
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
+[bot] [2025-07-01 05:28:14]     ret = await coro(arg)
+[bot] [2025-07-01 05:28:14]           ^^^^^^^^^^^^^^^
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
+[bot] [2025-07-01 05:28:14]     await self.callback(self.cog, ctx, **kwargs)
+[bot] [2025-07-01 05:28:14]   File "/app/cogs/draft_prob.py", line 1623, in backup_sessions
+[bot] [2025-07-01 05:28:14]     await ctx.respond(f"Error creating backup: {str(e)}", ephemeral=True)
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/interactions.py", line 620, in respond
+[bot] [2025-07-01 05:28:14]     return await self.response.send_message(*args, **kwargs)
+[bot] [2025-07-01 05:28:14]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/interactions.py", line 961, in send_message
+[bot] [2025-07-01 05:28:14]     await self._locked_response(
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/interactions.py", line 1292, in _locked_response
+[bot] [2025-07-01 05:28:14]     await coro
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/webhook/async_.py", line 222, in request
+[bot] [2025-07-01 05:28:14]     raise NotFound(response, data)
+[bot] [2025-07-01 05:28:14] discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+[bot] [2025-07-01 05:28:14] 
+[bot] [2025-07-01 05:28:14] The above exception was the direct cause of the following exception:
+[bot] [2025-07-01 05:28:14] 
+[bot] [2025-07-01 05:28:14] Traceback (most recent call last):
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
+[bot] [2025-07-01 05:28:14]     await ctx.command.invoke(ctx)
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
+[bot] [2025-07-01 05:28:14]     await injected(ctx)
+[bot] [2025-07-01 05:28:14]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
+[bot] [2025-07-01 05:28:14]     raise ApplicationCommandInvokeError(exc) from exc
+[bot] [2025-07-01 05:28:14] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+[bot] [2025-07-01 05:29:00] 2025-07-01 05:29:00,171 - models.player_profile - INFO - Updated profile for Discord ID 298162654592237579
+[bot] [2025-07-01 05:30:26] 2025-07-01 05:30:26,460 - models.player_profile - INFO - Updated profile for Discord ID 29816265459223
