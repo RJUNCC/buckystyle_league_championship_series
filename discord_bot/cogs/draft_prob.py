@@ -1567,7 +1567,8 @@ class DraftLotteryCog(commands.Cog):
             embed.add_field(
                 name="Database Sessions", 
                 value=f"{len(db_sessions)} sessions\n" +
-                    "\n".join([f"Channel {s.channel_id}: {s.team1} vs {s.team2}" for s in db_sessions]) if db_sessions else "None",
+                    "
+".join([f"Channel {s.channel_id}: {s.team1} vs {s.team2} (Active: {s.is_active})" for s in db_sessions]) if db_sessions else "None",
                 inline=False
             )
             
@@ -1598,6 +1599,7 @@ class DraftLotteryCog(commands.Cog):
                     loaded_count += 1
                 except Exception as e:
                     print(f"Error loading session {db_session.channel_id}: {e}")
+                    embed.add_field(name=f"❌ Error loading {db_session.channel_id}", value=str(e), inline=False)
             
             embed = discord.Embed(
                 title="🔄 Sessions Reloaded",
