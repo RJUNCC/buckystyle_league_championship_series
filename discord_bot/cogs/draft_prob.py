@@ -57,9 +57,9 @@ class SchedulingSession:
         return session
     
     def generate_next_week(self):
-        """Generate the next 7 days starting from tomorrow with actual dates"""
+        """Generate the next 7 days starting from current day"""
         dates = []
-        start_date = datetime.now() + timedelta(days=1)  # Start from tomorrow
+        start_date = datetime.now()
         
         for i in range(7):
             current_date = start_date + timedelta(days=i)
@@ -1205,11 +1205,7 @@ class DraftLotteryCog(commands.Cog):
                 f"**Scheduling game between {team1} and {team2}**\n\n"
                 f"📋 **What Players Need to Do:**\n"
                 f"All **6 players** (3 from each team) choose an interface:\n"
-                f"• `/my_schedule` - Dropdown interface\n"
-                f"• `/my_schedule2` - Visual calendar interface ⭐\n\n"
-                f"🕐 **Two Interface Options:**\n"
-                f"• **Dropdown**: Select days and times using dropdown menus\n"
-                f"• **Calendar**: Click time buttons in a visual day-by-day layout\n"
+                f"• `/my_schedule1` - Visual calendar interface ⭐\n\n"
                 f"• Times range from 6 PM to 12 AM (7 time slots)\n"
                 f"• Easy buttons for 'Not Available' and 'All Day'\n\n"
                 f"🎯 **Process:**\n"
@@ -1218,7 +1214,6 @@ class DraftLotteryCog(commands.Cog):
                 f"3️⃣ All players confirm with ✅/❌ buttons\n"
                 f"4️⃣ If anyone declines, they update schedule and repeat\n\n"
                 f"⏳ **Progress:** Waiting for {session.expected_players} players...\n"
-                f"💡 **Tip:** Try `/my_schedule2` for the new visual calendar!"
             ),
             color=0x00ff00
         )
@@ -1226,46 +1221,46 @@ class DraftLotteryCog(commands.Cog):
         
         await ctx.respond(embed=embed)
 
-    @discord.slash_command(name="my_schedule", description="Set your weekly availability using interactive menus")
-    async def my_schedule(self, ctx):
-        """Interactive schedule setting"""
-        channel_id = ctx.channel.id
+    # @discord.slash_command(name="my_schedule", description="Set your weekly availability using interactive menus")
+    # async def my_schedule(self, ctx):
+    #     """Interactive schedule setting"""
+    #     channel_id = ctx.channel.id
         
-        if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
-            return
+    #     if channel_id not in self.active_sessions:
+    #         await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
+    #         return
         
-        session = self.active_sessions[channel_id]
-        user_id = ctx.author.id
+    #     session = self.active_sessions[channel_id]
+    #     user_id = ctx.author.id
         
-        # Create the interactive view with dropdowns and buttons
-        view = DaySelectionView(user_id, session)
+    #     # Create the interactive view with dropdowns and buttons
+    #     view = DaySelectionView(user_id, session)
         
-        # Allow players to reset/modify their schedule
-        if user_id in session.players_responded:
-            embed = discord.Embed(
-                title="🔄 Update Your Schedule",
-                description="Use the dropdown below to select a day and set your availability. You can modify any day multiple times.",
-                color=0xffa500
-            )
-        else:
-            embed = discord.Embed(
-                title="📅 Set Your Weekly Availability",
-                description="Use the dropdown below to select a day and set your available times. You can modify any day multiple times.",
-                color=0x0099ff
-            )
+    #     # Allow players to reset/modify their schedule
+    #     if user_id in session.players_responded:
+    #         embed = discord.Embed(
+    #             title="🔄 Update Your Schedule",
+    #             description="Use the dropdown below to select a day and set your availability. You can modify any day multiple times.",
+    #             color=0xffa500
+    #         )
+    #     else:
+    #         embed = discord.Embed(
+    #             title="📅 Set Your Weekly Availability",
+    #             description="Use the dropdown below to select a day and set your available times. You can modify any day multiple times.",
+    #             color=0x0099ff
+    #         )
         
-        try:
-            # Send the interactive interface directly in DM
-            await ctx.author.send(embed=embed, view=view)
-            await ctx.respond(f"{ctx.author.mention}, check your DMs for the interactive schedule interface!", ephemeral=True)
-        except discord.Forbidden:
-            await ctx.respond("I couldn't send you a DM. Please enable DMs from server members and try again.", ephemeral=True)
-        except Exception as e:
-            await ctx.respond(f"Error sending DM: {str(e)}", ephemeral=True)
+    #     try:
+    #         # Send the interactive interface directly in DM
+    #         await ctx.author.send(embed=embed, view=view)
+    #         await ctx.respond(f"{ctx.author.mention}, check your DMs for the interactive schedule interface!", ephemeral=True)
+    #     except discord.Forbidden:
+    #         await ctx.respond("I couldn't send you a DM. Please enable DMs from server members and try again.", ephemeral=True)
+    #     except Exception as e:
+    #         await ctx.respond(f"Error sending DM: {str(e)}", ephemeral=True)
 
-    @discord.slash_command(name="my_schedule2", description="Set your weekly availability using visual calendar interface")
-    async def my_schedule2(self, ctx):
+    @discord.slash_command(name="my_schedule", description="Set your weekly availability using visual calendar interface")
+    async def my_schedule(self, ctx):
         """Visual calendar-style schedule setting"""
         channel_id = ctx.channel.id
         
@@ -1475,7 +1470,7 @@ class DraftLotteryCog(commands.Cog):
         if remaining > 0:
             embed.add_field(
                 name="Remaining",
-                value=f"Waiting for {remaining} more players to use `/my_schedule` or `/my_schedule2`",
+                value=f"Waiting for {remaining} more players to use `/my_schedule`",
                 inline=False
             )
         else:
