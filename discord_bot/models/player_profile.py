@@ -1,191 +1,237 @@
-# File: discord_bot/models/player_profile.py (ENHANCED VERSION)
+# File: discord_bot/models/player_profile.py (UPDATED FOR POSTGRESQL)
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, JSON, BigInteger
+from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
-import os
+import uuid
+import logging
+from models.database_config import Base, get_session
 
-# Use same database setup as scheduling
-from models.scheduling import engine, Session
-
-Base = declarative_base()
+logger = logging.getLogger(__name__)
 
 class PlayerProfile(Base):
     __tablename__ = 'player_profiles'
     
-    id = Column(Integer, primary_key=True)
-    discord_id = Column(String, unique=True, index=True)  # Discord user ID
-    discord_username = Column(String)  # Discord display name
+    # Primary key - use UUID for PostgreSQL, Integer for SQLite
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    # Discord identifiers - BigInteger for Discord IDs (they're very large)
+    discord_id = Column(BigInteger, unique=True, index=True, nullable=False)
+    discord_username = Column(String(255))
     
     # Rocket League identifiers
-    rl_name = Column(String)  # In-game name
-    steam_id = Column(String)  # Steam ID for ballchasing.com
-    epic_id = Column(String)  # Epic Games ID
-    ballchasing_player_id = Column(String)  # ballchasing.com player ID
+    rl_name = Column(String(255))
+    steam_id = Column(String(255))
+    epic_id = Column(String(255))
+    ballchasing_player_id = Column(String(255))
+    ballchasing_platform = Column(String(50))  # steam, epic, etc.
     
-    # Profile customization (like hockey card info)
-    custom_title = Column(String)  # Custom title like "Team Captain"
-    favorite_car = Column(String)  # Octane, Dominus, etc.
-    rank_name = Column(String)  # Champion, Grand Champion, etc.
-    rank_division = Column(String)  # I, II, III, IV
-    mmr = Column(Integer)  # Current MMR
-    age = Column(Integer)  # Player age (like hockey cards)
+    # Profile customization
+    custom_title = Column(String(255))
+    favorite_car = Column(String(100))
+    rank_name = Column(String(100))
+    rank_division = Column(String(10))
+    mmr = Column(Integer)
+    age = Column(Integer)
     
-    # Basic stats (updated from ballchasing.com)
-    total_goals = Column(Integer, default=0)
-    total_saves = Column(Integer, default=0)
-    total_shots = Column(Integer, default=0)
-    total_score = Column(Integer, default=0)
-    total_assists = Column(Integer, default=0)
-    games_played = Column(Integer, default=0)
-    wins = Column(Integer, default=0)
-    losses = Column(Integer, default=0)
+    # Basic stats (from ballchasing.com or manual entry)
+    total_goals = Column(Integer, default=0, nullable=False)
+    total_saves = Column(Integer, default=0, nullable=False)
+    total_shots = Column(Integer, default=0, nullable=False)
+    total_score = Column(BigInteger, default=0, nullable=False)  # Can be very large
+    total_assists = Column(Integer, default=0, nullable=False)
+    games_played = Column(Integer, default=0, nullable=False)
+    wins = Column(Integer, default=0, nullable=False)
+    losses = Column(Integer, default=0, nullable=False)
     
-    # Advanced stats (percentages like the hockey card)
-    goal_percentage = Column(Float, default=0.0)  # Goals/Shots
-    save_percentage = Column(Float, default=0.0)  # Saves/Shots Against
-    win_percentage = Column(Float, default=0.0)   # Wins/Games
+    # Calculated percentages
+    goal_percentage = Column(Float, default=0.0, nullable=False)
+    save_percentage = Column(Float, default=0.0, nullable=False)
+    win_percentage = Column(Float, default=0.0, nullable=False)
     
-    # Additional tracked stats
-    mvp_count = Column(Integer, default=0)  # MVP performances
-    demos_inflicted = Column(Integer, default=0)  # Demos given
-    demos_taken = Column(Integer, default=0)  # Demos received
+    # Advanced stats
+    mvp_count = Column(Integer, default=0, nullable=False)
+    demos_inflicted = Column(Integer, default=0, nullable=False)
+    demos_taken = Column(Integer, default=0, nullable=False)
+    avg_speed = Column(Float, default=0.0, nullable=False)
     
-    # League-specific stats
-    season_goals = Column(Integer, default=0)
-    season_saves = Column(Integer, default=0)
-    season_wins = Column(Integer, default=0)
-    season_games = Column(Integer, default=0)
-    current_season = Column(String, default="Season 1")
+    # BLCS-specific stats
+    dominance_quotient = Column(Float, default=50.0, nullable=False)
+    percentile_rank = Column(Float, default=50.0, nullable=False)
+    
+    # Season tracking
+    season_goals = Column(Integer, default=0, nullable=False)
+    season_saves = Column(Integer, default=0, nullable=False)
+    season_wins = Column(Integer, default=0, nullable=False)
+    season_games = Column(Integer, default=0, nullable=False)
+    current_season = Column(String(100), default="BLCS 4")
     
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    last_updated = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_updated = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_game_date = Column(DateTime)
+    last_sync_date = Column(DateTime)  # When stats were last synced from ballchasing
     
     # Profile settings
-    is_active = Column(Boolean, default=True)
-    is_public = Column(Boolean, default=True)  # Allow others to view profile
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_public = Column(Boolean, default=True, nullable=False)
     
     # Additional data (JSON for flexibility)
-    extra_data = Column(JSON)  # Store additional stats, achievements, etc.
+    extra_data = Column(JSON)
+    
+    def __repr__(self):
+        return f"<PlayerProfile(discord_id={self.discord_id}, rl_name='{self.rl_name}', games={self.games_played})>"
+    
+    def calculate_per_game_stats(self):
+        """Calculate per-game statistics"""
+        if self.games_played == 0:
+            return {
+                'goals_per_game': 0.0,
+                'assists_per_game': 0.0,
+                'saves_per_game': 0.0,
+                'shots_per_game': 0.0,
+                'score_per_game': 0.0,
+                'demos_inflicted_per_game': 0.0,
+                'demos_taken_per_game': 0.0
+            }
+        
+        return {
+            'goals_per_game': self.total_goals / self.games_played,
+            'assists_per_game': self.total_assists / self.games_played,
+            'saves_per_game': self.total_saves / self.games_played,
+            'shots_per_game': self.total_shots / self.games_played,
+            'score_per_game': self.total_score / self.games_played,
+            'demos_inflicted_per_game': self.demos_inflicted / self.games_played,
+            'demos_taken_per_game': self.demos_taken / self.games_played
+        }
+    
+    def update_percentages(self):
+        """Update calculated percentages"""
+        # Goal percentage
+        if self.total_shots > 0:
+            self.goal_percentage = (self.total_goals / self.total_shots) * 100
+        else:
+            self.goal_percentage = 0.0
+        
+        # Win percentage
+        if self.games_played > 0:
+            self.win_percentage = (self.wins / self.games_played) * 100
+        else:
+            self.win_percentage = 0.0
+        
+        # Update timestamp
+        self.last_updated = datetime.utcnow()
 
-# Create the table
-Base.metadata.create_all(engine)
-
-# Helper functions
+# Helper functions with proper session management
 def get_player_profile(discord_id):
     """Get player profile by Discord ID"""
-    session = Session()
+    session = get_session()
     try:
         profile = session.query(PlayerProfile).filter_by(
-            discord_id=str(discord_id),
+            discord_id=int(discord_id),
             is_active=True
         ).first()
         return profile
+    except Exception as e:
+        logger.error(f"Error getting player profile {discord_id}: {e}")
+        return None
     finally:
         session.close()
 
 def create_or_update_profile(discord_id, **kwargs):
     """Create or update a player profile"""
-    session = Session()
+    session = get_session()
     try:
         profile = session.query(PlayerProfile).filter_by(
-            discord_id=str(discord_id)
+            discord_id=int(discord_id)
         ).first()
         
         if profile:
             # Update existing profile
             for key, value in kwargs.items():
-                if hasattr(profile, key):
+                if hasattr(profile, key) and value is not None:
                     setattr(profile, key, value)
             profile.last_updated = datetime.utcnow()
+            logger.info(f"Updated profile for Discord ID {discord_id}")
         else:
             # Create new profile
             profile = PlayerProfile(
-                discord_id=str(discord_id),
+                discord_id=int(discord_id),
                 **kwargs
             )
             session.add(profile)
+            logger.info(f"Created new profile for Discord ID {discord_id}")
+        
+        # Update calculated percentages
+        profile.update_percentages()
         
         session.commit()
         return profile
+        
     except Exception as e:
         session.rollback()
+        logger.error(f"Error creating/updating profile {discord_id}: {e}")
         raise e
     finally:
         session.close()
 
-def update_player_stats(discord_id, stats_data):
+def update_player_stats_from_ballchasing(discord_id, ballchasing_stats):
     """Update player stats from ballchasing.com data"""
-    session = Session()
+    session = get_session()
     try:
         profile = session.query(PlayerProfile).filter_by(
-            discord_id=str(discord_id)
+            discord_id=int(discord_id)
         ).first()
         
-        if profile:
-            # Update stats
-            profile.total_goals += stats_data.get('goals', 0)
-            profile.total_saves += stats_data.get('saves', 0)
-            profile.total_shots += stats_data.get('shots', 0)
-            profile.total_score += stats_data.get('score', 0)
-            profile.total_assists += stats_data.get('assists', 0)
-            profile.games_played += 1
-            
-            # Update advanced stats
-            if stats_data.get('mvp', False):
-                profile.mvp_count += 1
-            
-            profile.demos_inflicted += stats_data.get('demos_inflicted', 0)
-            profile.demos_taken += stats_data.get('demos_taken', 0)
-            
-            # Update season stats
-            profile.season_goals += stats_data.get('goals', 0)
-            profile.season_saves += stats_data.get('saves', 0)
-            profile.season_games += 1
-            
-            if stats_data.get('won', False):
-                profile.wins += 1
-                profile.season_wins += 1
-            else:
-                profile.losses += 1
-            
-            # Calculate percentages
-            if profile.total_shots > 0:
-                profile.goal_percentage = (profile.total_goals / profile.total_shots) * 100
-            
-            if profile.games_played > 0:
-                profile.win_percentage = (profile.wins / profile.games_played) * 100
-            
-            profile.last_updated = datetime.utcnow()
-            profile.last_game_date = datetime.utcnow()
-            
-            session.commit()
-            return profile
-            
+        if not profile:
+            # Create new profile with ballchasing data
+            profile = PlayerProfile(
+                discord_id=int(discord_id),
+                rl_name=ballchasing_stats.get('name', ''),
+                ballchasing_platform=ballchasing_stats.get('platform', ''),
+                **ballchasing_stats
+            )
+            session.add(profile)
+            logger.info(f"Created new profile from ballchasing data for {discord_id}")
+        else:
+            # Update existing profile
+            for key, value in ballchasing_stats.items():
+                if hasattr(profile, key) and value is not None:
+                    setattr(profile, key, value)
+            logger.info(f"Updated profile from ballchasing data for {discord_id}")
+        
+        # Update calculated fields
+        profile.update_percentages()
+        profile.last_sync_date = datetime.utcnow()
+        
+        session.commit()
+        return profile
+        
     except Exception as e:
         session.rollback()
+        logger.error(f"Error updating stats for {discord_id}: {e}")
         raise e
     finally:
         session.close()
 
 def get_all_profiles():
     """Get all active player profiles"""
-    session = Session()
+    session = get_session()
     try:
         profiles = session.query(PlayerProfile).filter_by(
             is_active=True,
             is_public=True
-        ).all()
+        ).order_by(PlayerProfile.games_played.desc()).all()
         return profiles
+    except Exception as e:
+        logger.error(f"Error getting all profiles: {e}")
+        return []
     finally:
         session.close()
 
 def search_profiles(search_term):
     """Search profiles by Discord username or RL name"""
-    session = Session()
+    session = get_session()
     try:
         profiles = session.query(PlayerProfile).filter(
             PlayerProfile.is_active == True,
@@ -195,12 +241,15 @@ def search_profiles(search_term):
             (PlayerProfile.rl_name.ilike(f'%{search_term}%'))
         ).all()
         return profiles
+    except Exception as e:
+        logger.error(f"Error searching profiles: {e}")
+        return []
     finally:
         session.close()
 
 def get_top_players_by_stat(stat_name, limit=10, min_games=5):
     """Get top players for a specific stat"""
-    session = Session()
+    session = get_session()
     try:
         query = session.query(PlayerProfile).filter(
             PlayerProfile.is_active == True,
@@ -218,34 +267,78 @@ def get_top_players_by_stat(stat_name, limit=10, min_games=5):
             query = query.order_by(PlayerProfile.win_percentage.desc())
         elif stat_name == 'goal_percentage':
             query = query.order_by(PlayerProfile.goal_percentage.desc())
-        elif stat_name == 'mvp_rate':
-            # Calculate MVP rate on the fly
-            query = query.all()
-            query = sorted(query, key=lambda p: (p.mvp_count / p.games_played) * 100 if p.games_played > 0 else 0, reverse=True)
-            return query[:limit]
+        elif stat_name == 'dominance_quotient':
+            query = query.order_by(PlayerProfile.dominance_quotient.desc())
+        else:
+            # Default to games played
+            query = query.order_by(PlayerProfile.games_played.desc())
         
         return query.limit(limit).all()
+        
+    except Exception as e:
+        logger.error(f"Error getting top players: {e}")
+        return []
     finally:
         session.close()
 
 def reset_season_stats(season_name):
     """Reset all players' season stats for a new season"""
-    session = Session()
+    session = get_session()
     try:
-        profiles = session.query(PlayerProfile).filter_by(is_active=True).all()
-        
-        for profile in profiles:
-            profile.season_goals = 0
-            profile.season_saves = 0
-            profile.season_wins = 0
-            profile.season_games = 0
-            profile.current_season = season_name
-            profile.last_updated = datetime.utcnow()
+        updated_count = session.query(PlayerProfile).filter_by(
+            is_active=True
+        ).update({
+            PlayerProfile.season_goals: 0,
+            PlayerProfile.season_saves: 0,
+            PlayerProfile.season_wins: 0,
+            PlayerProfile.season_games: 0,
+            PlayerProfile.current_season: season_name,
+            PlayerProfile.last_updated: datetime.utcnow()
+        })
         
         session.commit()
-        return len(profiles)
+        logger.info(f"Reset season stats for {updated_count} players")
+        return updated_count
+        
     except Exception as e:
         session.rollback()
+        logger.error(f"Error resetting season stats: {e}")
         raise e
     finally:
         session.close()
+
+def get_database_stats():
+    """Get database statistics for admin purposes"""
+    session = get_session()
+    try:
+        total_profiles = session.query(PlayerProfile).count()
+        active_profiles = session.query(PlayerProfile).filter_by(is_active=True).count()
+        profiles_with_games = session.query(PlayerProfile).filter(PlayerProfile.games_played > 0).count()
+        
+        # Most recent activity
+        latest_update = session.query(PlayerProfile.last_updated).order_by(
+            PlayerProfile.last_updated.desc()
+        ).first()
+        
+        latest_sync = session.query(PlayerProfile.last_sync_date).filter(
+            PlayerProfile.last_sync_date.isnot(None)
+        ).order_by(PlayerProfile.last_sync_date.desc()).first()
+        
+        return {
+            'total_profiles': total_profiles,
+            'active_profiles': active_profiles,
+            'profiles_with_games': profiles_with_games,
+            'latest_update': latest_update[0] if latest_update else None,
+            'latest_sync': latest_sync[0] if latest_sync else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting database stats: {e}")
+        return {}
+    finally:
+        session.close()
+
+# Legacy compatibility functions
+def update_player_stats(discord_id, stats_data):
+    """Legacy function - update player stats (compatibility)"""
+    return update_player_stats_from_ballchasing(discord_id, stats_data)
