@@ -11,9 +11,6 @@ services:
   instance_size_slug: basic-xxs
   http_port: 8080
   envs:
-  - key: DATABASE_URL
-    value: sqlite:////app/data/scheduling.db
-    scope: RUN_TIME
   - key: PORT
     value: "8080"
     scope: RUN_TIME

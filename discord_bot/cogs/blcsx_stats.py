@@ -859,17 +859,18 @@ class BLCSXStatsCog(commands.Cog):
                 if player_stats:
                     processed_players.append(player_stats)
             
-            # Calculate dominance quotients and update database
+            # Calculate dominance quotients for all players first
             for player_stats in processed_players:
-                dominance_quotient = self.calculator.calculate_simple_score(player_stats, processed_players)
-                player_stats['dominance_quotient'] = dominance_quotient
-                
-                # Calculate percentile rank
-                all_dqs = [p['dominance_quotient'] for p in processed_players]
-                ranking = self.calculator.calculate_ranking(dominance_quotient, all_dqs)
+                # This uses the complex calculation method, not the simple one
+                player_stats['dominance_quotient'] = self.calculate_dominance_quotient(player_stats, processed_players)
+
+            # Now that all DQs are calculated, determine percentile ranks and update the database
+            all_dqs = [p['dominance_quotient'] for p in processed_players]
+            for player_stats in processed_players:
+                ranking = SimpleStatsCalculator.calculate_ranking(player_stats['dominance_quotient'], all_dqs)
                 player_stats['percentile_rank'] = ranking['percentile']
                 
-                # Update database
+                # Update database with the fully processed stats
                 self.db.update_player_statistics(player_stats)
             
             logger.info(f"Processed {len(processed_players)} players successfully")
