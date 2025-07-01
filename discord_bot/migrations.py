@@ -36,7 +36,7 @@ def apply_migration():
     try:
         engine = create_engine(db_url)
         
-        # The SQL command to add all potentially missing columns.
+        # The SQL command to add all potentially missing columns and correct the discord_id type.
         # "IF NOT EXISTS" prevents errors if the columns already exist.
         sql_command = text("""
         ALTER TABLE player_profiles
@@ -46,7 +46,8 @@ def apply_migration():
         ADD COLUMN IF NOT EXISTS last_sync_date TIMESTAMPTZ,
         ADD COLUMN IF NOT EXISTS last_game_date TIMESTAMPTZ,
         ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true,
-        ADD COLUMN IF NOT EXISTS extra_data JSONB;
+        ADD COLUMN IF NOT EXISTS extra_data JSONB,
+        ALTER COLUMN discord_id TYPE BIGINT USING discord_id::BIGINT;
         """)
 
         with engine.connect() as connection:
