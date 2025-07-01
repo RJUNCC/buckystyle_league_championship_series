@@ -173,8 +173,10 @@ class BallchasingService:
 ballchasing_service = BallchasingService()
 
 # Helper functions for Discord commands
-def link_discord_to_ballchasing(discord_id, rl_name, steam_id=None):
+def link_discord_to_ballchasing(discord_id, rl_name, steam_id=None, is_admin=False):
     """Helper to link Discord user to ballchasing identity"""
+    # Add a check to ensure only admins can link other users if you want to be specific
+    # For now, the check is in the cog, which is sufficient
     return ballchasing_service.link_player_to_discord(discord_id, rl_name, steam_id)
 
 def start_monitoring_group(group_id):

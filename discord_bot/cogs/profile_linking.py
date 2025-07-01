@@ -139,7 +139,7 @@ class ProfileLinkingCog(commands.Cog):
         """Admin command to link other players"""
         
         try:
-            link_discord_to_ballchasing(user.id, rl_name, steam_id)
+            link_discord_to_ballchasing(user.id, rl_name, steam_id, is_admin=True)
             
             embed = discord.Embed(
                 title="✅ Player Linked",
