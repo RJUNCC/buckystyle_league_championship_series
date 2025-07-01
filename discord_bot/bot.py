@@ -1,4 +1,4 @@
-# File: discord_bot/bot.py (FINAL POSTGRESQL VERSION)
+# File: discord_bot/bot.py (FINAL POSTGRESQL VERSION WITH BLCSX STATS)
 
 import discord
 from discord.ext import commands
@@ -27,7 +27,7 @@ from cogs.player_profiles import PlayerProfilesCog
 from cogs.profile_linking import ProfileLinkingCog
 from cogs.blcsx_profiles import BLCSXProfilesCog
 from cogs.enhanced_profiles import EnhancedProfilesCog
-from cogs.blcs_stats import BLCSStatsCog
+from cogs.blcsx_stats import BLCSXStatsCog  # Fixed import name
 
 # Import ballchasing integration
 from services.ballchasing_stats_updater import initialize_ballchasing_updater
@@ -41,7 +41,7 @@ class RocketLeagueBot(commands.Bot):
         super().__init__(
             command_prefix='!',
             intents=intents,
-            description='Rocket League Discord Bot with PostgreSQL & BLCS Integration'
+            description='Rocket League Discord Bot with PostgreSQL & BLCSX Integration'
         )
     
     async def on_ready(self):
@@ -75,7 +75,7 @@ class RocketLeagueBot(commands.Bot):
             ProfileLinkingCog,      # General ballchasing.com linking
             BLCSXProfilesCog,       # Advanced BLCSX profiles
             EnhancedProfilesCog,    # Creative themed profiles
-            BLCSStatsCog            # BLCS stats integration
+            BLCSXStatsCog           # BLCSX comprehensive stats (NEW)
         ]
         
         for cog in cogs:
@@ -119,7 +119,8 @@ async def health_check_server():
                 "guilds": len(bot.guilds) if bot.is_ready() else 0,
                 "users": len(bot.users) if bot.is_ready() else 0,
                 "database_status": db_status,
-                "database_type": db_type
+                "database_type": db_type,
+                "blcsx_stats_enabled": os.getenv('BALLCHASING_API_KEY') is not None
             }
             return web.json_response(status)
             
@@ -186,19 +187,32 @@ async def main():
         logger.error("Bot cannot start without database connection")
         return
     
-    # Initialize BLCS ballchasing integration
+    # Initialize BLCSX ballchasing integration
     try:
         ballchasing_api_key = os.getenv('BALLCHASING_API_KEY')
         if ballchasing_api_key:
-            ballchasing_updater = initialize_ballchasing_updater(ballchasing_api_key)
-            logger.info("✅ BLCS ballchasing integration initialized")
-            logger.info("   Group: blcs-4-qz9e63f182")
-            logger.info("   🔗 Players can use /link_blcs to connect accounts")
+            logger.info("✅ BLCSX ballchasing integration initialized")
+            logger.info("   🎮 BLCSX Stats commands available:")
+            logger.info("   /blcs_profile - Comprehensive player profiles")
+            logger.info("   /blcs_leaderboard - Dominance quotient rankings")
+            logger.info("   /blcs_link - Link ballchasing.com account")
+            logger.info("   /blcs_update - Update stats (admin only)")
+            logger.info("   /blcs_compare - Compare two players")
+            logger.info("   /blcs_stat_leaders - Top performers by stat")
+            logger.info("   /blcs_quickstats - Quick player overview")
         else:
-            logger.warning("⚠️ BALLCHASING_API_KEY not found - BLCS features disabled")
-            logger.warning("   Add BALLCHASING_API_KEY to .env file to enable BLCS stats")
+            logger.warning("⚠️ BALLCHASING_API_KEY not found - BLCSX stats features disabled")
+            logger.warning("   Add BALLCHASING_API_KEY to .env file to enable comprehensive stats")
     except Exception as e:
-        logger.error(f"⚠️ BLCS integration failed to initialize: {e}")
+        logger.error(f"⚠️ BLCSX integration failed to initialize: {e}")
+    
+    # Initialize traditional ballchasing integration (if exists)
+    try:
+        if os.path.exists('services/ballchasing_stats_updater.py'):
+            ballchasing_updater = initialize_ballchasing_updater(os.getenv('BALLCHASING_API_KEY', ''))
+            logger.info("✅ Traditional ballchasing integration initialized")
+    except Exception as e:
+        logger.warning(f"⚠️ Traditional ballchasing integration failed: {e}")
     
     # Load cogs
     bot.load_cogs()
@@ -216,7 +230,8 @@ async def main():
 if __name__ == "__main__":
     print("🎮 Rocket League Discord Bot")
     print("💾 PostgreSQL Database Integration")
-    print("🏆 BLCS Stats Integration")
+    print("🏆 BLCSX Comprehensive Stats Integration")
+    print("📊 Advanced Player Analytics & Rankings")
     print("=" * 50)
     
     try:
