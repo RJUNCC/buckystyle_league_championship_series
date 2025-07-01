@@ -408,7 +408,7 @@ class BLCSXStatsCog(commands.Cog):
         self.db = DatabaseManager(database_url)
         
         # Load configuration for the calculator
-        self.calculator_config = OmegaConf.load("shared/config/conf/blcsx_calculator_config.yaml").tournament_calculator
+        self.calculator_config = OmegaConf.load("../shared/config/conf/blcsx_calculator_config.yaml").tournament_calculator
         self.stat_weights = OmegaConf.to_container(self.calculator_config.stat_weights_initial, resolve=True)
 
         # Performance indicators
