@@ -204,6 +204,7 @@ class DatabaseManager:
         
         try:
             with self.Session() as session:
+                logger.info(f"Attempting to update stats for player_id: {player_stats.get('player_id')}")
                 stmt = insert(PlayerStatistics).values(**player_stats)
                 stmt = stmt.on_conflict_do_update(
                     index_elements=['player_id'],
@@ -211,8 +212,9 @@ class DatabaseManager:
                 )
                 session.execute(stmt)
                 session.commit()
+                logger.info(f"Successfully updated stats for player_id: {player_stats.get('player_id')}")
         except Exception as e:
-            logger.error(f"Error updating player statistics: {e}")
+            logger.error(f"Error updating player statistics for {player_stats.get('player_id')}: {e}")
     
     def get_player_statistics(self, player_id: str) -> Optional[Dict]:
         """Get player statistics"""
@@ -221,8 +223,10 @@ class DatabaseManager:
         
         try:
             with self.Session() as session:
+                logger.info(f"Attempting to retrieve stats for player_id: {player_id}")
                 stats = session.query(PlayerStatistics).filter_by(player_id=player_id).first()
                 if stats:
+                    logger.info(f"Successfully retrieved stats for player_id: {player_id}")
                     return {
                         'player_id': stats.player_id,
                         'season_id': stats.season_id,
@@ -242,9 +246,10 @@ class DatabaseManager:
                         'percentile_rank': stats.percentile_rank,
                         'last_updated': stats.last_updated
                     }
+                logger.warning(f"No stats found for player_id: {player_id}")
                 return None
         except Exception as e:
-            logger.error(f"Error getting player statistics: {e}")
+            logger.error(f"Error getting player statistics for {player_id}: {e}")
             return None
     
     def get_all_player_statistics(self) -> List[Dict]:
@@ -803,7 +808,7 @@ class BLCSXStatsCog(commands.Cog):
             movement_stats = game_average.get('movement', {})
             demo_stats = game_average.get('demo', {})
             
-            return {
+            extracted_stats = {
                 'player_id': player_id,
                 'season_id': season_id,
                 'games_played': cumulative.get('games', 0),
@@ -821,6 +826,8 @@ class BLCSXStatsCog(commands.Cog):
                 'dominance_quotient': 0,
                 'percentile_rank': 0
             }
+            logger.info(f"Returning extracted stats for {player_id}: {extracted_stats}")
+            return extracted_stats
         except Exception as e:
             logger.error(f"Error extracting player stats: {e}")
             return None
