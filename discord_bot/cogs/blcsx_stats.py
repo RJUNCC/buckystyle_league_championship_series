@@ -248,32 +248,37 @@ class DatabaseManager:
             return None
     
     def get_all_player_statistics(self) -> List[Dict]:
-        """Get all player statistics for ranking calculations"""
+        """Get all player statistics for ranking, joined with player names."""
         if not self.use_db:
-            return self.storage.get_all_player_statistics()
-        
+            # Fallback for memory storage (less efficient)
+            stats = self.storage.get_all_player_statistics()
+            mappings = self.storage.player_mappings
+            # Create a reverse map from ballchasing_id to discord_username
+            reverse_map = {v['ballchasing_player_id']: v['discord_username'] for k, v in mappings.items()}
+            for s in stats:
+                s['discord_username'] = reverse_map.get(s['player_id'])
+            return sorted(stats, key=lambda x: x.get('dominance_quotient', 0), reverse=True)
+
         try:
             with self.Session() as session:
-                all_stats = session.query(PlayerStatistics).order_by(PlayerStatistics.dominance_quotient.desc()).all()
-                return [{
-                    'player_id': stats.player_id,
-                    'season_id': stats.season_id,
-                    'games_played': stats.games_played,
-                    'wins': stats.wins,
-                    'losses': stats.losses,
-                    'avg_score': stats.avg_score,
-                    'goals_per_game': stats.goals_per_game,
-                    'assists_per_game': stats.assists_per_game,
-                    'saves_per_game': stats.saves_per_game,
-                    'shots_per_game': stats.shots_per_game,
-                    'shot_percentage': stats.shot_percentage,
-                    'demos_inflicted_per_game': stats.demos_inflicted_per_game,
-                    'demos_taken_per_game': stats.demos_taken_per_game,
-                    'avg_speed': stats.avg_speed,
-                    'dominance_quotient': stats.dominance_quotient,
-                    'percentile_rank': stats.percentile_rank,
-                    'last_updated': stats.last_updated
-                } for stats in all_stats]
+                # Efficiently join PlayerStatistics with PlayerMapping
+                results = (
+                    session.query(PlayerStatistics, PlayerMapping.discord_username)
+                    .outerjoin(PlayerMapping, PlayerStatistics.player_id == PlayerMapping.ballchasing_player_id)
+                    .order_by(PlayerStatistics.dominance_quotient.desc())
+                    .all()
+                )
+                
+                # Process results into a list of dictionaries
+                all_stats = []
+                for stats, discord_username in results:
+                    stat_dict = {
+                        c.name: getattr(stats, c.name) for c in stats.__table__.columns
+                    }
+                    stat_dict['discord_username'] = discord_username
+                    all_stats.append(stat_dict)
+                
+                return all_stats
         except Exception as e:
             logger.error(f"Error getting all player statistics: {e}")
             return []
@@ -693,20 +698,19 @@ class BLCSXStatsCog(commands.Cog):
             all_mappings = self.db.get_all_player_mappings()
             
             # Create a lookup table for player names
-            player_name_map = {m['ballchasing_player_id']: m['discord_username'] for m in all_mappings}
+            # This is no longer needed due to the JOIN in the query
             
             if not all_players:
                 embed = discord.Embed(
                     title="No Data",
-                    description="No player statistics available yet.",
+                    description="No player statistics available yet. Use `/blcs_update` to fetch them.",
                     color=discord.Color.orange()
                 )
                 await ctx.response.send_message(embed=embed)
                 return
             
-            # Sort by dominance quotient
-            sorted_players = sorted(all_players, key=lambda x: x.get('dominance_quotient', 0), reverse=True)
-            limited_players = sorted_players[:min(limit, len(sorted_players))]
+            # The list is already sorted by the database query
+            limited_players = all_players[:min(limit, len(all_players))]
             
             # Create leaderboard embed
             embed = discord.Embed(
@@ -717,16 +721,8 @@ class BLCSXStatsCog(commands.Cog):
             
             leaderboard_text = ""
             for i, player in enumerate(limited_players, 1):
-                player_id = player['player_id']
-                player_name = player_name_map.get(player_id)
-
-                if not player_name:
-                    # Fallback for unmapped players: try to show a cleaner name
-                    try:
-                        player_name = player_id.split(':')[1]
-                    except:
-                        player_name = player_id
-
+                # Use the joined discord_username, with a fallback to the player_id
+                player_name = player.get('discord_username') or player['player_id']
                 dq = player.get('dominance_quotient', 0)
                 win_rate = (player['wins'] / max(player['games_played'], 1)) * 100
                 
@@ -744,7 +740,7 @@ class BLCSXStatsCog(commands.Cog):
                     medal = f"**{i}.**"
                 
                 leaderboard_text += f"{medal} **{player_name}** {indicator['emoji']}\n"
-                leaderboard_text += f"⭐ Avg Score: **{player.get('avg_score', 0):.0f}** | 🏆 DQ: {dq:.1f}% | 🎯 {player['games_played']} games | 📈 {win_rate:.1f}% WR\n\n"
+                leaderboard_text += f"    ⭐ Avg Score: **{player.get('avg_score', 0):.0f}** | 🏆 DQ: **{dq:.1f}** | 🎯 {player['games_played']} games | 📈 {win_rate:.1f}% WR\n\n"
             
             embed.add_field(
                 name="📊 Rankings",
