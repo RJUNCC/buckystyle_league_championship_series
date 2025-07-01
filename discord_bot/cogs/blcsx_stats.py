@@ -379,6 +379,51 @@ class BLCSXStatsCog(commands.Cog):
                 return data
         return self.performance_indicators['terrible']
 
+    @discord.slash_command(name="profile", description="Show a player's comprehensive BLCSX profile card")
+    async def new_profile_command(self, ctx, player: discord.Member = None):
+        """Display a modern, data-rich player profile card."""
+        target_user = player or ctx.author
+        await ctx.response.defer()
+
+        try:
+            # Get player mapping to find their ballchasing ID
+            mapping = self.db.get_player_mapping(target_user.id)
+            if not mapping or not mapping.get('ballchasing_player_id'):
+                embed = discord.Embed(
+                    title="❌ Player Not Linked",
+                    description=f"{target_user.display_name} has not linked their ballchasing.com account.\nUse `/blcs_link` or have an admin use `/admin_blcs_link`.",
+                    color=discord.Color.red()
+                )
+                await ctx.followup.send(embed=embed)
+                return
+
+            # Get player statistics from the correct database
+            player_stats = self.db.get_player_statistics(mapping['ballchasing_player_id'])
+            if not player_stats:
+                embed = discord.Embed(
+                    title="📊 No Statistics Found",
+                    description=f"No statistics found for {target_user.display_name}.\nRun `/blcs_update` after games have been played and uploaded to the group.",
+                    color=discord.Color.orange()
+                )
+                await ctx.followup.send(embed=embed)
+                return
+
+            # Get all players for percentile calculations
+            all_players = self.db.get_all_player_statistics()
+
+            # Generate the modern profile embed
+            embed = self.create_profile_embed(target_user, player_stats, all_players)
+            await ctx.followup.send(embed=embed)
+
+        except Exception as e:
+            logger.error(f"Error in new_profile_command: {e}")
+            embed = discord.Embed(
+                title="An Error Occurred",
+                description="Could not generate the player profile. Please check the logs.",
+                color=discord.Color.dark_red()
+            )
+            await ctx.followup.send(embed=embed, ephemeral=True)
+
     def create_profile_embed(self, user: discord.User, player_stats: Dict, all_players: List[Dict]) -> discord.Embed:
         """Create modern profile embed with rankings and indicators"""
         
