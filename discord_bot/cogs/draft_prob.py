@@ -1205,7 +1205,7 @@ class DraftLotteryCog(commands.Cog):
                 f"**Scheduling game between {team1} and {team2}**\n\n"
                 f"📋 **What Players Need to Do:**\n"
                 f"All **6 players** (3 from each team) choose an interface:\n"
-                f"• `/my_schedule1` - Visual calendar interface ⭐\n\n"
+                f"• `/my_schedule` - Visual calendar interface ⭐\n\n"
                 f"• Times range from 6 PM to 12 AM (7 time slots)\n"
                 f"• Easy buttons for 'Not Available' and 'All Day'\n\n"
                 f"🎯 **Process:**\n"
