@@ -277,6 +277,24 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error getting all player statistics: {e}")
             return []
+    
+    def get_all_player_mappings(self) -> List[Dict]:
+        """Get all player mappings from the database"""
+        if not self.use_db:
+            return list(self.storage.player_mappings.values())
+
+        try:
+            with self.Session() as session:
+                all_mappings = session.query(PlayerMapping).all()
+                return [{
+                    'discord_id': mapping.discord_id,
+                    'discord_username': mapping.discord_username,
+                    'ballchasing_player_id': mapping.ballchasing_player_id,
+                    'ballchasing_platform': mapping.ballchasing_platform
+                } for mapping in all_mappings]
+        except Exception as e:
+            logger.error(f"Error getting all player mappings: {e}")
+            return []
 
 class SimpleStatsCalculator:
     """Simple stats calculator when pandas is not available"""
@@ -629,6 +647,10 @@ class BLCSXStatsCog(commands.Cog):
         
         try:
             all_players = self.db.get_all_player_statistics()
+            all_mappings = self.db.get_all_player_mappings()
+            
+            # Create a lookup table for player names
+            player_name_map = {m['ballchasing_player_id']: m['discord_username'] for m in all_mappings}
             
             if not all_players:
                 embed = discord.Embed(
@@ -652,8 +674,8 @@ class BLCSXStatsCog(commands.Cog):
             
             leaderboard_text = ""
             for i, player in enumerate(limited_players, 1):
-                # Extract player name from player_id
-                player_name = player['player_id'].split(':')[1] if ':' in player['player_id'] else player['player_id']
+                # Use the map to get the player's name, with a fallback
+                player_name = player_name_map.get(player['player_id'], player['player_id'])
                 dq = player.get('dominance_quotient', 0)
                 win_rate = (player['wins'] / max(player['games_played'], 1)) * 100
                 
