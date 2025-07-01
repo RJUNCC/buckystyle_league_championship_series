@@ -33,6 +33,10 @@ except ImportError as e:
     logger.warning(f"⚠️ BLCSX Stats dependencies not found, features will be disabled: {e}")
 
 
+# Import the specific cogs you want to load
+from cogs.draft_prob import DraftLotteryCog
+from cogs.blcsx_stats import BLCSXStatsCog
+
 # Import ballchasing integration
 from services.ballchasing_stats_updater import initialize_ballchasing_updater
 
@@ -62,22 +66,23 @@ class RocketLeagueBot(commands.Bot):
         # py-cord handles command syncing automatically for new guilds
     
     def load_cogs(self):
-        """Load all cogs from the cogs directory."""
-        cogs_dir = os.path.join(os.path.dirname(__file__), 'cogs')
-        for filename in os.listdir(cogs_dir):
-            if filename.endswith('.py') and not filename.startswith('__'):
-                cog_name = filename[:-3]
-                
-                # Skip blcsx_stats if dependencies are not met
-                if cog_name == 'blcsx_stats' and not BLCSX_STATS_AVAILABLE:
-                    logger.warning("⚠️ Skipping blcsx_stats cog due to missing dependencies.")
-                    continue
-                
-                try:
-                    self.load_extension(f'cogs.{cog_name}')
-                    logger.info(f"✅ Loaded cog: {cog_name}")
-                except Exception as e:
-                    logger.error(f"❌ Failed to load cog {cog_name}: {e}")
+        """Load a specific list of cogs."""
+        cogs_to_load = [
+            DraftLotteryCog,
+        ]
+
+        # Conditionally add BLCSXStatsCog if its dependencies are met
+        if BLCSX_STATS_AVAILABLE:
+            cogs_to_load.append(BLCSXStatsCog)
+        else:
+            logger.warning("⚠️ BLCSXStatsCog not loaded due to missing dependencies.")
+
+        for cog in cogs_to_load:
+            try:
+                self.add_cog(cog(self))
+                logger.info(f"✅ Loaded cog: {cog.__name__}")
+            except Exception as e:
+                logger.error(f"❌ Failed to load cog {cog.__name__}: {e}")
 
 # Initialize bot instance
 bot = RocketLeagueBot()
