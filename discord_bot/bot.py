@@ -167,6 +167,29 @@ async def main():
     try:
         logger.info("🔄 Initializing database connection...")
         initialize_database()
+        try:
+            logger.info("🔧 Checking for database migrations...")
+            from sqlalchemy import text
+            engine = get_engine()
+            with engine.connect() as conn:
+                # Check if ballchasing_platform column exists
+                check_query = text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'player_profiles' 
+                    AND column_name = 'ballchasing_platform'
+                """)
+                result = conn.execute(check_query)
+                if not result.fetchone():
+                    # Add missing column
+                    logger.info("🔄 Adding missing ballchasing_platform column...")
+                    conn.execute(text("ALTER TABLE player_profiles ADD COLUMN ballchasing_platform VARCHAR(50)"))
+                    conn.commit()
+                    logger.info("✅ Database migration completed successfully")
+                else:
+                    logger.info("✅ Database schema is up to date")
+        except Exception as e:
+            logger.warning(f"⚠️ Database migration check failed: {e}")
         logger.info("✅ PostgreSQL database initialized successfully")
         
         # Log database info
