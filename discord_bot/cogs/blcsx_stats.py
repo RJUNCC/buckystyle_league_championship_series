@@ -394,7 +394,7 @@ class BLCSXStatsCog(commands.Cog):
 
     def calculate_tournament_context_weights(self, all_player_data: List[Dict]) -> Dict:
         """Calculate weights based on tournament-specific factors"""
-        total_games = sum(p['games_played'] for p in all_player_data)
+        total_games = sum(p.get('games_played', 0) for p in all_player_data)
         avg_games = total_games / len(all_player_data) if all_player_data else 0
         
         # Adjust weights based on how complete the tournament is
@@ -525,21 +525,21 @@ class BLCSXStatsCog(commands.Cog):
         if tournament_context['completion'] < 0.3:
             # Very early tournament: Heavy regression to mean
             win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
-            league_avg_win_rate = sum(p['wins'] for p in all_players) / sum(p['games_played'] for p in all_players)
+            league_avg_win_rate = sum(p.get('wins', 0) for p in all_players) / sum(p.get('games_played', 1) for p in all_players)
             
             # Games-based confidence (more games = more confidence in win rate)
             # Full confidence at 16 games (about 2 full Bo7 matches)
             confidence = min(player_stats.get('games_played', 0) / 16, 1.0)
             adjusted_win_rate = (confidence * win_rate) + ((1 - confidence) * league_avg_win_rate)
             
-            all_win_rates = [p['wins'] / p['games_played'] for p in all_players if p['games_played'] > 0]
+            all_win_rates = [p.get('wins', 0) / p.get('games_played', 1) for p in all_players if p.get('games_played', 0) > 0]
             win_rate_percentile = self.calculate_percentile(adjusted_win_rate, all_win_rates)
             
             logger.info(f"Win rate adjustment: Original: {win_rate:.2f}, Adjusted: {adjusted_win_rate:.2f}, Confidence: {confidence:.2f}")
         else:
             # Late tournament: Use actual win rate
             win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
-            all_win_rates = [p['wins'] / p['games_played'] for p in all_players if p['games_played'] > 0]
+            all_win_rates = [p.get('wins', 0) / p.get('games_played', 1) for p in all_players if p.get('games_played', 0) > 0]
             win_rate_percentile = self.calculate_percentile(win_rate, all_win_rates)
         
         percentiles['win_rate'] = win_rate_percentile
@@ -615,7 +615,7 @@ class BLCSXStatsCog(commands.Cog):
         # Tournament-specific logging
         logger.info(f"Tournament DQ calculation for {player_stats.get('player_id', 'Unknown')}:")
         logger.info(f"  Games played: {player_stats.get('games_played', 0)} (opportunity factor: {opportunity_factor:.2f})")
-        logger.info(f"  Tournament completion: {tournament_context.completion:.1%}")
+        logger.info(f"  Tournament completion: {tournament_context['completion']:.1%}")
         logger.info(f"  Final DQ: {final_dq:.1f}")
         
         return final_dq
@@ -1090,7 +1090,7 @@ class BLCSXStatsCog(commands.Cog):
             )
             
             # Add legend
-            legend = "🏆 Elite (90%+) | 🥇 Excellent (80%+) | ✅ Good (65%+) | ➖ Average (35-65%) | 📉 Poor (20-35%) | 🔻 Terrible (<20%)"
+            legend = "🏆 Elite | 🥇 Excellent | ✅ Good | ➖ Average | 📉 Poor | 🔻 Terrible"
             embed.add_field(
                 name="📖 Performance Indicators",
                 value=legend,
