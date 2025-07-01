@@ -791,13 +791,20 @@ class BLCSXStatsCog(commands.Cog):
     def extract_player_stats(self, player_data: Dict, season_id: str) -> Dict:
         """Extract and calculate player statistics from API data"""
         try:
-            platform_info = player_data.get('platform')
-            if isinstance(platform_info, dict):
-                player_id = f"{platform_info.get('type')}:{platform_info.get('id')}"
+            # Ballchasing API can return platform as a string or a dict
+            platform_type = player_data.get('platform')
+            platform_id = player_data.get('id')
+
+            if isinstance(platform_type, dict):
+                # Newer API response format
+                player_id = f"{platform_type.get('type')}:{platform_type.get('id')}"
+            elif isinstance(platform_type, str) and isinstance(platform_id, str):
+                # Older API response format or simplified
+                player_id = f"{platform_type.lower()}:{platform_id}"
             else:
-                # Fallback if platform_info is not a dict (e.g., a string or None)
-                logger.warning(f"Unexpected platform_info type: {type(platform_info)}. Full player_data: {player_data}")
-                player_id = player_data.get('id', 'unknown_id') # Use a fallback ID
+                # Fallback for unexpected formats
+                logger.error(f"Could not determine player_id from platform_info: {player_data}")
+                return None
             
             logger.info(f"Extracted player_id from Ballchasing API: {player_id}")
             cumulative = player_data.get('cumulative', {})
