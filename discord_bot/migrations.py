@@ -36,13 +36,17 @@ def apply_migration():
     try:
         engine = create_engine(db_url)
         
-        # The SQL command to add the missing columns.
+        # The SQL command to add all potentially missing columns.
         # "IF NOT EXISTS" prevents errors if the columns already exist.
         sql_command = text("""
         ALTER TABLE player_profiles
         ADD COLUMN IF NOT EXISTS avg_speed REAL DEFAULT 0.0,
         ADD COLUMN IF NOT EXISTS dominance_quotient REAL DEFAULT 50.0,
-        ADD COLUMN IF NOT EXISTS percentile_rank REAL DEFAULT 50.0;
+        ADD COLUMN IF NOT EXISTS percentile_rank REAL DEFAULT 50.0,
+        ADD COLUMN IF NOT EXISTS last_sync_date TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS last_game_date TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true,
+        ADD COLUMN IF NOT EXISTS extra_data JSONB;
         """)
 
         with engine.connect() as connection:
