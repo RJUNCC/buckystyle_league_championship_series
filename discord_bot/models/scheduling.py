@@ -53,7 +53,7 @@ def create_database_engine():
     """Create database engine with appropriate settings"""
     database_url = get_database_url()
     
-    print(f"🔗 Connecting to database: {database_url.split('@')[0]}@***" if '@' in database_url else database_url)
+    # print(f"🔗 Connecting to database: {database_url.split('@')[0]}@***" if '@' in database_url else database_url)
     
     if database_url.startswith('postgresql://'):
         # PostgreSQL settings

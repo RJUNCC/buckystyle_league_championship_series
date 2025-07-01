@@ -27,7 +27,15 @@ from cogs.player_profiles import PlayerProfilesCog
 from cogs.profile_linking import ProfileLinkingCog
 from cogs.blcsx_profiles import BLCSXProfilesCog
 from cogs.enhanced_profiles import EnhancedProfilesCog
-from cogs.blcsx_stats import BLCSXStatsCog  # Fixed import name
+
+# Try to import BLCSX stats (requires additional dependencies)
+try:
+    from cogs.blcsx_stats import BLCSXStatsCog
+    BLCSX_STATS_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"⚠️ BLCSX Stats not available: {e}")
+    BLCSX_STATS_AVAILABLE = False
+    BLCSXStatsCog = None
 
 # Import ballchasing integration
 from services.ballchasing_stats_updater import initialize_ballchasing_updater
@@ -75,8 +83,11 @@ class RocketLeagueBot(commands.Bot):
             ProfileLinkingCog,      # General ballchasing.com linking
             BLCSXProfilesCog,       # Advanced BLCSX profiles
             EnhancedProfilesCog,    # Creative themed profiles
-            BLCSXStatsCog           # BLCSX comprehensive stats (NEW)
         ]
+        
+        # Add BLCSX stats if available
+        if BLCSX_STATS_AVAILABLE and BLCSXStatsCog:
+            cogs.append(BLCSXStatsCog)
         
         for cog in cogs:
             try:
@@ -120,7 +131,7 @@ async def health_check_server():
                 "users": len(bot.users) if bot.is_ready() else 0,
                 "database_status": db_status,
                 "database_type": db_type,
-                "blcsx_stats_enabled": os.getenv('BALLCHASING_API_KEY') is not None
+                "blcsx_stats_enabled": BLCSX_STATS_AVAILABLE and os.getenv('BALLCHASING_API_KEY') is not None
             }
             return web.json_response(status)
             
@@ -190,7 +201,7 @@ async def main():
     # Initialize BLCSX ballchasing integration
     try:
         ballchasing_api_key = os.getenv('BALLCHASING_API_KEY')
-        if ballchasing_api_key:
+        if ballchasing_api_key and BLCSX_STATS_AVAILABLE:
             logger.info("✅ BLCSX ballchasing integration initialized")
             logger.info("   🎮 BLCSX Stats commands available:")
             logger.info("   /blcs_profile - Comprehensive player profiles")
@@ -200,6 +211,9 @@ async def main():
             logger.info("   /blcs_compare - Compare two players")
             logger.info("   /blcs_stat_leaders - Top performers by stat")
             logger.info("   /blcs_quickstats - Quick player overview")
+        elif not BLCSX_STATS_AVAILABLE:
+            logger.warning("⚠️ BLCSX stats unavailable - missing dependencies (psycopg2, pandas, numpy)")
+            logger.warning("   Install with: pip install psycopg2-binary pandas numpy aiohttp")
         else:
             logger.warning("⚠️ BALLCHASING_API_KEY not found - BLCSX stats features disabled")
             logger.warning("   Add BALLCHASING_API_KEY to .env file to enable comprehensive stats")
