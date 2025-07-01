@@ -674,8 +674,16 @@ class BLCSXStatsCog(commands.Cog):
             
             leaderboard_text = ""
             for i, player in enumerate(limited_players, 1):
-                # Use the map to get the player's name, with a fallback
-                player_name = player_name_map.get(player['player_id'], player['player_id'])
+                player_id = player['player_id']
+                player_name = player_name_map.get(player_id)
+
+                if not player_name:
+                    # Fallback for unmapped players: try to show a cleaner name
+                    try:
+                        player_name = player_id.split(':')[1]
+                    except:
+                        player_name = player_id
+
                 dq = player.get('dominance_quotient', 0)
                 win_rate = (player['wins'] / max(player['games_played'], 1)) * 100
                 
