@@ -1014,6 +1014,41 @@ class BLCSXStatsCog(commands.Cog):
             )
             await ctx.followup.send(embed=embed)
 
+    @discord.slash_command(name="blcs_clear_stats", description="[Admin] Clears all player statistics from the database.")
+    @commands.has_permissions(administrator=True)
+    async def clear_stats_command(self, ctx):
+        """Clears all player statistics from the database."""
+        if not ctx.author.guild_permissions.administrator:
+            embed = discord.Embed(
+                title="Permission Denied",
+                description="Only administrators can clear player statistics.",
+                color=discord.Color.red()
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        await ctx.response.defer(ephemeral=True)
+
+        try:
+            with self.db.Session() as session:
+                session.query(PlayerStatistics).delete()
+                session.commit()
+            embed = discord.Embed(
+                title="✅ Player Statistics Cleared",
+                description="All player statistics have been successfully removed from the database.",
+                color=discord.Color.green()
+            )
+            await ctx.followup.send(embed=embed, ephemeral=True)
+            logger.info(f"Admin {ctx.author.display_name} ({ctx.author.id}) cleared all player statistics.")
+        except Exception as e:
+            logger.error(f"Error clearing player statistics: {e}")
+            embed = discord.Embed(
+                title="❌ Error Clearing Stats",
+                description=f"An error occurred while clearing player statistics: {str(e)}",
+                color=discord.Color.red()
+            )
+            await ctx.followup.send(embed=embed, ephemeral=True)
+
     @discord.slash_command(name="blcs_leaderboard", description="Show the performance score leaderboard")
     async def leaderboard_command(self, ctx, limit: int = 10):
         """Enhanced leaderboard with performance indicators"""
