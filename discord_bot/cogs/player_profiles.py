@@ -201,63 +201,41 @@ class PlayerProfilesCog(commands.Cog):
         await ctx.respond(embed=embed)
 
     @discord.slash_command(name="setup_profile", description="Set up or update your Rocket League profile")
-    async def setup_profile(self, ctx, 
-                          rl_name: str,
-                          rank: str = None,
-                          car: str = None,
-                          title: str = None,
-                          age: int = None):
-        """Set up a player's profile"""
-        
+    async def setup_profile(self, ctx, rl_name: str, platform: str, age: int, favorite_car: str, custom_title: str = None):
+        """Set up your player profile with stats and custom info."""
         try:
-            # Create or update profile
             profile_data = {
-                'discord_username': ctx.author.display_name,
                 'rl_name': rl_name,
-                'last_updated': datetime.utcnow()
+                'ballchasing_platform': platform.lower(),
+                'age': age,
+                'favorite_car': favorite_car,
+                'custom_title': custom_title,
+                'discord_username': ctx.author.name
             }
             
-            if rank:
-                # Parse rank if it includes division (e.g., "Champion II")
-                rank_parts = rank.split()
-                if len(rank_parts) > 1 and rank_parts[-1] in ['I', 'II', 'III', 'IV']:
-                    profile_data['rank_name'] = ' '.join(rank_parts[:-1])
-                    profile_data['rank_division'] = rank_parts[-1]
-                else:
-                    profile_data['rank_name'] = rank
-            
-            if car:
-                profile_data['favorite_car'] = car
-            if title:
-                profile_data['custom_title'] = title
-            if age:
-                profile_data['age'] = age
-            
+            # This will create or update the profile
             profile = create_or_update_profile(ctx.author.id, **profile_data)
             
             embed = discord.Embed(
-                title="✅ Profile Updated!",
-                description=f"Your profile has been set up successfully!",
+                title="✅ Profile Setup Successful!",
+                description=f"Your profile for **{profile.rl_name}** has been created/updated.",
                 color=0x00ff00
             )
-            embed.add_field(name="RL Name", value=rl_name, inline=True)
-            if rank:
-                embed.add_field(name="Rank", value=rank, inline=True)
-            if car:
-                embed.add_field(name="Car", value=car, inline=True)
-            if title:
-                embed.add_field(name="Title", value=title, inline=False)
-            
-            embed.add_field(
-                name="Next Steps",
-                value="• Use `/profile` to view your card\n• Use `/link_ballchasing` to auto-sync stats",
-                inline=False
-            )
+            embed.add_field(name="Rocket League Name", value=profile.rl_name, inline=True)
+            embed.add_field(name="Platform", value=profile.ballchasing_platform.capitalize(), inline=True)
+            embed.add_field(name="Age", value=str(profile.age), inline=True)
+            embed.add_field(name="Favorite Car", value=profile.favorite_car, inline=True)
+            if profile.custom_title:
+                embed.add_field(name="Custom Title", value=profile.custom_title, inline=True)
             
             await ctx.respond(embed=embed, ephemeral=True)
-            
+
         except Exception as e:
-            await ctx.respond(f"❌ Error setting up profile: {str(e)}", ephemeral=True)
+            # Shorten the error message to avoid exceeding Discord's character limit
+            error_message = str(e)
+            if len(error_message) > 1500:
+                error_message = error_message[:1500] + "... (message truncated)"
+            await ctx.respond(f"❌ Error setting up profile: {error_message}", ephemeral=True)
 
     @discord.slash_command(name="leaderboard", description="View the league leaderboard")
     async def leaderboard(self, ctx, stat: str = "wins"):
