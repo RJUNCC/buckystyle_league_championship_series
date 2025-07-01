@@ -375,7 +375,7 @@ class DaySelectionView(discord.ui.View):
             # Find the cog to access bot and finalize_scheduling method
             draft_cog = None
             for cog in interaction.client.cogs.values():
-                if hasattr(cog, 'active_sessions') and self.session.channel_id in cog.active_sessions:
+                if hasattr(cog, 'active_sessions') and int(self.session.channel_id) in cog.active_sessions:
                     draft_cog = cog
                     break
             
