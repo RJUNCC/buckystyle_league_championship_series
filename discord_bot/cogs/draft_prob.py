@@ -1610,7 +1610,12 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond(embed=embed, ephemeral=True)
             
         except Exception as e:
-            await ctx.respond(f"Error reloading sessions: {str(e)}", ephemeral=True)
+            error_embed = discord.Embed(
+                title="❌ Error Reloading Sessions",
+                description=f"An error occurred while reloading sessions: {str(e)}",
+                color=0xff0000
+            )
+            await ctx.respond(embed=error_embed, ephemeral=True)
 
     @discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
     @commands.has_permissions(administrator=True)
