@@ -2,7 +2,7 @@ name: discord-bot
 services:
 - name: bot
   dockerfile_path: discord_bot/Dockerfile
-  source_dir: /discord_bot  # KEY CHANGE: Point to subdirectory
+  source_dir: /  # Use the entire repository as context
   github:
     repo: RJUNCC/buckystyle_league_championship_series
     branch: main
