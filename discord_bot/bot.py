@@ -21,19 +21,17 @@ load_dotenv()
 # Import database configuration (FIRST - before other imports)
 from models.database_config import initialize_database, get_engine
 
-# Import your cogs
-from cogs.draft_prob import DraftLotteryCog
-
-
-
-# Try to import BLCSX stats (requires additional dependencies)
+# Check for BLCSX stats dependencies
+BLCSX_STATS_AVAILABLE = False
 try:
-    from cogs.blcsx_stats import BLCSXStatsCog
+    # These are the optional dependencies for blcsx_stats.py
+    import numpy
+    import pandas
+    import sqlalchemy
     BLCSX_STATS_AVAILABLE = True
 except ImportError as e:
-    logger.warning(f"⚠️ BLCSX Stats not available: {e}")
-    BLCSX_STATS_AVAILABLE = False
-    BLCSXStatsCog = None
+    logger.warning(f"⚠️ BLCSX Stats dependencies not found, features will be disabled: {e}")
+
 
 # Import ballchasing integration
 from services.ballchasing_stats_updater import initialize_ballchasing_updater
@@ -64,21 +62,22 @@ class RocketLeagueBot(commands.Bot):
         # py-cord handles command syncing automatically for new guilds
     
     def load_cogs(self):
-        """Load all cogs with error handling"""
-        cogs = [
-            DraftLotteryCog,        # Draft lottery + scheduling
-        ]
-        
-        # Add BLCSX stats if available
-        if BLCSX_STATS_AVAILABLE and BLCSXStatsCog:
-            cogs.append(BLCSXStatsCog)
-        
-        for cog in cogs:
-            try:
-                self.add_cog(cog(self))
-                logger.info(f"✅ {cog.__name__} loaded successfully")
-            except Exception as e:
-                logger.error(f"❌ Error loading {cog.__name__}: {str(e)}")
+        """Load all cogs from the cogs directory."""
+        cogs_dir = os.path.join(os.path.dirname(__file__), 'cogs')
+        for filename in os.listdir(cogs_dir):
+            if filename.endswith('.py') and not filename.startswith('__'):
+                cog_name = filename[:-3]
+                
+                # Skip blcsx_stats if dependencies are not met
+                if cog_name == 'blcsx_stats' and not BLCSX_STATS_AVAILABLE:
+                    logger.warning("⚠️ Skipping blcsx_stats cog due to missing dependencies.")
+                    continue
+                
+                try:
+                    self.load_extension(f'cogs.{cog_name}')
+                    logger.info(f"✅ Loaded cog: {cog_name}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to load cog {cog_name}: {e}")
 
 # Initialize bot instance
 bot = RocketLeagueBot()
