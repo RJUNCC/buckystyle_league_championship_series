@@ -8,7 +8,6 @@ import json
 import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
-from omegaconf import OmegaConf
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -344,6 +343,46 @@ class SimpleStatsCalculator:
             'percentile': max(0, min(100, percentile))
         }
 
+class SimpleStatsCalculator:
+    """Simple stats calculator when pandas is not available"""
+    
+    @staticmethod
+    def calculate_simple_score(player_stats: Dict, all_players: List[Dict]) -> float:
+        """Calculate a simple performance score without pandas"""
+        if not all_players:
+            return 50.0
+        
+        # Simple scoring based on win rate and basic stats
+        win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
+        goals = player_stats.get('goals_per_game', 0)
+        assists = player_stats.get('assists_per_game', 0)
+        saves = player_stats.get('saves_per_game', 0)
+        
+        # Simple weighted score
+        score = (win_rate * 40) + (goals * 10) + (assists * 8) + (saves * 8)
+        return min(100, max(0, score))
+    
+    @staticmethod
+    def calculate_ranking(player_value: float, all_values: List[float]) -> Dict:
+        """Calculate ranking without pandas"""
+        if not all_values:
+            return {'rank': 1, 'total': 1, 'percentile': 50.0}
+        
+        sorted_values = sorted(all_values, reverse=True)
+        rank = 1
+        for i, value in enumerate(sorted_values, 1):
+            if player_value >= value:
+                rank = i
+                break
+        
+        percentile = (len([v for v in all_values if v < player_value]) / len(all_values)) * 100
+        
+        return {
+            'rank': rank,
+            'total': len(all_values),
+            'percentile': max(0, min(100, percentile))
+        }
+
 class BLCSXStatsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -361,11 +400,8 @@ class BLCSXStatsCog(commands.Cog):
         
         self.ballchasing_token = ballchasing_token
         self.db = DatabaseManager(database_url)
+        self.calculator = SimpleStatsCalculator()
         
-        # Load configuration for the calculator
-        self.calculator_config = OmegaConf.load("shared/config/conf/blcsx_calculator_config.yaml").tournament_calculator
-        self.stat_weights = OmegaConf.to_container(self.calculator_config.stat_weights_initial, resolve=True)
-
         # Performance indicators
         self.performance_indicators = {
             'elite': {'emoji': '🏆', 'threshold': 90, 'color': 0x4CAF50, 'name': 'ELITE'},
@@ -651,7 +687,8 @@ class BLCSXStatsCog(commands.Cog):
         win_rate = (player_stats['wins'] / max(player_stats['games_played'], 1)) * 100
         
         # Calculate simple dominance quotient
-        dq = self.calculator.calculate_dominance_quotient(player_stats, all_players)
+        dq = player_stats.get('dominance_quotient', 
+                             self.calculator.calculate_simple_score(player_stats, all_players))
         
         # Calculate ranking
         all_dqs = [p.get('dominance_quotient', 50.0) for p in all_players]
@@ -733,7 +770,7 @@ class BLCSXStatsCog(commands.Cog):
             
             # Calculate dominance quotients and update database
             for player_stats in processed_players:
-                dominance_quotient = self.calculator.calculate_dominance_quotient(player_stats, processed_players)
+                dominance_quotient = self.calculator.calculate_simple_score(player_stats, processed_players)
                 player_stats['dominance_quotient'] = dominance_quotient
                 
                 # Calculate percentile rank
