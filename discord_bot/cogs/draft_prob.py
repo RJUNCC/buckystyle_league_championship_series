@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 # Import database functions
 try:
-    from discord_bot.models.scheduling import save_session, delete_session, get_all_active_sessions, load_session, SchedulingSession as DBSchedulingSession
+    from models.scheduling import save_session, delete_session, get_all_active_sessions, load_session, SchedulingSession as DBSchedulingSession
 except ImportError:
     print("Warning: scheduling module not found. Database persistence disabled.")
     save_session = lambda x: None
@@ -1425,7 +1425,7 @@ class DraftLotteryCog(commands.Cog):
     async def db_health(self, ctx):
         """Check database health and connection status"""
         try:
-            from discord_bot.models.scheduling import engine, get_all_active_sessions
+            from models.scheduling import engine, get_all_active_sessions
             from sqlalchemy import text
             import time
             
@@ -1546,7 +1546,7 @@ class DraftLotteryCog(commands.Cog):
     async def debug_sessions(self, ctx):
         """Debug what sessions are in database vs memory"""
         try:
-            from discord_bot.models.scheduling import get_all_active_sessions
+            from models.scheduling import get_all_active_sessions
             
             # Get from database
             db_sessions = get_all_active_sessions()
@@ -1586,7 +1586,7 @@ class DraftLotteryCog(commands.Cog):
             color=0x00ff00
         )
         try:
-            from discord_bot.models.scheduling import get_all_active_sessions, SchedulingSession as DBSchedulingSession
+            from models.scheduling import get_all_active_sessions, SchedulingSession as DBSchedulingSession
             
             # Clear current sessions
             old_count = len(self.active_sessions)
