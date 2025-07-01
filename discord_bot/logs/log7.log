@@ -1,0 +1,7 @@
+[bot] [2025-07-01 07:11:19] Traceback (most recent call last):
+[bot] [2025-07-01 07:11:19]   File "/app/bot.py", line 25, in <module>
+[bot] [2025-07-01 07:11:19]     from cogs.draft_prob import DraftLotteryCog
+[bot] [2025-07-01 07:11:19]   File "/app/cogs/draft_prob.py", line 1570
+[bot] [2025-07-01 07:11:19]     f"
+[bot] [2025-07-01 07:11:19]     ^
+[bot] [2025-07-01 07:11:19] SyntaxError: unterminated f-string literal (detected at line 1570)
