@@ -779,11 +779,11 @@ class BLCSXStatsCog(commands.Cog):
         
         # Calculate simple dominance quotient
         dq = player_stats.get('dominance_quotient', 
-                             self.calculator.calculate_simple_score(player_stats, all_players))
+                             SimpleStatsCalculator.calculate_simple_score(player_stats, all_players))
         
         # Calculate ranking
         all_dqs = [p.get('dominance_quotient', 50.0) for p in all_players]
-        dq_ranking = self.calculator.calculate_ranking(dq, all_dqs)
+        dq_ranking = SimpleStatsCalculator.calculate_ranking(dq, all_dqs)
         dq_indicator = self.get_performance_indicator(dq_ranking['percentile'])
         
         # Main embed

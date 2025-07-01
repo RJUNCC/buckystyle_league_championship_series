@@ -1,0 +1,73 @@
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,522 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,526 - __main__ - INFO - 🏥 Health check server task created
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,527 - __main__ - INFO - 🔄 Initializing database connection...
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,528 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,665 - models.database_config - INFO - ✅ Database connection successful
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,668 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,694 - models.database_config - INFO - ✅ Database tables created/verified
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,718 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,724 - __main__ - INFO - 🔧 Checking for database migrations...
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,751 - __main__ - INFO - ✅ Database schema is up to date
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,753 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,754 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,754 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,754 - __main__ - INFO -    🎮 BLCSX Stats commands available:
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,754 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,755 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,755 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,755 - __main__ - INFO -    /blcs_update - Update stats (admin only)
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,755 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,757 - __main__ - INFO - ✅ Loaded cog: DraftLotteryCog
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,909 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,930 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,932 - __main__ - INFO - ✅ Loaded cog: BLCSXStatsCog
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,932 - __main__ - INFO - 🚀 Starting Discord bot...
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,933 - discord.client - INFO - logging in using static token
+[bot] [2025-07-01 22:33:30] 2025-07-01 22:33:30,971 - __main__ - INFO - ✅ Health check server started on port 8080
+[bot] [2025-07-01 22:33:31] 2025-07-01 22:33:31,418 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
+[bot] [2025-07-01 22:33:31] 2025-07-01 22:33:31,658 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-d-stz7",{"micros":216812,"calls":["id_created",{"micros":475,"calls":[]},"session_lookup_time",{"micros":330,"calls":[]},"session_lookup_finished",{"micros":30,"calls":[]},"discord-sessions-prd-2-144",{"micros":215558,"calls":["start_session",{"micros":212128,"calls":["discord-api-rpc-5b7458d7d5-thmmq",{"micros":162219,"calls":["get_user",{"micros":56842},"get_guilds",{"micros":20854},"send_scheduled_deletion_message",{"micros":10},"guild_join_requests",{"micros":477},"authorized_ip_coro",{"micros":14},"pending_payments",{"micros":7170},"apex_experiments",{"micros":3866},"user_activities",{"micros":7},"played_application_ids",{"micros":3}]}]},"starting_guild_connect",{"micros":60,"calls":[]},"presence_started",{"micros":398,"calls":[]},"guilds_started",{"micros":77,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":1,"calls":[]},"presence_connect",{"micros":2876,"calls":[]},"connect_finished",{"micros":2880,"calls":[]},"build_ready",{"micros":11,"calls":[]},"clean_ready",{"micros":1,"calls":[]},"optimize_ready",{"micros":1,"calls":[]},"split_ready",{"micros":0,"calls":[]}]}]}] (Session ID: ca6b47067aca0c3eff86be9853742e69).
+[bot] [2025-07-01 22:33:33] 2025-07-01 22:33:33,688 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
+[bot] [2025-07-01 22:33:33] 2025-07-01 22:33:33,689 - __main__ - INFO - 📊 Connected to 2 servers
+[bot] [2025-07-01 22:33:33] 2025-07-01 22:33:33,689 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
+[bot] [2025-07-01 22:34:23] Ignoring exception in command schedule_game:
+[bot] [2025-07-01 22:34:23] Traceback (most recent call last):
+[bot] [2025-07-01 22:34:23]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
+[bot] [2025-07-01 22:34:23]     ret = await coro(arg)
+[bot] [2025-07-01 22:34:23]           ^^^^^^^^^^^^^^^
+[bot] [2025-07-01 22:34:23]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
+[bot] [2025-07-01 22:34:23]     await self.callback(self.cog, ctx, **kwargs)
+[bot] [2025-07-01 22:34:23]   File "/app/cogs/draft_prob.py", line 1117, in schedule_game
+[bot] [2025-07-01 22:34:23]     session.save()
+[bot] [2025-07-01 22:34:23]     ^^^^^^^^^^^^
+[bot] [2025-07-01 22:34:23] AttributeError: 'SchedulingSession' object has no attribute 'save'
+[bot] [2025-07-01 22:34:23] 
+[bot] [2025-07-01 22:34:23] The above exception was the direct cause of the following exception:
+[bot] [2025-07-01 22:34:23] 
+[bot] [2025-07-01 22:34:23] Traceback (most recent call last):
+[bot] [2025-07-01 22:34:23]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
+[bot] [2025-07-01 22:34:23]     await ctx.command.invoke(ctx)
+[bot] [2025-07-01 22:34:23]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
+[bot] [2025-07-01 22:34:23]     await injected(ctx)
+[bot] [2025-07-01 22:34:23]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
+[bot] [2025-07-01 22:34:23]     raise ApplicationCommandInvokeError(exc) from exc
+[bot] [2025-07-01 22:34:23] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: AttributeError: 'SchedulingSession' object has no attribute 'save'
+[bot] [2025-07-01 22:35:00] 2025-07-01 22:35:00,551 - cogs.blcsx_stats - INFO - Processing group data for blcsx-1-yp2y1hqpvg
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,243 - cogs.blcsx_stats - INFO - Found 6 players
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,245 - cogs.blcsx_stats - INFO - Extracted player_id from Ballchasing API: epic:c185a23491954fb4a651c79b1893bf81
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,245 - cogs.blcsx_stats - INFO - Returning extracted stats for epic:c185a23491954fb4a651c79b1893bf81: {'player_id': 'epic:c185a23491954fb4a651c79b1893bf81', 'season_id': 'BLCS4', 'games_played': 4, 'wins': 0, 'losses': 4, 'avg_score': 346.25, 'goals_per_game': 0.75, 'assists_per_game': 0.5, 'saves_per_game': 2, 'shots_per_game': 0.75, 'shot_percentage': 100, 'demos_inflicted_per_game': 0.75, 'demos_taken_per_game': 1, 'avg_speed': 1473.1737, 'dominance_quotient': 0, 'percentile_rank': 0}
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,245 - cogs.blcsx_stats - INFO - Extracted player_id from Ballchasing API: steam:76561198966482468
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,246 - cogs.blcsx_stats - INFO - Returning extracted stats for steam:76561198966482468: {'player_id': 'steam:76561198966482468', 'season_id': 'BLCS4', 'games_played': 4, 'wins': 0, 'losses': 4, 'avg_score': 453, 'goals_per_game': 1, 'assists_per_game': 0.75, 'saves_per_game': 2.25, 'shots_per_game': 3.25, 'shot_percentage': 30.76923, 'demos_inflicted_per_game': 1, 'demos_taken_per_game': 1.25, 'avg_speed': 1563.2742, 'dominance_quotient': 0, 'percentile_rank': 0}
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,247 - cogs.blcsx_stats - INFO - Extracted player_id from Ballchasing API: steam:76561198169500756
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,248 - cogs.blcsx_stats - INFO - Returning extracted stats for steam:76561198169500756: {'player_id': 'steam:76561198169500756', 'season_id': 'BLCS4', 'games_played': 4, 'wins': 4, 'losses': 0, 'avg_score': 574, 'goals_per_game': 1.75, 'assists_per_game': 1, 'saves_per_game': 1.5, 'shots_per_game': 4.5, 'shot_percentage': 38.88889, 'demos_inflicted_per_game': 1.5, 'demos_taken_per_game': 0.5, 'avg_speed': 1601.6028, 'dominance_quotient': 0, 'percentile_rank': 0}
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,249 - cogs.blcsx_stats - INFO - Extracted player_id from Ballchasing API: steam:76561198389804286
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,249 - cogs.blcsx_stats - INFO - Returning extracted stats for steam:76561198389804286: {'player_id': 'steam:76561198389804286', 'season_id': 'BLCS4', 'games_played': 4, 'wins': 0, 'losses': 4, 'avg_score': 295.75, 'goals_per_game': 0.25, 'assists_per_game': 0.75, 'saves_per_game': 1.75, 'shots_per_game': 2, 'shot_percentage': 12.5, 'demos_inflicted_per_game': 0.25, 'demos_taken_per_game': 0.75, 'avg_speed': 1555.4724, 'dominance_quotient': 0, 'percentile_rank': 0}
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,249 - cogs.blcsx_stats - INFO - Extracted player_id from Ballchasing API: steam:76561198262801476
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,249 - cogs.blcsx_stats - INFO - Returning extracted stats for steam:76561198262801476: {'player_id': 'steam:76561198262801476', 'season_id': 'BLCS4', 'games_played': 4, 'wins': 4, 'losses': 0, 'avg_score': 351.75, 'goals_per_game': 1.25, 'assists_per_game': 0.25, 'saves_per_game': 0.75, 'shots_per_game': 4.5, 'shot_percentage': 27.777779, 'demos_inflicted_per_game': 1, 'demos_taken_per_game': 0.75, 'avg_speed': 1634.831, 'dominance_quotient': 0, 'percentile_rank': 0}
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,250 - cogs.blcsx_stats - INFO - Extracted player_id from Ballchasing API: steam:76561198148363848
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,250 - cogs.blcsx_stats - INFO - Returning extracted stats for steam:76561198148363848: {'player_id': 'steam:76561198148363848', 'season_id': 'BLCS4', 'games_played': 4, 'wins': 4, 'losses': 0, 'avg_score': 330, 'goals_per_game': 0.75, 'assists_per_game': 1.25, 'saves_per_game': 1.25, 'shots_per_game': 2, 'shot_percentage': 37.5, 'demos_inflicted_per_game': 0.5, 'demos_taken_per_game': 0.75, 'avg_speed': 1564.7279, 'dominance_quotient': 0, 'percentile_rank': 0}
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,252 - cogs.blcsx_stats - INFO - Player games: 4, elimination type: early, opportunity factor: 1.15
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,253 - cogs.blcsx_stats - INFO - Win rate adjustment: Original: 0.00, Adjusted: 0.38, Confidence: 0.25
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,254 - cogs.blcsx_stats - INFO -   Win rate weight modifier: 0.00
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,254 - cogs.blcsx_stats - INFO - Tournament DQ calculation for epic:c185a23491954fb4a651c79b1893bf81:
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,255 - cogs.blcsx_stats - INFO -   Games played: 4 (opportunity factor: 1.15)
+[bot] [2025-07-01 22:35:01] 2025-07-01 22:35:01,261 - cogs.blcsx_stats - ERROR - Error updating data: 'dict' object has no att
