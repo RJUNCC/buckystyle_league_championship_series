@@ -1565,6 +1565,7 @@ class DraftLotteryCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def backup_sessions(self, ctx):
         """Export current sessions for backup"""
+        await ctx.defer(ephemeral=True)  # Defer the response to prevent timeouts
         try:
             import io
             
@@ -1598,7 +1599,7 @@ class DraftLotteryCog(commands.Cog):
                 print(f"Error getting database sessions: {e}")
             
             if not sessions_data:
-                await ctx.respond("No active sessions to backup.", ephemeral=True)
+                await ctx.followup.send("No active sessions to backup.", ephemeral=True)
                 return
             
             # Create backup file
@@ -1617,10 +1618,10 @@ class DraftLotteryCog(commands.Cog):
                 color=0x0099ff
             )
             
-            await ctx.respond(embed=embed, file=file, ephemeral=True)
+            await ctx.followup.send(embed=embed, file=file, ephemeral=True)
             
         except Exception as e:
-            await ctx.respond(f"Error creating backup: {str(e)}", ephemeral=True)
+            await ctx.followup.send(f"Error creating backup: {str(e)}", ephemeral=True)
 
     @discord.slash_command(name="debug_sessions", description="Debug database sessions")
     @commands.has_permissions(administrator=True)
