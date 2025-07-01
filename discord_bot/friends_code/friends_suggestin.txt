@@ -1,0 +1,5 @@
+i looked at how bad my dominance quotient was and realized that the way I told it to calculate had a logic issue so i told it to redo the code to account for that issue and it gave me this
+It made the dominance quotient calculator aware of the lesser amount of games and scaled back the impact winrate had on dominane quotient early on while teams didnt have many games played
+my individual stats should get me the second best DQ rn but since I got swept and have a 0% winrate the current code gives me a terrible grade
+that new code needs to replace the old one for the DQ calculations
+you get what I mean?
