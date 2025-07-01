@@ -349,46 +349,6 @@ class SimpleStatsCalculator:
             'percentile': max(0, min(100, percentile))
         }
 
-class SimpleStatsCalculator:
-    """Simple stats calculator when pandas is not available"""
-    
-    @staticmethod
-    def calculate_simple_score(player_stats: Dict, all_players: List[Dict]) -> float:
-        """Calculate a simple performance score without pandas"""
-        if not all_players:
-            return 50.0
-        
-        # Simple scoring based on win rate and basic stats
-        win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
-        goals = player_stats.get('goals_per_game', 0)
-        assists = player_stats.get('assists_per_game', 0)
-        saves = player_stats.get('saves_per_game', 0)
-        
-        # Simple weighted score
-        score = (win_rate * 40) + (goals * 10) + (assists * 8) + (saves * 8)
-        return min(100, max(0, score))
-    
-    @staticmethod
-    def calculate_ranking(player_value: float, all_values: List[float]) -> Dict:
-        """Calculate ranking without pandas"""
-        if not all_values:
-            return {'rank': 1, 'total': 1, 'percentile': 50.0}
-        
-        sorted_values = sorted(all_values, reverse=True)
-        rank = 1
-        for i, value in enumerate(sorted_values, 1):
-            if player_value >= value:
-                rank = i
-                break
-        
-        percentile = (len([v for v in all_values if v < player_value]) / len(all_values)) * 100
-        
-        return {
-            'rank': rank,
-            'total': len(all_values),
-            'percentile': max(0, min(100, percentile))
-        }
-
 class BLCSXStatsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -431,72 +391,6 @@ class BLCSXStatsCog(commands.Cog):
             if percentile >= data['threshold']:
                 return data
         return self.performance_indicators['terrible']
-
-    def calculate_tournament_context_weights(self, all_player_data: List[Dict]) -> Dict:
-        """Calculate weights based on tournament-specific factors"""
-        total_games = sum(p['games_played'] for p in all_player_data)
-        avg_games = total_games / len(all_player_data) if all_player_data else 0
-        
-        # Adjust weights based on how complete the tournament is
-        tournament_completion = min(total_games / self.calculator_config.tournament_config.expected_total_games, 1.0)
-        
-        if tournament_completion < 0.25:
-            # Very early tournament: Almost pure individual performance
-            individual_weight = 0.85
-            team_weight = 0.05
-            consistency_weight = 0.05
-            clutch_weight = 0.05
-        elif tournament_completion < 0.5:
-            # Early-mid tournament: Some team results matter
-            individual_weight = 0.75
-            team_weight = 0.10
-            consistency_weight = 0.10
-            clutch_weight = 0.05
-        elif tournament_completion < 0.8:
-            # Late tournament: Results becoming more important
-            individual_weight = 0.65
-            team_weight = 0.15
-            consistency_weight = 0.15
-            clutch_weight = 0.05
-        else:
-            # Tournament complete: Full weighting
-            individual_weight = 0.60
-            team_weight = 0.20
-            consistency_weight = 0.15
-            clutch_weight = 0.05
-        
-        return {
-            'individual': individual_weight,
-            'team': team_weight,
-            'consistency': consistency_weight,
-            'clutch': clutch_weight,
-            'completion': tournament_completion
-        }
-
-    def calculate_bracket_position_adjustment(self, player_stats: Dict, all_players: List[Dict]) -> float:
-        """Adjust for bracket position disadvantages"""
-        player_games = player_stats.get('games_played', 0)
-        
-        # Categorize based on actual Bo7 tournament game counts
-        if player_games <= self.calculator_config.tournament_config.early_elimination_threshold:
-            # Early elimination (8-14 games): Fewer opportunities
-            opportunity_factor = 1.15  # 15% boost for early elimination
-            elimination_type = "early"
-        elif player_games <= self.calculator_config.tournament_config.mid_elimination_threshold:
-            # Mid elimination (15-21 games): Average opportunities  
-            opportunity_factor = 1.05  # 5% boost for mid elimination
-            elimination_type = "mid"
-        elif player_games >= self.calculator_config.tournament_config.deep_run_threshold:
-            # Deep run (22+ games): Many opportunities to accumulate stats
-            opportunity_factor = 0.92  # 8% penalty (had more opportunities)
-            elimination_type = "deep"
-        else:
-            # Standard run
-            opportunity_factor = 1.0
-            elimination_type = "standard"
-        
-        logger.info(f"Player games: {player_games}, elimination type: {elimination_type}, opportunity factor: {opportunity_factor}")
-        return opportunity_factor
 
     def calculate_tournament_context_weights(self, all_player_data: List[Dict]) -> Dict:
         """Calculate weights based on tournament-specific factors"""
@@ -1196,7 +1090,7 @@ class BLCSXStatsCog(commands.Cog):
             )
             
             # Add legend
-            legend = "🏆 Elite | 🥇 Excellent | ✅ Good | ➖ Average | 📉 Poor | 🔻 Terrible"
+            legend = "🏆 Elite (90%+) | 🥇 Excellent (80%+) | ✅ Good (65%+) | ➖ Average (35-65%) | 📉 Poor (20-35%) | 🔻 Terrible (<20%)"
             embed.add_field(
                 name="📖 Performance Indicators",
                 value=legend,
