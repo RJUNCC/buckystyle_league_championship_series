@@ -606,6 +606,49 @@ class BLCSXStatsCog(commands.Cog):
             )
             await ctx.response.send_message(embed=embed)
 
+    @discord.slash_command(name="admin_blcs_link", description="[Admin] Link a player to their ballchasing.com ID")
+    @commands.has_permissions(administrator=True)
+    async def admin_link_command(self, ctx, user: discord.Member, player_id: str, platform: str):
+        """Admin command to link a user to their ballchasing ID."""
+        valid_platforms = ['steam', 'epic', 'ps4', 'xbox', 'switch']
+        if platform.lower() not in valid_platforms:
+            embed = discord.Embed(
+                title="Invalid Platform",
+                description=f"Platform must be one of: {', '.join(valid_platforms)}",
+                color=discord.Color.red()
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        if ':' not in player_id:
+            formatted_player_id = f"{platform.lower()}:{player_id}"
+        else:
+            formatted_player_id = player_id
+
+        try:
+            self.db.add_player_mapping(
+                user.id,
+                user.display_name,
+                formatted_player_id,
+                platform.lower()
+            )
+
+            embed = discord.Embed(
+                title="✅ Player Linked by Admin",
+                description=f"Successfully linked {user.display_name} to {formatted_player_id}",
+                color=discord.Color.green()
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+
+        except Exception as e:
+            logger.error(f"Error in admin_link_command: {e}")
+            embed = discord.Embed(
+                title="Error",
+                description="Failed to link player. Please check logs.",
+                color=discord.Color.red()
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+
     @discord.slash_command(name="blcs_update", description="Update player statistics from ballchasing.com (Admin only)")
     async def update_data_command(self, ctx, group_id: str):
         """Update player data from ballchasing.com"""
