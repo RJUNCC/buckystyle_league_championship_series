@@ -530,7 +530,8 @@ class BLCSXStatsCog(commands.Cog):
     def extract_player_stats(self, player_data: Dict, season_id: str) -> Dict:
         """Extract and calculate player statistics from API data"""
         try:
-            player_id = f"{player_data['platform']}:{player_data['id']}"
+            player_id = f"{player_data['platform']['type']}:{player_data['platform']['id']}"
+            logger.info(f"Extracted player_id from Ballchasing API: {player_id}")
             cumulative = player_data.get('cumulative', {})
             game_average = player_data.get('game_average', {})
             
@@ -646,6 +647,7 @@ class BLCSXStatsCog(commands.Cog):
                 color=discord.Color.green()
             )
             await ctx.response.send_message(embed=embed)
+            logger.info(f"User {ctx.author.display_name} ({ctx.author.id}) linked to Ballchasing ID: {formatted_player_id}")
             
         except Exception as e:
             logger.error(f"Error linking account: {e}")
@@ -689,6 +691,7 @@ class BLCSXStatsCog(commands.Cog):
                 color=discord.Color.green()
             )
             await ctx.response.send_message(embed=embed, ephemeral=True)
+            logger.info(f"Admin {ctx.author.display_name} ({ctx.author.id}) linked user {user.display_name} ({user.id}) to Ballchasing ID: {formatted_player_id}")
 
         except Exception as e:
             logger.error(f"Error in admin_link_command: {e}")
