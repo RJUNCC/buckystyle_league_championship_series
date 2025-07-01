@@ -408,7 +408,13 @@ class BLCSXStatsCog(commands.Cog):
         self.db = DatabaseManager(database_url)
         
         # Load configuration for the calculator
-        self.calculator_config = OmegaConf.load("../shared/config/conf/blcsx_calculator_config.yaml").tournament_calculator
+        # Build a reliable path to the config file
+        # __file__ is the path to the current script (cogs/blcsx_stats.py)
+        # os.path.dirname(__file__) is the directory of the current script (cogs/)
+        # os.path.abspath() ensures it's an absolute path
+        # Then, join with the relative path to the config file
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "shared", "config", "conf", "blcsx_calculator_config.yaml"))
+        self.calculator_config = OmegaConf.load(config_path).tournament_calculator
         self.stat_weights = OmegaConf.to_container(self.calculator_config.stat_weights_initial, resolve=True)
 
         # Performance indicators
