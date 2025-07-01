@@ -106,16 +106,22 @@ class PlayerProfile(Base):
         }
     
     def update_percentages(self):
-        """Update calculated percentages"""
+        """Update calculated percentages, handling None values gracefully."""
+        # Ensure numeric types are not None before comparing
+        total_goals = self.total_goals or 0
+        total_shots = self.total_shots or 0
+        wins = self.wins or 0
+        games_played = self.games_played or 0
+
         # Goal percentage
-        if self.total_shots > 0:
-            self.goal_percentage = (self.total_goals / self.total_shots) * 100
+        if total_shots > 0:
+            self.goal_percentage = (total_goals / total_shots) * 100
         else:
             self.goal_percentage = 0.0
         
         # Win percentage
-        if self.games_played > 0:
-            self.win_percentage = (self.wins / self.games_played) * 100
+        if games_played > 0:
+            self.win_percentage = (wins / games_played) * 100
         else:
             self.win_percentage = 0.0
         
