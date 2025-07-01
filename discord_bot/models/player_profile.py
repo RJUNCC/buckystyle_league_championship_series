@@ -172,6 +172,7 @@ def create_or_update_profile(discord_id, **kwargs):
         profile.update_percentages()
         
         session.commit()
+        session.refresh(profile)  # Load the latest data before the session closes
         return profile
         
     except Exception as e:
