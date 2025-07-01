@@ -8,6 +8,7 @@ import json
 import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
+from omegaconf import OmegaConf
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -301,6 +302,8 @@ class DatabaseManager:
             logger.error(f"Error getting all player mappings: {e}")
             return []
 
+
+
 class SimpleStatsCalculator:
     """Simple stats calculator when pandas is not available"""
     
@@ -358,8 +361,11 @@ class BLCSXStatsCog(commands.Cog):
         
         self.ballchasing_token = ballchasing_token
         self.db = DatabaseManager(database_url)
-        self.calculator = SimpleStatsCalculator()
         
+        # Load configuration for the calculator
+        self.calculator_config = OmegaConf.load("shared/config/conf/blcsx_calculator_config.yaml").tournament_calculator
+        self.stat_weights = OmegaConf.to_container(self.calculator_config.stat_weights_initial, resolve=True)
+
         # Performance indicators
         self.performance_indicators = {
             'elite': {'emoji': '🏆', 'threshold': 90, 'color': 0x4CAF50, 'name': 'ELITE'},
@@ -378,6 +384,220 @@ class BLCSXStatsCog(commands.Cog):
             if percentile >= data['threshold']:
                 return data
         return self.performance_indicators['terrible']
+
+    def calculate_tournament_context_weights(self, all_player_data: List[Dict]) -> Dict:
+        """Calculate weights based on tournament-specific factors"""
+        total_games = sum(p['games_played'] for p in all_player_data)
+        avg_games = total_games / len(all_player_data) if all_player_data else 0
+        
+        # Adjust weights based on how complete the tournament is
+        tournament_completion = min(total_games / self.calculator_config.tournament_config.expected_total_games, 1.0)
+        
+        if tournament_completion < 0.25:
+            # Very early tournament: Almost pure individual performance
+            individual_weight = 0.85
+            team_weight = 0.05
+            consistency_weight = 0.05
+            clutch_weight = 0.05
+        elif tournament_completion < 0.5:
+            # Early-mid tournament: Some team results matter
+            individual_weight = 0.75
+            team_weight = 0.10
+            consistency_weight = 0.10
+            clutch_weight = 0.05
+        elif tournament_completion < 0.8:
+            # Late tournament: Results becoming more important
+            individual_weight = 0.65
+            team_weight = 0.15
+            consistency_weight = 0.15
+            clutch_weight = 0.05
+        else:
+            # Tournament complete: Full weighting
+            individual_weight = 0.60
+            team_weight = 0.20
+            consistency_weight = 0.15
+            clutch_weight = 0.05
+        
+        return {
+            'individual': individual_weight,
+            'team': team_weight,
+            'consistency': consistency_weight,
+            'clutch': clutch_weight,
+            'completion': tournament_completion
+        }
+
+    def calculate_bracket_position_adjustment(self, player_stats: Dict, all_players: List[Dict]) -> float:
+        """Adjust for bracket position disadvantages"""
+        player_games = player_stats.get('games_played', 0)
+        
+        # Categorize based on actual Bo7 tournament game counts
+        if player_games <= self.calculator_config.tournament_config.early_elimination_threshold:
+            # Early elimination (8-14 games): Fewer opportunities
+            opportunity_factor = 1.15  # 15% boost for early elimination
+            elimination_type = "early"
+        elif player_games <= self.calculator_config.tournament_config.mid_elimination_threshold:
+            # Mid elimination (15-21 games): Average opportunities  
+            opportunity_factor = 1.05  # 5% boost for mid elimination
+            elimination_type = "mid"
+        elif player_games >= self.calculator_config.tournament_config.deep_run_threshold:
+            # Deep run (22+ games): Many opportunities to accumulate stats
+            opportunity_factor = 0.92  # 8% penalty (had more opportunities)
+            elimination_type = "deep"
+        else:
+            # Standard run
+            opportunity_factor = 1.0
+            elimination_type = "standard"
+        
+        logger.info(f"Player games: {player_games}, elimination type: {elimination_type}, opportunity factor: {opportunity_factor}")
+        return opportunity_factor
+
+    def calculate_consistency_metrics(self, player_stats: Dict) -> Dict:
+        """Calculate consistency metrics (would need game-by-game data in real implementation)"""
+        # Note: This is simplified - in reality you'd analyze game-by-game performance
+        
+        # Estimate consistency based on available stats
+        avg_score = player_stats.get('avg_score', 0)
+        
+        # Higher consistency for players with moderate but stable stats
+        # vs players with high variance (some great games, some terrible ones)
+        
+        # Simplified consistency calculation
+        # In real implementation, you'd calculate standard deviation of game scores
+        estimated_consistency = min(100, max(0, 100 - abs(avg_score - 400) / 10))
+        
+        return {
+            'score_consistency': estimated_consistency,
+            'performance_stability': estimated_consistency
+        }
+    
+    def calculate_clutch_factor(self, player_stats: Dict, all_players: List[Dict]) -> float:
+        """Calculate clutch performance (simplified without game-by-game data)"""
+        # In a real implementation, you'd analyze:
+        # - Performance in Game 7s
+        # - Performance when series is tied
+        # - Performance in elimination games
+        
+        # Simplified: Use shot percentage and saves as proxies for clutch performance
+        shot_pct = player_stats.get('shot_percentage', 0)
+        saves_per_game = player_stats.get('saves_per_game', 0)
+        
+        # Players who convert shots and make saves under pressure
+        clutch_score = (shot_pct / 100 * 50) + min(saves_per_game * 10, 50)
+        
+        return min(100, max(0, clutch_score))
+
+    def calculate_percentile(self, player_value: float, all_values: List[float]) -> float:
+        """Calculate percentile rank of a value"""
+        if not all_values:
+            return 50.0
+        return (sum(1 for v in all_values if v < player_value) / len(all_values)) * 100
+
+    def calculate_dominance_quotient(self, player_stats: Dict, all_players: List[Dict]) -> float:
+        """Calculate tournament-optimized Dominance Quotient"""
+        if not all_players:
+            return 50.0
+        
+        # Calculate bracket position adjustment
+        opportunity_factor = self.calculate_bracket_position_adjustment(player_stats, all_players)
+        
+        # Calculate percentiles for standard stats
+        percentiles = {}
+        stats_to_evaluate = ['goals_per_game', 'assists_per_game', 'saves_per_game',
+                           'shots_per_game', 'shot_percentage', 'avg_score',
+                           'demos_inflicted_per_game', 'avg_speed']
+        
+        for stat in stats_to_evaluate:
+            if stat in player_stats:
+                player_value = player_stats[stat]
+                all_values = [p[stat] for p in all_players if stat in p]
+                percentiles[stat] = self.calculate_percentile(player_value, all_values)
+        
+        # Calculate win rate with tournament context
+        tournament_context = self.calculate_tournament_context_weights(all_players)
+        
+        if tournament_context['completion'] < 0.3:
+            # Very early tournament: Heavy regression to mean
+            win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
+            league_avg_win_rate = sum(p['wins'] for p in all_players) / sum(p['games_played'] for p in all_players)
+            
+            # Games-based confidence (more games = more confidence in win rate)
+            # Full confidence at 16 games (about 2 full Bo7 matches)
+            confidence = min(player_stats.get('games_played', 0) / 16, 1.0)
+            adjusted_win_rate = (confidence * win_rate) + ((1 - confidence) * league_avg_win_rate)
+            
+            all_win_rates = [p['wins'] / p['games_played'] for p in all_players if p['games_played'] > 0]
+            win_rate_percentile = self.calculate_percentile(adjusted_win_rate, all_win_rates)
+            
+            logger.info(f"Win rate adjustment: Original: {win_rate:.2f}, Adjusted: {adjusted_win_rate:.2f}, Confidence: {confidence:.2f}")
+        else:
+            # Late tournament: Use actual win rate
+            win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
+            all_win_rates = [p['wins'] / p['games_played'] for p in all_players if p['games_played'] > 0]
+            win_rate_percentile = self.calculate_percentile(win_rate, all_win_rates)
+        
+        percentiles['win_rate'] = win_rate_percentile
+        
+        # Calculate consistency metrics
+        consistency_metrics = self.calculate_consistency_metrics(player_stats)
+        percentiles['score_consistency'] = consistency_metrics['score_consistency']
+        
+        # Calculate clutch factor
+        clutch_score = self.calculate_clutch_factor(player_stats, all_players)
+        percentiles['clutch_factor'] = clutch_score
+        
+        # Calculate weighted dominance quotient
+        dominance_quotient = 0
+        total_weight_used = 0
+        
+        for stat, weight in self.calculator_config.base_weights.items():
+            if stat == 'individual_performance':
+                # Apply individual stat weights
+                individual_contribution = 0
+                individual_weight_sum = 0
+                for s_stat, s_weight in self.stat_weights.items():
+                    if s_stat in percentiles and s_weight > 0:
+                        individual_contribution += percentiles[s_stat] * s_weight
+                        individual_weight_sum += s_weight
+                if individual_weight_sum > 0:
+                    dominance_quotient += (individual_contribution / individual_weight_sum) * weight
+                    total_weight_used += weight
+            elif stat == 'consistency':
+                if 'score_consistency' in percentiles:
+                    dominance_quotient += percentiles['score_consistency'] * weight
+                    total_weight_used += weight
+            elif stat == 'clutch_performance':
+                if 'clutch_factor' in percentiles:
+                    dominance_quotient += percentiles['clutch_factor'] * weight
+                    total_weight_used += weight
+            elif stat == 'team_success':
+                if 'win_rate' in percentiles:
+                    dominance_quotient += percentiles['win_rate'] * weight
+                    total_weight_used += weight
+        
+        # Apply opportunity factor
+        dominance_quotient *= opportunity_factor
+        
+        # Handle negative demo impact (if configured)
+        if 'demos_taken_per_game' in percentiles and self.stat_weights.get('demos_taken_per_game', 0) > 0:
+            inverted_demo_percentile = 100 - percentiles['demos_taken_per_game']
+            dominance_quotient += inverted_demo_percentile * self.stat_weights['demos_taken_per_game']
+            total_weight_used += self.stat_weights['demos_taken_per_game']
+        
+        # Normalize and clamp
+        if total_weight_used > 0:
+            final_dq = dominance_quotient / total_weight_used
+        else:
+            final_dq = 50.0 # Default if no weights applied
+        
+        final_dq = max(0, min(100, final_dq))
+        
+        # Tournament-specific logging
+        logger.info(f"Tournament DQ calculation for {player_stats.get('player_id', 'Unknown')}:")
+        logger.info(f"  Games played: {player_stats.get('games_played', 0)} (opportunity factor: {opportunity_factor:.2f})")
+        logger.info(f"  Tournament completion: {tournament_context.completion:.1%}")
+        logger.info(f"  Final DQ: {final_dq:.1f}")
+        
+        return final_dq
 
     @discord.slash_command(name="profile", description="Show a player's comprehensive BLCSX profile card")
     async def new_profile_command(self, ctx, player: discord.Member = None):
@@ -431,8 +651,7 @@ class BLCSXStatsCog(commands.Cog):
         win_rate = (player_stats['wins'] / max(player_stats['games_played'], 1)) * 100
         
         # Calculate simple dominance quotient
-        dq = player_stats.get('dominance_quotient', 
-                             self.calculator.calculate_simple_score(player_stats, all_players))
+        dq = self.calculator.calculate_dominance_quotient(player_stats, all_players)
         
         # Calculate ranking
         all_dqs = [p.get('dominance_quotient', 50.0) for p in all_players]
@@ -514,7 +733,7 @@ class BLCSXStatsCog(commands.Cog):
             
             # Calculate dominance quotients and update database
             for player_stats in processed_players:
-                dominance_quotient = self.calculator.calculate_simple_score(player_stats, processed_players)
+                dominance_quotient = self.calculator.calculate_dominance_quotient(player_stats, processed_players)
                 player_stats['dominance_quotient'] = dominance_quotient
                 
                 # Calculate percentile rank
@@ -530,7 +749,14 @@ class BLCSXStatsCog(commands.Cog):
     def extract_player_stats(self, player_data: Dict, season_id: str) -> Dict:
         """Extract and calculate player statistics from API data"""
         try:
-            player_id = f"{player_data['platform']['type']}:{player_data['platform']['id']}"
+            platform_info = player_data.get('platform')
+            if isinstance(platform_info, dict):
+                player_id = f"{platform_info.get('type')}:{platform_info.get('id')}"
+            else:
+                # Fallback if platform_info is not a dict (e.g., a string or None)
+                logger.warning(f"Unexpected platform_info type: {type(platform_info)}. Full player_data: {player_data}")
+                player_id = player_data.get('id', 'unknown_id') # Use a fallback ID
+            
             logger.info(f"Extracted player_id from Ballchasing API: {player_id}")
             cumulative = player_data.get('cumulative', {})
             game_average = player_data.get('game_average', {})

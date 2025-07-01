@@ -23,10 +23,8 @@ from models.database_config import initialize_database, get_engine
 
 # Import your cogs
 from cogs.draft_prob import DraftLotteryCog
-from cogs.player_profiles import PlayerProfilesCog
-from cogs.profile_linking import ProfileLinkingCog
-from cogs.blcsx_profiles import BLCSXProfilesCog
-from cogs.enhanced_profiles import EnhancedProfilesCog
+
+
 
 # Try to import BLCSX stats (requires additional dependencies)
 try:
@@ -69,10 +67,6 @@ class RocketLeagueBot(commands.Bot):
         """Load all cogs with error handling"""
         cogs = [
             DraftLotteryCog,        # Draft lottery + scheduling
-            PlayerProfilesCog,      # Basic player profiles
-            ProfileLinkingCog,      # General ballchasing.com linking
-            BLCSXProfilesCog,       # Advanced BLCSX profiles
-            EnhancedProfilesCog,    # Creative themed profiles
         ]
         
         # Add BLCSX stats if available

@@ -1,0 +1,33 @@
+# shared/config/conf/blcsx_calculator_config.yaml
+tournament_calculator:
+  tournament_config:
+    players: 8
+    format: "double_elimination"
+    match_format: "best_of_7"
+    expected_total_games: 160
+    min_games_per_player: 8
+    max_games_per_player: 28
+    avg_games_per_player: 20
+    early_elimination_threshold: 14
+    mid_elimination_threshold: 21
+    deep_run_threshold: 22
+
+  base_weights:
+    individual_performance: 0.7
+    consistency: 0.15
+    clutch_performance: 0.10
+    team_success: 0.05
+
+  stat_weights_initial:
+    goals_per_game: 0.0
+    assists_per_game: 0.0
+    saves_per_game: 0.0
+    shots_per_game: 0.0
+    shot_percentage: 0.0
+    avg_score: 0.0
+    demos_inflicted_per_game: 0.0
+    demos_taken_per_game: 0.0
+    avg_speed: 0.0
+    win_rate: 0.0
+    score_consistency: 0.0
+    clutch_factor: 0.0
