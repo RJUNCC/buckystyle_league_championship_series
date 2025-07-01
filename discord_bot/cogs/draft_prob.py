@@ -146,7 +146,7 @@ class TimeSelectionView(discord.ui.View):
                 self.session.player_schedules[self.user_id] = {}
                 
             self.session.player_schedules[self.user_id][self.day] = list(self.selected_times)
-            self.session.save()
+            save_session(self.session)
             
             # Go back to day selection with updated info
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** times saved!")
@@ -169,7 +169,7 @@ class TimeSelectionView(discord.ui.View):
                 self.session.player_schedules[self.user_id] = {}
                 
             self.session.player_schedules[self.user_id][self.day] = []
-            self.session.save()
+            save_session(self.session)
             
             # Go back to day selection with updated info
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** marked as not available!")
@@ -195,7 +195,7 @@ class TimeSelectionView(discord.ui.View):
                 self.session.player_schedules[self.user_id] = {}
                 
             self.session.player_schedules[self.user_id][self.day] = all_times
-            self.session.save()
+            save_session(self.session)
             
             # Go back to day selection with updated info
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** set to all day available!")
@@ -370,7 +370,7 @@ class DaySelectionView(discord.ui.View):
             
             # Add user to responded list
             self.session.players_responded.add(self.user_id)
-            self.session.save()
+            save_session(self.session)
             
             # Find the cog to access bot and finalize_scheduling method
             draft_cog = None
@@ -422,7 +422,7 @@ class ConfirmationView(discord.ui.View):
             return
             
         self.session.confirmations[user_id] = True
-        self.session.save()
+        save_session(self.session)
         confirmed = sum(1 for c in self.session.confirmations.values() if c)
         total = len(self.session.player_schedules)
         
@@ -459,20 +459,19 @@ class ConfirmationView(discord.ui.View):
             return
             
         self.session.confirmations[user_id] = False
-        self.session.save()
-        
-        await interaction.response.send_message(
-            "❌ You declined the game time. Please update your schedule using `/my_schedule` and set more accurate times.",
-            ephemeral=True
-        )
         
         # Reset this player's status so they can resubmit
-        # Directly modify the DBSchedulingSession object
         if str(user_id) in self.session.player_schedules:
             del self.session.player_schedules[str(user_id)]
         if str(user_id) in self.session.players_responded:
             self.session.players_responded.remove(str(user_id))
+        
         save_session(self.session)
+
+        await interaction.response.send_message(
+            "❌ You declined the game time. Please update your schedule using `/my_schedule` and set more accurate times.",
+            ephemeral=True
+        )
         
         channel = self.cog.bot.get_channel(self.session.channel_id)
         await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. Use `/my_schedule` to resubmit availability.")
@@ -1114,7 +1113,7 @@ class DraftLotteryCog(commands.Cog):
         # Create new scheduling session
         session = DBSchedulingSession(channel_id=str(channel_id), team1=team1, team2=team2)
         self.active_sessions[channel_id] = session
-        session.save()
+        save_session(session)
         
         embed = discord.Embed(
             title="🎮 Game Scheduling Started!",

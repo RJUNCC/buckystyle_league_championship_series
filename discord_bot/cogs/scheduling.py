@@ -309,6 +309,29 @@ class EnhancedSchedulingCog(commands.Cog):
             )
             await ctx.respond(embed=embed, ephemeral=True)
 
+    @discord.slash_command(name="my_schedule", description="Set your weekly availability using a modern calendar interface")
+    async def my_schedule_v2(self, ctx):
+        """Modern calendar interface for setting weekly availability"""
+        channel_id = ctx.channel.id
+        
+        # Check for active session
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel. Use `/schedule_game_v2` to start one.", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        
+        # Create and send the view
+        view = ScheduleView(ctx.author.id, session, self)
+        
+        embed = discord.Embed(
+            title="📅 Set Your Weekly Availability",
+            description="Click the buttons to navigate days and set your available times.",
+            color=0x0099ff
+        )
+        
+        await ctx.respond(embed=embed, view=view, ephemeral=True)
+
 # Simple SchedulingSession class for this cog
 class SchedulingSession:
     def __init__(self, channel_id, teams):
@@ -360,246 +383,148 @@ class SchedulingSession:
     def is_complete(self):
         return len(self.players_responded) >= self.expected_players
 
-def setup(bot):
-    bot.add_cog(EnhancedSchedulingCog(bot))
-    def __init__(self, user_id, session):
+class ScheduleView(discord.ui.View):
+    def __init__(self, user_id, session, cog):
         super().__init__(timeout=600)  # 10 minute timeout
         self.user_id = user_id
         self.session = session
-        self.current_day_index = 0  # Start with first day
+        self.cog = cog  # Direct reference to the cog
+        self.current_day_index = 0
         
-        # Track schedule state: {day: {time: selected_state}}
-        # selected_state: None, 'available', 'all_day', 'not_available', 'unsure'
+        # Initialize schedule state
         self.schedule_state = {}
+        existing_schedule = self.session.player_schedules.get(str(self.user_id), {})
         
-        # Initialize schedule state from existing data if any
-        existing_schedule = self.session.player_schedules.get(self.user_id, {})
         for date_info in self.session.schedule_dates:
             day_name = date_info['day_name']
             self.schedule_state[day_name] = {}
             
             if day_name in existing_schedule:
-                existing_times = existing_schedule[day_name]
-                if not existing_times:  # Empty list = not available
+                day_data = existing_schedule[day_name]
+                if not day_data:
                     self.schedule_state[day_name]['status'] = 'not_available'
-                elif len(existing_times) >= 6:  # 6+ slots = all day
+                elif len(day_data) >= 6:
                     self.schedule_state[day_name]['status'] = 'all_day'
                 else:
                     self.schedule_state[day_name]['status'] = 'partial'
-                    # Mark specific times as available
                     for time_slot in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']:
-                        self.schedule_state[day_name][time_slot] = time_slot in existing_times
+                        self.schedule_state[day_name][time_slot] = time_slot in day_data
             else:
                 self.schedule_state[day_name]['status'] = None
-        
+                
         self.create_calendar_buttons()
-    
+
     def create_calendar_buttons(self):
-        """Create a simplified calendar that fits Discord's 5-row limit"""
-        # We'll use a day-by-day approach instead of a full grid
-        # Show current day being edited
+        """Create the calendar interface"""
+        self.clear_items()
         
-        current_day_index = getattr(self, 'current_day_index', 0)
-        if current_day_index >= len(self.session.schedule_dates):
-            current_day_index = 0
-            
-        current_date_info = self.session.schedule_dates[current_day_index]
+        current_date_info = self.session.schedule_dates[self.current_day_index]
         current_day_name = current_date_info['day_name']
         
         # Row 0: Day navigation
-        prev_button = discord.ui.Button(
-            label="◀ Prev Day", 
-            style=discord.ButtonStyle.secondary,
-            row=0
-        )
-        prev_button.callback = self.prev_day_callback
-        self.add_item(prev_button)
+        self.add_item(DayNavButton("◀ Prev", -1))
+        self.add_item(discord.ui.Button(label=f"{current_date_info['day_name']}, {current_date_info['date']}", style=discord.ButtonStyle.primary, disabled=True, row=0))
+        self.add_item(DayNavButton("Next ▶", 1))
         
-        day_display_button = discord.ui.Button(
-            label=f"{current_date_info['day_name']}, {current_date_info['date']}",
-            style=discord.ButtonStyle.primary,
-            disabled=True,
-            row=0
-        )
-        self.add_item(day_display_button)
-        
-        next_button = discord.ui.Button(
-            label="Next Day ▶",
-            style=discord.ButtonStyle.secondary, 
-            row=0
-        )
-        next_button.callback = self.next_day_callback
-        self.add_item(next_button)
-        
-        # Row 1 & 2: Time slots (3-4 per row)
+        # Row 1 & 2: Time slots
         time_slots = ['6PM', '7PM', '8PM', '9PM', '10PM', '11PM', '12AM']
         time_values = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
         
-        for i, (time_label, time_value) in enumerate(zip(time_slots, time_values)):
-            # Determine button style
-            is_selected = self.schedule_state[current_day_name].get(time_value, False)
+        for i, (label, value) in enumerate(zip(time_slots, time_values)):
+            is_selected = self.schedule_state[current_day_name].get(value, False)
             day_status = self.schedule_state[current_day_name].get('status')
             
-            if day_status == 'all_day':
+            style = discord.ButtonStyle.gray
+            if day_status == 'all_day' or is_selected:
                 style = discord.ButtonStyle.green
             elif day_status == 'not_available':
                 style = discord.ButtonStyle.red
             elif day_status == 'unsure':
                 style = discord.ButtonStyle.secondary
-            elif is_selected:
-                style = discord.ButtonStyle.green
-            else:
-                style = discord.ButtonStyle.gray
             
-            row = 1 if i < 4 else 2  # First 4 in row 1, rest in row 2
+            self.add_item(TimeSlotButton(label, value, current_day_name, style, row=1 if i < 4 else 2))
             
-            time_button = TimeSlotButton(
-                label=time_label,
-                time_value=time_value,
-                day_name=current_day_name,
-                style=style,
-                row=row
-            )
-            self.add_item(time_button)
-        
-        # Row 3: Day action buttons
-        all_day_button = DayActionButton(
-            label="All Day Available",
-            action="all_day",
-            day_name=current_day_name,
-            style=discord.ButtonStyle.blurple,
-            row=3
-        )
-        self.add_item(all_day_button)
-        
-        not_available_button = DayActionButton(
-            label="Not Available",
-            action="not_available",
-            day_name=current_day_name,
-            style=discord.ButtonStyle.red,
-            row=3
-        )
-        self.add_item(not_available_button)
-        
-        unsure_button = DayActionButton(
-            label="Unsure",
-            action="unsure",
-            day_name=current_day_name,
-            style=discord.ButtonStyle.secondary,
-            row=3
-        )
-        self.add_item(unsure_button)
+        # Row 3: Day actions
+        self.add_item(DayActionButton("All Day", "all_day", current_day_name, discord.ButtonStyle.blurple, 3))
+        self.add_item(DayActionButton("Not Available", "not_available", current_day_name, discord.ButtonStyle.red, 3))
+        self.add_item(DayActionButton("Unsure", "unsure", current_day_name, discord.ButtonStyle.secondary, 3))
         
         # Row 4: Control buttons
-        cancel_button = CancelButton()
-        self.add_item(cancel_button)
-        
-        finalize_button = FinalizeButton()
-        self.add_item(finalize_button)
-    
-    async def prev_day_callback(self, interaction):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-            return
-            
-        self.current_day_index = getattr(self, 'current_day_index', 0) - 1
-        if self.current_day_index < 0:
-            self.current_day_index = len(self.session.schedule_dates) - 1
-            
-        self.update_schedule_display()
-        await self.update_message(interaction)
-    
-    async def next_day_callback(self, interaction):
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-            return
-            
-        self.current_day_index = getattr(self, 'current_day_index', 0) + 1
-        if self.current_day_index >= len(self.session.schedule_dates):
-            self.current_day_index = 0
-            
-        self.update_schedule_display()
-        await self.update_message(interaction)
-    
-    def update_schedule_display(self):
-        """Update the visual state of all buttons"""
-        self.clear_items()
-        self.create_calendar_buttons()
-    
+        self.add_item(CancelButton())
+        self.add_item(FinalizeButton())
+
     async def update_message(self, interaction):
-        """Update the message with current schedule state"""
+        """Update the message with the current schedule state"""
+        self.create_calendar_buttons()
+        
         embed = discord.Embed(
             title="📅 Set Your Weekly Availability",
-            description="Click time slots to toggle availability, or use the action buttons below each day.",
+            description="Click time slots or use the action buttons to set your availability for each day.",
             color=0x0099ff
         )
         
-        # Show current progress
-        days_completed = 0
         status_text = ""
-        
+        days_completed = 0
         for date_info in self.session.schedule_dates:
             day_name = date_info['day_name']
-            day_display = f"{date_info['day_name']}, {date_info['date']}"
             day_status = self.schedule_state[day_name].get('status')
             
             if day_status == 'all_day':
-                status_text += f"**{day_display}:** ✅ All day available\n"
+                status_text += f"**{date_info['full_date']}:** ✅ All Day\n"
                 days_completed += 1
             elif day_status == 'not_available':
-                status_text += f"**{day_display}:** ❌ Not available\n"
+                status_text += f"**{date_info['full_date']}:** ❌ Not Available\n"
                 days_completed += 1
             elif day_status == 'unsure':
-                status_text += f"**{day_display}:** ❓ Unsure\n"
+                status_text += f"**{date_info['full_date']}:** ❓ Unsure\n"
                 days_completed += 1
             elif day_status == 'partial':
-                selected_count = sum(1 for time_val in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00'] 
-                                   if self.schedule_state[day_name].get(time_val, False))
-                if selected_count > 0:
-                    status_text += f"**{day_display}:** ✅ {selected_count} time slots\n"
+                selected_times = [f"{int(t.split(':')[0]) % 12 or 12}{'AM' if t.startswith('00') else 'PM'}" 
+                                  for t in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00'] 
+                                  if self.schedule_state[day_name].get(t)]
+                if selected_times:
+                    status_text += f"**{date_info['full_date']}:** ✅ {', '.join(selected_times)}\n"
                     days_completed += 1
                 else:
-                    status_text += f"**{day_display}:** ⏳ In progress\n"
+                    status_text += f"**{date_info['full_date']}:** ⏳ In Progress\n"
             else:
-                status_text += f"**{day_display}:** ⏳ Not set\n"
+                status_text += f"**{date_info['full_date']}:** ⏳ Not Set\n"
         
-        embed.add_field(
-            name=f"📋 Progress: {days_completed}/7 days completed",
-            value=status_text,
-            inline=False
-        )
+        embed.add_field(name=f"Progress: {days_completed}/7 Days Set", value=status_text, inline=False)
         
         if days_completed == 7:
             embed.color = 0x00ff00
-            embed.add_field(
-                name="🎉 Ready to Finalize!",
-                value="All days are set. Click 'Finalize' to submit your schedule.",
-                inline=False
-            )
+            embed.add_field(name="🎉 Ready to Finalize!", value="Click 'Finalize' to submit your schedule.", inline=False)
+            
+        await interaction.response.edit_message(embed=embed, view=self)
+
+class DayNavButton(discord.ui.Button):
+    def __init__(self, label, direction):
+        super().__init__(label=label, style=discord.ButtonStyle.secondary, row=0)
+        self.direction = direction
         
-        try:
-            await interaction.response.edit_message(embed=embed, view=self)
-        except discord.InteractionAlreadyResponded:
-            await interaction.edit_original_response(embed=embed, view=self)
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.view.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+            
+        self.view.current_day_index = (self.view.current_day_index + self.direction) % len(self.view.session.schedule_dates)
+        await self.view.update_message(interaction)
 
 class TimeSlotButton(discord.ui.Button):
     def __init__(self, label, time_value, day_name, style, row):
         super().__init__(label=label, style=style, row=row)
         self.time_value = time_value
         self.day_name = day_name
-    
+        
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.view.user_id:
             await interaction.response.send_message("This is not your schedule!", ephemeral=True)
             return
-        
-        # Toggle this time slot
+            
         current_state = self.view.schedule_state[self.day_name].get(self.time_value, False)
         self.view.schedule_state[self.day_name][self.time_value] = not current_state
         self.view.schedule_state[self.day_name]['status'] = 'partial'
-        
-        # Update button appearance
-        self.style = discord.ButtonStyle.green if not current_state else discord.ButtonStyle.gray
         
         await self.view.update_message(interaction)
 
@@ -608,51 +533,40 @@ class DayActionButton(discord.ui.Button):
         super().__init__(label=label, style=style, row=row)
         self.action = action
         self.day_name = day_name
-    
+        
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.view.user_id:
             await interaction.response.send_message("This is not your schedule!", ephemeral=True)
             return
-        
-        # Update day status
+            
         self.view.schedule_state[self.day_name]['status'] = self.action
-        
-        # Clear individual time selections for this day
-        time_slots = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
-        for time_slot in time_slots:
+        for time_slot in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']:
             if time_slot in self.view.schedule_state[self.day_name]:
                 del self.view.schedule_state[self.day_name][time_slot]
-        
-        self.view.update_schedule_display()
+                
         await self.view.update_message(interaction)
 
 class CancelButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="Cancel", style=discord.ButtonStyle.red, row=4)
-    
+        
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.view.user_id:
             await interaction.response.send_message("This is not your schedule!", ephemeral=True)
             return
-        
-        await interaction.response.edit_message(
-            content="❌ **Schedule setup cancelled.**",
-            embed=None,
-            view=None
-        )
+            
+        await interaction.response.edit_message(content="❌ Schedule setup cancelled.", embed=None, view=None)
 
 class FinalizeButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="Finalize", style=discord.ButtonStyle.green, row=4)
-    
+        
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.view.user_id:
             await interaction.response.send_message("This is not your schedule!", ephemeral=True)
             return
-        
-        # Convert schedule state to format expected by existing system
+            
         user_schedule = {}
-        
         for date_info in self.view.session.schedule_dates:
             day_name = date_info['day_name']
             day_state = self.view.schedule_state[day_name]
@@ -660,55 +574,33 @@ class FinalizeButton(discord.ui.Button):
             
             if day_status == 'all_day':
                 user_schedule[day_name] = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
-            elif day_status == 'not_available':
+            elif day_status in ['not_available', 'unsure']:
                 user_schedule[day_name] = []
-            elif day_status == 'unsure':
-                user_schedule[day_name] = []  # Treat unsure as not available for scheduling
             elif day_status == 'partial':
-                # Get selected time slots
-                selected_times = []
-                for time_slot in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']:
-                    if day_state.get(time_slot, False):
-                        selected_times.append(time_slot)
-                user_schedule[day_name] = selected_times
+                user_schedule[day_name] = [t for t in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00'] if day_state.get(t)]
             else:
-                user_schedule[day_name] = []  # Not set = not available
-        
-        # Check if all days are set
+                user_schedule[day_name] = []
+                
         days_set = sum(1 for day_data in self.view.schedule_state.values() if day_data.get('status') is not None)
-        
         if days_set < 7:
-            await interaction.response.send_message(
-                f"Please set all 7 days before finalizing! You have {days_set}/7 days set.",
-                ephemeral=True
-            )
+            await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {days_set}/7 days set.", ephemeral=True)
             return
+            
+        self.view.session.add_player_schedule(str(self.view.user_id), user_schedule)
         
-        # Save to session using existing method
-        self.view.session.add_player_schedule(self.view.user_id, user_schedule)
-        
-        # Find the cog to access bot and finalize_scheduling method
-        draft_cog = None
-        for cog in interaction.client.cogs.values():
-            if hasattr(cog, 'active_sessions') and self.view.session.channel_id in cog.active_sessions:
-                draft_cog = cog
-                break
-        
-        if draft_cog:
-            channel = draft_cog.bot.get_channel(self.view.session.channel_id)
+        if self.view.cog:
+            channel = self.view.cog.bot.get_channel(self.view.session.channel_id)
             remaining = self.view.session.expected_players - len(self.view.session.players_responded)
             
             if remaining > 0:
                 await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
             
-            await interaction.response.edit_message(
-                content="✅ **Schedule finalized!** Thank you for submitting your availability.",
-                embed=None,
-                view=None
-            )
+            await interaction.response.edit_message(content="✅ **Schedule finalized!** Thank you.", embed=None, view=None)
             
-            # Check if all schedules are complete
             if self.view.session.is_complete():
-                await draft_cog.finalize_scheduling(channel, self.view.session)
+                await self.view.cog.finalize_scheduling(channel, self.view.session)
         else:
-            await interaction.response.send_message("Error finding scheduling session", ephemeral=True)
+            await interaction.response.send_message("Error: Could not find the scheduling session. Please try again.", ephemeral=True)
+
+def setup(bot):
+    bot.add_cog(EnhancedSchedulingCog(bot))
