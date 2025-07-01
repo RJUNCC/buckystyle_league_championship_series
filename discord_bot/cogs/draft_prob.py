@@ -1581,6 +1581,11 @@ class DraftLotteryCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def reload_sessions(self, ctx):
         """Manually reload sessions from database"""
+        embed = discord.Embed(
+            title="🔄 Sessions Reloaded",
+            description="",
+            color=0x00ff00
+        )
         try:
             from models.scheduling import get_all_active_sessions
             
@@ -1601,18 +1606,12 @@ class DraftLotteryCog(commands.Cog):
                     print(f"Error loading session {db_session.channel_id}: {e}")
                     embed.add_field(name=f"❌ Error loading {db_session.channel_id}", value=str(e), inline=False)
             
-            embed = discord.Embed(
-                title="🔄 Sessions Reloaded",
-                description=f"Cleared {old_count} memory sessions\nLoaded {loaded_count} from database",
-                color=0x00ff00
-            )
+            embed.description = f"Cleared {old_count} memory sessions\nLoaded {loaded_count} from database"
             
         except Exception as e:
-            embed = discord.Embed(
-                title="❌ Error Reloading Sessions",
-                description=f"An error occurred while reloading sessions: {str(e)}",
-                color=0xff0000
-            )
+            embed.title = "❌ Error Reloading Sessions"
+            embed.description = f"An error occurred while reloading sessions: {str(e)}"
+            embed.color = 0xff0000
             
         await ctx.respond(embed=embed, ephemeral=True)
 
