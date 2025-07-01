@@ -26,98 +26,7 @@ class DraftResult(NamedTuple):
     draft_order: List[Tuple[int, str, int]]
     eliminated: List[Tuple[str, int]]
 
-class SchedulingSession:
-    def __init__(self, channel_id, teams):
-        self.channel_id = channel_id
-        self.teams = teams
-        self.player_schedules = {}
-        self.players_responded = set()
-        self.expected_players = 6
-        
-        # Generate the next 7 days starting from tomorrow
-        self.schedule_dates = self.generate_next_week()
-        self.weekdays = [date_info['day_name'] for date_info in self.schedule_dates]
-        
-        self.confirmation_message = None
-        self.confirmations = {}  # {user_id: True/False}
-    
-    def save(self):
-        """Save current state to database"""
-        save_session(self)
-    
-    @classmethod
-    def from_db(cls, db_session):
-        """Create a SchedulingSession from database data"""
-        session = cls(int(db_session.channel_id), [db_session.team1, db_session.team2])
-        
-        # Convert string keys back to integers
-        session.player_schedules = {int(k): v for k, v in (db_session.player_schedules or {}).items()}
-        session.players_responded = set(int(uid) for uid in (db_session.players_responded or []))
-        session.confirmations = {int(k): v for k, v in (db_session.confirmations or {}).items()}
 
-        session.expected_players = db_session.expected_players
-        session.schedule_dates = db_session.schedule_dates or session.generate_next_week()
-        return session
-    
-    def generate_next_week(self):
-        """Generate the next 7 days starting from current day"""
-        dates = []
-        start_date = datetime.now()
-        
-        for i in range(7):
-            current_date = start_date + timedelta(days=i)
-            dates.append({
-                'day_name': current_date.strftime('%A'),  # Monday, Tuesday, etc.
-                'date': current_date.strftime('%m/%d'),    # 06/29
-                'full_date': current_date.strftime('%A, %B %d'),  # Monday, June 29
-                # Don't include datetime object as it's not JSON serializable
-            })
-        
-        return dates
-    
-    def get_date_info(self, day_name):
-        """Get date info for a specific day name"""
-        for date_info in self.schedule_dates:
-            if date_info['day_name'] == day_name:
-                return date_info
-        return None
-        
-    def add_player_schedule(self, user_id, schedule):
-        self.player_schedules[user_id] = schedule
-        self.players_responded.add(user_id)
-        self.save()
-        
-    def reset_player_schedule(self, user_id):
-        if user_id in self.player_schedules:
-            del self.player_schedules[user_id]
-        if user_id in self.players_responded:
-            self.players_responded.remove(user_id)
-        self.save()
-        
-    def is_complete(self):
-        return len(self.players_responded) >= self.expected_players
-        
-    def find_common_times(self):
-        if not self.player_schedules:
-            return None
-            
-        common_times = defaultdict(list)
-        
-        # For each day of the week
-        for date_info in self.schedule_dates:
-            day_name = date_info['day_name']
-            day_schedules = []
-            for user_id, schedule in self.player_schedules.items():
-                if day_name in schedule:
-                    day_schedules.append(set(schedule[day_name]))
-            
-            if len(day_schedules) >= self.expected_players:
-                if day_schedules:
-                    common_slots = set.intersection(*day_schedules[:self.expected_players])
-                    if common_slots:
-                        common_times[day_name] = sorted(list(common_slots))
-        
-        return dict(common_times) if common_times else None
 
 class DaySelect(discord.ui.Select):
     def __init__(self, options, user_id, session, parent_view):
@@ -558,7 +467,12 @@ class ConfirmationView(discord.ui.View):
         )
         
         # Reset this player's status so they can resubmit
-        self.session.reset_player_schedule(user_id)
+        # Directly modify the DBSchedulingSession object
+        if str(user_id) in self.session.player_schedules:
+            del self.session.player_schedules[str(user_id)]
+        if str(user_id) in self.session.players_responded:
+            self.session.players_responded.remove(str(user_id))
+        save_session(self.session)
         
         channel = self.cog.bot.get_channel(self.session.channel_id)
         await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. Use `/my_schedule` to resubmit availability.")
@@ -691,7 +605,7 @@ class DraftLotteryCog(commands.Cog):
             
             active_sessions = get_all_active_sessions()
             for db_session in active_sessions:
-                session = SchedulingSession.from_db(db_session)
+                session = DBSchedulingSession.from_db(db_session)
                 self.active_sessions[int(db_session.channel_id)] = session
                 print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
                 
@@ -1198,7 +1112,7 @@ class DraftLotteryCog(commands.Cog):
             return
         
         # Create new scheduling session
-        session = SchedulingSession(channel_id, [team1, team2])
+        session = DBSchedulingSession(channel_id=str(channel_id), team1=team1, team2=team2)
         self.active_sessions[channel_id] = session
         session.save()
         
@@ -1278,7 +1192,7 @@ class DraftLotteryCog(commands.Cog):
         view = CalendarScheduleView(user_id, session)
         
         # Allow players to reset/modify their schedule
-        if user_id in session.players_responded:
+        if str(user_id) in session.players_responded:
             embed = discord.Embed(
                 title="🔄 Update Your Schedule (Calendar View)",
                 description="Use the calendar below to update your availability. Click time slots to toggle them on/off.",
@@ -1329,6 +1243,11 @@ class DraftLotteryCog(commands.Cog):
 
     async def finalize_scheduling(self, channel, session):
         """Find common times and start confirmation process"""
+        # Ensure session is a DBSchedulingSession object
+        if not isinstance(session, DBSchedulingSession):
+            print(f"Error: session is not DBSchedulingSession, it is {type(session)}")
+            return
+
         common_times = session.find_common_times()
         
         if not common_times:
@@ -1970,7 +1889,7 @@ class CalendarScheduleView(discord.ui.View):
     def __init__(self, user_id, session):
         super().__init__(timeout=600)  # 10 minute timeout
         self.user_id = user_id
-        self.session = session
+        self.session = session  # This is now a DBSchedulingSession object
         self.current_day_index = 0  # Start with first day
         
         # Track schedule state: {day: {time: selected_state}}
@@ -1978,7 +1897,8 @@ class CalendarScheduleView(discord.ui.View):
         self.schedule_state = {}
         
         # Initialize schedule state from existing data if any
-        existing_schedule = self.session.player_schedules.get(self.user_id, {})
+        # Access player_schedules directly from the DBSchedulingSession object
+        existing_schedule = self.session.player_schedules.get(str(self.user_id), {})
         for date_info in self.session.schedule_dates:
             day_name = date_info['day_name']
             self.schedule_state[day_name] = {}
@@ -2290,7 +2210,9 @@ class FinalizeButton(discord.ui.Button):
             return
         
         # Save to session using existing method
-        self.view.session.add_player_schedule(self.view.user_id, user_schedule)
+        self.view.session.player_schedules[str(self.view.user_id)] = user_schedule
+        self.view.session.players_responded.append(str(self.view.user_id)) # Append to list
+        save_session(self.view.session)
         
         # Find the cog to access bot and finalize_scheduling method
         draft_cog = None

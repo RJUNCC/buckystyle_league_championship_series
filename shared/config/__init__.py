@@ -1,1 +1,2 @@
-from .config import Config
+# shared/config/__init__.py
+from .config import config

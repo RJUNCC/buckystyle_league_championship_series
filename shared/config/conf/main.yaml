@@ -1,0 +1,51 @@
+# shared/config/conf/main.yaml
+
+# Weights for player data
+player_weights:
+  avg_score: 0.25
+  goals_per_game: 0.22
+  saves_per_game: 0.17
+  assists_per_game: 0.16
+  shots_per_game: 0.07
+  demos_per_games: 0.05
+  demos_taken_per_game: 0.05
+  count_big_pads_stolen_per_game: 0.02
+  count_small_pads_stolen_per_game: 0.01
+
+# Weights for team data
+team_weights:
+  win_perc_weight: 0.6
+  goal_diff_weight: 0.22
+  shot_diff_weight: 0.06
+  demo_diff_weight: 0.02
+  strength_of_schedule: 0.10
+
+# Fantasy Points
+fantasy_points:
+  goals_pts: 5.0
+  assists_pts: 2.0
+  saves_pts: 3.0
+  shots_pts: 1.0
+  demos_inf_pts: 0.5
+  demos_taken_pts: -0.5
+
+# Dominance Quotient
+dominance_quotient_multiplier: 20
+
+# File for data
+data_files:
+  playoff_player_data: "playoff_player_data_season_4.parquet"
+  playoff_team_data: "playoff_team_data_season_4.parquet"
+  regular_player_data: "season_4_player_stats.parquet"
+  regular_team_data: "season_4_team_stats.parquet"
+  overall_player_data: "season_3_overall_player_data.parquet"
+
+  all_player_data: "playoff_player_data_season_4"
+  all_team_data: "season_4_team_data"
+  playoff_player_path: "playoff_player_data_season_4"
+  playoff_team_path: "playoff_team_data_season_4"
+
+# PATHS TO GROUPS
+group_paths:
+  all_blcs_season_2_matches_link: "all-blcs-2-matches-reg-playoffs-ajmebwvz3b"
+  blcs_season_5: blcsx-1-yp2y1hqpvg

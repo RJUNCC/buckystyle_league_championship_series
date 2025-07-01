@@ -9,6 +9,8 @@ from pathlib import Path
 
 Base = declarative_base()
 
+from collections import defaultdict
+
 class SchedulingSession(Base):
     __tablename__ = 'scheduling_sessions'
     
@@ -23,6 +25,90 @@ class SchedulingSession(Base):
     schedule_dates = Column(JSON)  # Store the date info
     confirmations = Column(JSON, default={})
     is_active = Column(Boolean, default=True)
+
+    def __init__(self, channel_id, team1, team2, player_schedules=None, players_responded=None, expected_players=6, schedule_dates=None, confirmations=None):
+        self.channel_id = str(channel_id)
+        self.team1 = team1
+        self.team2 = team2
+        self.player_schedules = player_schedules if player_schedules is not None else {}
+        self.players_responded = players_responded if players_responded is not None else []
+        self.expected_players = expected_players
+        self.schedule_dates = schedule_dates if schedule_dates is not None else self.generate_next_week()
+        self.confirmations = confirmations if confirmations is not None else {}
+        self.created_at = datetime.now()
+        self.is_active = True
+
+    def generate_next_week(self):
+        """Generate the next 7 days starting from current day"""
+        dates = []
+        start_date = datetime.now()
+        
+        for i in range(7):
+            current_date = start_date + timedelta(days=i)
+            dates.append({
+                'day_name': current_date.strftime('%A'),  # Monday, Tuesday, etc.
+                'date': current_date.strftime('%m/%d'),    # 06/29
+                'full_date': current_date.strftime('%A, %B %d'),  # Monday, June 29
+            })
+        return dates
+
+    def get_date_info(self, day_name):
+        """Get date info for a specific day name"""
+        for date_info in self.schedule_dates:
+            if date_info['day_name'] == day_name:
+                return date_info
+        return None
+
+    def add_player_schedule(self, user_id, schedule):
+        self.player_schedules[str(user_id)] = schedule
+        if str(user_id) not in self.players_responded:
+            self.players_responded.append(str(user_id))
+
+    def reset_player_schedule(self, user_id):
+        if str(user_id) in self.player_schedules:
+            del self.player_schedules[str(user_id)]
+        if str(user_id) in self.players_responded:
+            self.players_responded.remove(str(user_id))
+
+    def is_complete(self):
+        return len(self.players_responded) >= self.expected_players
+
+    def find_common_times(self):
+        if not self.player_schedules:
+            return None
+            
+        common_times = defaultdict(list)
+        
+        # For each day of the week
+        for date_info in self.schedule_dates:
+            day_name = date_info['day_name']
+            day_schedules = []
+            for user_id, schedule in self.player_schedules.items():
+                if day_name in schedule:
+                    day_schedules.append(set(schedule[day_name]))
+            
+            if len(day_schedules) >= self.expected_players:
+                if day_schedules:
+                    common_slots = set.intersection(*day_schedules[:self.expected_players])
+                    if common_slots:
+                        common_times[day_name] = sorted(list(common_slots))
+        
+        return dict(common_times) if common_times else None
+
+    @classmethod
+    def from_db(cls, db_session):
+        """Create a SchedulingSession from database data"""
+        session = cls(
+            channel_id=int(db_session.channel_id),
+            team1=db_session.team1,
+            team2=db_session.team2,
+            player_schedules=db_session.player_schedules or {},
+            players_responded=db_session.players_responded or [],
+            expected_players=db_session.expected_players,
+            schedule_dates=db_session.schedule_dates or [],
+            confirmations=db_session.confirmations or {}
+        )
+        return session
 
 def get_database_url():
     """Get database URL with PostgreSQL support and robust local fallback."""
@@ -103,19 +189,13 @@ def save_session(session_obj):
     """Save or update a scheduling session with better error handling"""
     db = Session()
     try:
-        # Convert sets to lists for JSON serialization
-        players_responded_list = list(session_obj.players_responded) if hasattr(session_obj.players_responded, '__iter__') else []
+        # Convert sets to lists for JSON serialization (if applicable)
+        players_responded_list = list(session_obj.players_responded) if isinstance(session_obj.players_responded, set) else session_obj.players_responded
         
-        # Convert user IDs to strings for consistency
-        player_schedules_str = {}
-        if session_obj.player_schedules:
-            for user_id, schedule in session_obj.player_schedules.items():
-                player_schedules_str[str(user_id)] = schedule
+        # Ensure player_schedules keys are strings for JSON serialization
+        player_schedules_str = {str(k): v for k, v in session_obj.player_schedules.items()}
         
-        confirmations_str = {}
-        if hasattr(session_obj, 'confirmations') and session_obj.confirmations:
-            for user_id, confirmed in session_obj.confirmations.items():
-                confirmations_str[str(user_id)] = confirmed
+        confirmations_str = {str(k): v for k, v in session_obj.confirmations.items()}
         
         existing = db.query(SchedulingSession).filter_by(
             channel_id=str(session_obj.channel_id)
