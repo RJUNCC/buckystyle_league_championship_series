@@ -1071,12 +1071,12 @@ class BLCSXStatsCog(commands.Cog):
             )
             
             # Add legend
-            legend = "Elite | Excellent | Good | Average | Poor | Terrible"
-            embed.add_field(
-                name="Performance Indicators",
-                value=legend,
-                inline=False
-            )
+            # legend = "Elite | Excellent | Good | Average | Poor | Terrible"
+            # embed.add_field(
+            #     name="Performance Indicators",
+            #     value=legend,
+            #     inline=False
+            # )
             
             embed.set_footer(text=f"Showing top {len(limited_players)} of {len(all_players)} players")
             

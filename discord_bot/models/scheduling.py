@@ -216,7 +216,9 @@ def save_session(session_obj):
                 existing.team1 = session_obj.teams[0]
                 existing.team2 = session_obj.teams[1]
             existing.expected_players = getattr(session_obj, 'expected_players', 6)
+            db.commit()
             print(f"📝 Updated session for channel {session_obj.channel_id}")
+            return existing # Return the updated object
         else:
             # Create new session
             new_session = SchedulingSession(
@@ -230,10 +232,9 @@ def save_session(session_obj):
                 confirmations=confirmations_str
             )
             db.add(new_session)
+            db.commit()
             print(f"💾 Created new session for channel {session_obj.channel_id}")
-        
-        db.commit()
-        print(f"✅ Session saved successfully to database")
+            return new_session # Return the new object
         
     except Exception as e:
         db.rollback()
