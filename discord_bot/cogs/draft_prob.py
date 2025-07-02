@@ -1166,7 +1166,12 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
             return
         
-        session = self.active_sessions[channel_id]
+        # Reload the session from the database to ensure it's attached to a session
+        session = load_session(channel_id)
+        if not session:
+            await ctx.respond("Could not load session data from the database.", ephemeral=True)
+            return
+
         user_id = ctx.author.id
         
         # Create the visual calendar view
@@ -1364,6 +1369,28 @@ class DraftLotteryCog(commands.Cog):
         await channel.send(f"@everyone Game Time: {display_time}?")
         session.confirmation_message = await channel.send(embed=embed, view=view)
 
+    @discord.slash_command(name="next_game_time", description="Propose the next available game time.")
+    @commands.has_permissions(administrator=True)
+    async def next_game_time(self, ctx):
+        """Propose the next available game time if a previous one was declined."""
+        channel_id = ctx.channel.id
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+
+        session = load_session(channel_id)
+        if not session:
+            await ctx.respond("Could not load session data from the database.", ephemeral=True)
+            return
+
+        # Ensure all players have submitted their schedules
+        if not session.is_complete():
+            await ctx.respond(f"Still waiting for {session.expected_players - len(session.players_responded)} players to submit their availability.", ephemeral=True)
+            return
+
+        await self.finalize_scheduling(ctx.channel, session)
+        await ctx.respond("Attempting to find and propose the next available game time.", ephemeral=True)
+
     def format_available_times_interactive(self, common_times, session):
         """Format available times for display with actual dates"""
         formatted = []
@@ -1413,7 +1440,12 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
             return
         
-        session = self.active_sessions[channel_id]
+        # Reload the session from the database to ensure it's attached to a session
+        session = load_session(channel_id)
+        if not session:
+            await ctx.respond("Could not load session data from the database.", ephemeral=True)
+            return
+            
         remaining = session.expected_players - len(session.players_responded)
         
         embed = discord.Embed(
@@ -1441,7 +1473,7 @@ class DraftLotteryCog(commands.Cog):
         
         embed.add_field(
             name="Teams",
-            value=f"{session.teams[0]} vs {session.teams[1]}",
+            value=f"{session.team1} vs {session.team2}",
             inline=False
         )
 

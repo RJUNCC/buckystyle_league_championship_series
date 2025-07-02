@@ -1,48 +1,305 @@
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,696 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,710 - __main__ - INFO - 🏥 Health check server task created
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,713 - __main__ - INFO - 🔄 Initializing database connection...
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,714 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,788 - models.database_config - INFO - ✅ Database connection successful
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,791 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,817 - models.database_config - INFO - ✅ Database tables created/verified
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,829 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,832 - __main__ - INFO - 🔧 Checking for database migrations...
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,847 - __main__ - INFO - ✅ Database schema is up to date
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,849 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,850 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,850 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,851 - __main__ - INFO -    🎮 BLCSX Stats commands available:
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,851 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,852 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,852 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,852 - __main__ - INFO -    /blcs_update - Update stats (admin only)
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,853 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,854 - __main__ - INFO - ✅ Loaded cog: DraftLotteryCog
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,856 - __main__ - INFO - ✅ Loaded cog: EnhancedSchedulingCog
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,937 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,937 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,940 - __main__ - INFO - ✅ Loaded cog: BLCSXStatsCog
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,940 - __main__ - INFO - 🚀 Starting Discord bot...
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,940 - discord.client - INFO - logging in using static token
-[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,956 - __main__ - INFO - ✅ Health check server started on port 8080
-[bot] [2025-07-02 20:08:47] 2025-07-02 20:08:47,357 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
-[bot] [2025-07-02 20:08:47] 2025-07-02 20:08:47,500 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-b-l35q",{"micros":116946,"calls":["id_created",{"micros":744,"calls":[]},"session_lookup_time",{"micros":347,"calls":[]},"session_lookup_finished",{"micros":22,"calls":[]},"discord-sessions-prd-2-4",{"micros":115154,"calls":["start_session",{"micros":105282,"calls":["discord-api-rpc-5f544bbbf7-nwt89",{"micros":82602,"calls":["get_user",{"micros":23952},"get_guilds",{"micros":7444},"send_scheduled_deletion_message",{"micros":12},"guild_join_requests",{"micros":2},"authorized_ip_coro",{"micros":16},"pending_payments",{"micros":5681},"apex_experiments",{"micros":1637},"user_activities",{"micros":5},"played_application_ids",{"micros":3}]}]},"starting_guild_connect",{"micros":41,"calls":[]},"presence_started",{"micros":262,"calls":[]},"guilds_started",{"micros":95,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":1,"calls":[]},"presence_connect",{"micros":9451,"calls":[]},"connect_finished",{"micros":9456,"calls":[]},"build_ready",{"micros":15,"calls":[]},"clean_ready",{"micros":1,"calls":[]},"optimize_ready",{"micros":0,"calls":[]},"split_ready",{"micros":0,"calls":[]}]}]}] (Session ID: 554a651a47f756f60e38a4e5ce93d6b9).
-[bot] [2025-07-02 20:08:47] Ignoring exception in on_connect
-[bot] [2025-07-02 20:08:47] Traceback (most recent call last):
-[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/client.py", line 412, in _run_event
-[bot] [2025-07-02 20:08:47]     await coro(*args, **kwargs)
-[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1214, in on_connect
-[bot] [2025-07-02 20:08:47]     await self.sync_commands()
-[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 742, in sync_commands
-[bot] [2025-07-02 20:08:47]     registered_commands = await self.register_commands(
-[bot] [2025-07-02 20:08:47]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 606, in register_commands
-[bot] [2025-07-02 20:08:47]     registered = await register("bulk", data, _log=False)
-[bot] [2025-07-02 20:08:47]                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/http.py", line 374, in request
-[bot] [2025-07-02 20:08:47]     raise HTTPException(response, data)
-[bot] [2025-07-02 20:08:47] discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
-[bot] [2025-07-02 20:08:47] In 20: Application command names must be unique
-[bot] [2025-07-02 20:08:49] 2025-07-02 20:08:49,527 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
-[bot] [2025-07-02 20:08:49] 2025-07-02 20:08:49,528 - __main__ - INFO - 📊 Connected to 2 servers
-[bot] [2025-07-02 20:08:49] 2025-07-02 20:08:49,528 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,309 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,312 - __main__ - INFO - 🏥 Health check server task created
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,313 - __main__ - INFO - 🔄 Initializing database connection...
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,313 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,373 - models.database_config - INFO - ✅ Database connection successful
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,376 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,389 - models.database_config - INFO - ✅ Database tables created/verified
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,399 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,401 - __main__ - INFO - 🔧 Checking for database migrations...
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,416 - __main__ - INFO - ✅ Database schema is up to date
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO -    🎮 BLCSX Stats commands available:
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,418 - __main__ - INFO -    /blcs_update - Update stats (admin only)
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,419 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,420 - __main__ - INFO - ✅ Loaded cog: DraftLotteryCog
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,485 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,486 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,488 - __main__ - INFO - ✅ Loaded cog: BLCSXStatsCog
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,488 - __main__ - INFO - 🚀 Starting Discord bot...
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,488 - discord.client - INFO - logging in using static token
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,507 - __main__ - INFO - ✅ Health check server started on port 8080
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,821 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
+[bot] [2025-07-02 20:31:07] 2025-07-02 20:31:07,993 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-d-5cb7",{"micros":148580,"calls":["id_created",{"micros":740,"calls":[]},"session_lookup_time",{"micros":303,"calls":[]},"session_lookup_finished",{"micros":12,"calls":[]},"discord-sessions-prd-2-75",{"micros":147122,"calls":["start_session",{"micros":125126,"calls":["discord-api-rpc-5f544bbbf7-lkhdx",{"micros":109177,"calls":["get_user",{"micros":15497},"get_guilds",{"micros":3677},"send_scheduled_deletion_message",{"micros":13},"guild_join_requests",{"micros":10},"authorized_ip_coro",{"micros":10},"pending_payments",{"micros":5892},"apex_experiments",{"micros":2739},"user_activities",{"micros":3},"played_application_ids",{"micros":2}]}]},"starting_guild_connect",{"micros":53,"calls":[]},"presence_started",{"micros":12612,"calls":[]},"guilds_started",{"micros":100,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":2,"calls":[]},"presence_connect",{"micros":9207,"calls":[]},"connect_finished",{"micros":9213,"calls":[]},"build_ready",{"micros":14,"calls":[]},"clean_ready",{"micros":1,"calls":[]},"optimize_ready",{"micros":0,"calls":[]},"split_ready",{"micros":1,"calls":[]}]}]}] (Session ID: b4e680a47804eab8a14d16c8a20b1f5f).
+[bot] [2025-07-02 20:31:10] 2025-07-02 20:31:10,010 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
+[bot] [2025-07-02 20:31:10] 2025-07-02 20:31:10,010 - __main__ - INFO - 📊 Connected to 2 servers
+[bot] [2025-07-02 20:31:10] 2025-07-02 20:31:10,010 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
+[bot] [2025-07-02 20:32:53] Ignoring exception in view <CalendarScheduleView timeout=600 children=0> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Next Day ▶' emoji=None sku_id=None row=0>:
+[bot] [2025-07-02 20:32:53] Traceback (most recent call last):
+[bot] [2025-07-02 20:32:53]   File "/usr/local/lib/python3.12/site-packages/discord/ui/view.py", line 426, in _scheduled_task
+[bot] [2025-07-02 20:32:53]     await item.callback(interaction)
+[bot] [2025-07-02 20:32:53]   File "/app/cogs/draft_prob.py", line 1982, in next_day_callback
+[bot] [2025-07-02 20:32:53]     await self.update_view(interaction)
+[bot] [2025-07-02 20:32:53]   File "/app/cogs/draft_prob.py", line 1937, in update_view
+[bot] [2025-07-02 20:32:53]     self.create_calendar_buttons()
+[bot] [2025-07-02 20:32:53]   File "/app/cogs/draft_prob.py", line 1838, in create_calendar_buttons
+[bot] [2025-07-02 20:32:53]     if current_day_index >= len(self.session.schedule_dates):
+[bot] [2025-07-02 20:32:53]                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:53]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 20:32:53]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 20:32:53]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:53]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 20:32:53]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 20:32:53]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:53]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 20:32:53]     return state._load_expired(state, passive)
+[bot] [2025-07-02 20:32:53]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:53]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 20:32:53]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 20:32:53]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 20:32:53]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 20:32:53] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d39640> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 20:32:59] Ignoring exception in view <CalendarScheduleView timeout=600 children=0> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Next Day ▶' emoji=None sku_id=None row=0>:
+[bot] [2025-07-02 20:32:59] Traceback (most recent call last):
+[bot] [2025-07-02 20:32:59]   File "/usr/local/lib/python3.12/site-packages/discord/ui/view.py", line 426, in _scheduled_task
+[bot] [2025-07-02 20:32:59]     await item.callback(interaction)
+[bot] [2025-07-02 20:32:59]   File "/app/cogs/draft_prob.py", line 1982, in next_day_callback
+[bot] [2025-07-02 20:32:59]     await self.update_view(interaction)
+[bot] [2025-07-02 20:32:59]   File "/app/cogs/draft_prob.py", line 1937, in update_view
+[bot] [2025-07-02 20:32:59]     self.create_calendar_buttons()
+[bot] [2025-07-02 20:32:59]   File "/app/cogs/draft_prob.py", line 1838, in create_calendar_buttons
+[bot] [2025-07-02 20:32:59]     if current_day_index >= len(self.session.schedule_dates):
+[bot] [2025-07-02 20:32:59]                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:59]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 20:32:59]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 20:32:59]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:59]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 20:32:59]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 20:32:59]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:59]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 20:32:59]     return state._load_expired(state, passive)
+[bot] [2025-07-02 20:32:59]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:32:59]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 20:32:59]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 20:32:59]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 20:32:59]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 20:32:59] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d39640> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 20:33:29] Ignoring exception in view <CalendarScheduleView timeout=600 children=0> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='Next Day ▶' emoji=None sku_id=None row=0>:
+[bot] [2025-07-02 20:33:29] Traceback (most recent call last):
+[bot] [2025-07-02 20:33:29]   File "/usr/local/lib/python3.12/site-packages/discord/ui/view.py", line 426, in _scheduled_task
+[bot] [2025-07-02 20:33:29]     await item.callback(interaction)
+[bot] [2025-07-02 20:33:29]   File "/app/cogs/draft_prob.py", line 1982, in next_day_callback
+[bot] [2025-07-02 20:33:29]     await self.update_view(interaction)
+[bot] [2025-07-02 20:33:29]   File "/app/cogs/draft_prob.py", line 1937, in update_view
+[bot] [2025-07-02 20:33:29]     self.create_calendar_buttons()
+[bot] [2025-07-02 20:33:29]   File "/app/cogs/draft_prob.py", line 1838, in create_calendar_buttons
+[bot] [2025-07-02 20:33:29]     if current_day_index >= len(self.session.schedule_dates):
+[bot] [2025-07-02 20:33:29]                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:33:29]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 20:33:29]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 20:33:29]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:33:29]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 20:33:29]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 20:33:29]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:33:29]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 20:33:29]     return state._load_expired(state, passive)
+[bot] [2025-07-02 20:33:29]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:33:29]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 20:33:29]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 20:33:29]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 20:33:29]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 20:33:29] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d39640> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 20:34:27] Ignoring exception in command my_schedule:
+[bot] [2025-07-02 20:34:27] Traceback (most recent call last):
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
+[bot] [2025-07-02 20:34:27]     ret = await coro(arg)
+[bot] [2025-07-02 20:34:27]           ^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
+[bot] [2025-07-02 20:34:27]     await self.callback(self.cog, ctx, **kwargs)
+[bot] [2025-07-02 20:34:27]   File "/app/cogs/draft_prob.py", line 1173, in my_schedule
+[bot] [2025-07-02 20:34:27]     view = CalendarScheduleView(user_id, session)
+[bot] [2025-07-02 20:34:27]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:27]   File "/app/cogs/draft_prob.py", line 1811, in __init__
+[bot] [2025-07-02 20:34:27]     existing_schedule = self.session.player_schedules.get(str(self.user_id), {})
+[bot] [2025-07-02 20:34:27]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 20:34:27]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 20:34:27]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 20:34:27]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 20:34:27]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 20:34:27]     return state._load_expired(state, passive)
+[bot] [2025-07-02 20:34:27]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 20:34:27]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 20:34:27]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 20:34:27] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 20:34:27] 
+[bot] [2025-07-02 20:34:27] The above exception was the direct cause of the following exception:
+[bot] [2025-07-02 20:34:27] 
+[bot] [2025-07-02 20:34:27] Traceback (most recent call last):
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
+[bot] [2025-07-02 20:34:27]     await ctx.command.invoke(ctx)
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
+[bot] [2025-07-02 20:34:27]     await injected(ctx)
+[bot] [2025-07-02 20:34:27]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
+[bot] [2025-07-02 20:34:27]     raise ApplicationCommandInvokeError(exc) from exc
+[bot] [2025-07-02 20:34:27] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 20:34:31] Ignoring exception in view <CalendarScheduleView timeout=600 children=0> for item <TimeSlotButton style=<ButtonStyle.secondary: 2> url=None disabled=False label='8PM' emoji=None sku_id=None row=1>:
+[bot] [2025-07-02 20:34:31] Traceback (most recent call last):
+[bot] [2025-07-02 20:34:31]   File "/usr/local/lib/python3.12/site-packages/discord/ui/view.py", line 426, in _scheduled_task
+[bot] [2025-07-02 20:34:31]     await item.callback(interaction)
+[bot] [2025-07-02 20:34:31]   File "/app/cogs/draft_prob.py", line 2058, in callback
+[bot] [2025-07-02 20:34:31]     await view.update_view(interaction)
+[bot] [2025-07-02 20:34:31]   File "/app/cogs/draft_prob.py", line 1937, in update_view
+[bot] [2025-07-02 20:34:31]     self.create_calendar_buttons()
+[bot] [2025-07-02 20:34:31]   File "/app/cogs/draft_prob.py", line 1838, in create_calendar_buttons
+[bot] [2025-07-02 20:34:31]     if current_day_index >= len(self.session.schedule_dates):
+[bot] [2025-07-02 20:34:31]                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 20:34:31]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 20:34:31]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 20:34:31]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 20:34:31]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 20:34:31]     return state._load_expired(state, passive)
+[bot] [2025-07-02 20:34:31]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 20:34:31]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 20:34:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 20:34:31]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 20:34:31] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d39640> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 20:34:39] Ignoring exception in view <CalendarScheduleView timeout=600 children=0> for item <Button style=<ButtonStyle.secondary: 2> url=None disabled=False label='◀ Prev Day' emoji=None sku_id=None row=0>:
+[bot] [2025-07-02 20:34:39] Traceback (most recent call last):
+[bot] [2025-07-02 20:34:39]   File "/usr/local/lib/python3.12/site-packages/discord/ui/view.py", line 426, in _scheduled_task
+[bot] [2025-07-02 20:34:39]     await item.callback(interaction)
+[bot] [2025-07-02 20:34:39]   File "/app/cogs/draft_prob.py", line 1978, in prev_day_callback
+[bot] [2025-07-02 20:34:39]     await self.update_view(interaction)
+[bot] [2025-07-02 20:34:39]   File "/app/cogs/draft_prob.py", line 1937, in update_view
+[bot] [2025-07-02 20:34:39]     self.create_calendar_buttons()
+[bot] [2025-07-02 20:34:39]   File "/app/cogs/draft_prob.py", line 1838, in create_calendar_buttons
+[bot] [2025-07-02 20:34:39]     if current_day_index >= len(self.session.schedule_dates):
+[bot] [2025-07-02 20:34:39]                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:39]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 20:34:39]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 20:34:39]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:39]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 20:34:39]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 20:34:39]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:39]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 20:34:39]     return state._load_expired(state, passive)
+[bot] [2025-07-02 20:34:39]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:34:39]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 20:34:39]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 20:34:39]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 20:34:39]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 20:34:39] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d39640> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 21:49:33] Ignoring exception in command my_schedule:
+[bot] [2025-07-02 21:49:33] Traceback (most recent call last):
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
+[bot] [2025-07-02 21:49:33]     ret = await coro(arg)
+[bot] [2025-07-02 21:49:33]           ^^^^^^^^^^^^^^^
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
+[bot] [2025-07-02 21:49:33]     await self.callback(self.cog, ctx, **kwargs)
+[bot] [2025-07-02 21:49:33]   File "/app/cogs/draft_prob.py", line 1173, in my_schedule
+[bot] [2025-07-02 21:49:33]     view = CalendarScheduleView(user_id, session)
+[bot] [2025-07-02 21:49:33]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 21:49:33]   File "/app/cogs/draft_prob.py", line 1811, in __init__
+[bot] [2025-07-02 21:49:33]     existing_schedule = self.session.player_schedules.get(str(self.user_id), {})
+[bot] [2025-07-02 21:49:33]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 21:49:33]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 21:49:33]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 21:49:33]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 21:49:33]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 21:49:33]     return state._load_expired(state, passive)
+[bot] [2025-07-02 21:49:33]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 21:49:33]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 21:49:33]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 21:49:33] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 21:49:33] 
+[bot] [2025-07-02 21:49:33] The above exception was the direct cause of the following exception:
+[bot] [2025-07-02 21:49:33] 
+[bot] [2025-07-02 21:49:33] Traceback (most recent call last):
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
+[bot] [2025-07-02 21:49:33]     await ctx.command.invoke(ctx)
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
+[bot] [2025-07-02 21:49:33]     await injected(ctx)
+[bot] [2025-07-02 21:49:33]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
+[bot] [2025-07-02 21:49:33]     raise ApplicationCommandInvokeError(exc) from exc
+[bot] [2025-07-02 21:49:33] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 22:06:31] Ignoring exception in command schedule_status:
+[bot] [2025-07-02 22:06:31] Traceback (most recent call last):
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
+[bot] [2025-07-02 22:06:31]     ret = await coro(arg)
+[bot] [2025-07-02 22:06:31]           ^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
+[bot] [2025-07-02 22:06:31]     await self.callback(self.cog, ctx, **kwargs)
+[bot] [2025-07-02 22:06:31]   File "/app/cogs/draft_prob.py", line 1417, in schedule_status
+[bot] [2025-07-02 22:06:31]     remaining = session.expected_players - len(session.players_responded)
+[bot] [2025-07-02 22:06:31]                 ^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 22:06:31]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 22:06:31]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 22:06:31]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 22:06:31]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 22:06:31]     return state._load_expired(state, passive)
+[bot] [2025-07-02 22:06:31]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 22:06:31]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 22:06:31]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 22:06:31] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 22:06:31] 
+[bot] [2025-07-02 22:06:31] The above exception was the direct cause of the following exception:
+[bot] [2025-07-02 22:06:31] 
+[bot] [2025-07-02 22:06:31] Traceback (most recent call last):
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
+[bot] [2025-07-02 22:06:31]     await ctx.command.invoke(ctx)
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
+[bot] [2025-07-02 22:06:31]     await injected(ctx)
+[bot] [2025-07-02 22:06:31]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
+[bot] [2025-07-02 22:06:31]     raise ApplicationCommandInvokeError(exc) from exc
+[bot] [2025-07-02 22:06:31] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 22:06:46] Ignoring exception in command my_schedule:
+[bot] [2025-07-02 22:06:46] Traceback (most recent call last):
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
+[bot] [2025-07-02 22:06:46]     ret = await coro(arg)
+[bot] [2025-07-02 22:06:46]           ^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
+[bot] [2025-07-02 22:06:46]     await self.callback(self.cog, ctx, **kwargs)
+[bot] [2025-07-02 22:06:46]   File "/app/cogs/draft_prob.py", line 1173, in my_schedule
+[bot] [2025-07-02 22:06:46]     view = CalendarScheduleView(user_id, session)
+[bot] [2025-07-02 22:06:46]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:46]   File "/app/cogs/draft_prob.py", line 1811, in __init__
+[bot] [2025-07-02 22:06:46]     existing_schedule = self.session.player_schedules.get(str(self.user_id), {})
+[bot] [2025-07-02 22:06:46]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
+[bot] [2025-07-02 22:06:46]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+[bot] [2025-07-02 22:06:46]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
+[bot] [2025-07-02 22:06:46]     value = self._fire_loader_callables(state, key, passive)
+[bot] [2025-07-02 22:06:46]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
+[bot] [2025-07-02 22:06:46]     return state._load_expired(state, passive)
+[bot] [2025-07-02 22:06:46]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
+[bot] [2025-07-02 22:06:46]     self.manager.expired_attribute_loader(self, toload, passive)
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
+[bot] [2025-07-02 22:06:46]     raise orm_exc.DetachedInstanceError(
+[bot] [2025-07-02 22:06:46] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[bot] [2025-07-02 22:06:46] 
+[bot] [2025-07-02 22:06:46] The above exception was the direct cause of the following exception:
+[bot] [2025-07-02 22:06:46] 
+[bot] [2025-07-02 22:06:46] Traceback (most recent call last):
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
+[bot] [2025-07-02 22:06:46]     await ctx.command.invoke(ctx)
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
+[bot] [2025-07-02 22:06:46]     await injected(ctx)
+[bot] [2025-07-02 22:06:46]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
+[bot] [2025-07-02 22:06:46]     raise ApplicationCommandInvokeError(exc) from exc
+[bot] [2025-07-02 22:06:46] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: DetachedInstanceError: Instance <SchedulingSession at 0x7ec399d3aba0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
