@@ -1566,7 +1566,7 @@ class DraftLotteryCog(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=True)
 
     @discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
-    @commands.has_permissions(administrator=True)
+    # @commands.has_permissions(administrator=True)
     async def view_all_schedules(self, ctx):
         """Admin command to view all players' schedules in the current session"""
         channel_id = ctx.channel.id
