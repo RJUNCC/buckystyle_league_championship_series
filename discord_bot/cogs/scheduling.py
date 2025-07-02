@@ -7,18 +7,11 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 # Import database functions - updated for PostgreSQL support
-try:
-    from models.scheduling import (
-        save_session, load_session, delete_session, 
-        get_all_active_sessions, SchedulingSession as DBSchedulingSession
-    )
-    from models.player import Player
-except ImportError:
-    print("Warning: scheduling/player modules not found. Database persistence disabled.")
-    save_session = lambda x: None
-    load_session = lambda x: None
-    delete_session = lambda x: None
-    get_all_active_sessions = lambda: []
+from models.scheduling import (
+    save_session, load_session, delete_session, 
+    get_all_active_sessions, SchedulingSession as DBSchedulingSession
+)
+from models.player import Player
 
 class EnhancedSchedulingCog(commands.Cog):
     def __init__(self, bot):
@@ -30,15 +23,29 @@ class EnhancedSchedulingCog(commands.Cog):
 
     async def load_active_sessions(self):
         """Load all active sessions from database on startup"""
+        print("DEBUG: Attempting to load active sessions from database...")
         try:
-            await asyncio.sleep(2)  # Wait for bot to be ready
+            await self.bot.wait_until_ready()
+            print("DEBUG: Bot is ready, proceeding to load sessions.")
+
             active_sessions = get_all_active_sessions()
+            print(f"DEBUG: Found {len(active_sessions)} active sessions in database.")
+
             for db_session in active_sessions:
-                session = SchedulingSession.from_db(db_session)
-                self.active_sessions[int(db_session.channel_id)] = session
-                print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
+                try:
+                    session = SchedulingSession.from_db(db_session)
+                    self.active_sessions[int(db_session.channel_id)] = session
+                    print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
+                except Exception as e:
+                    print(f"ERROR: Failed to load session from DB object for channel {db_session.channel_id}: {e}")
+
+        except asyncio.CancelledError:
+            print("📝 Session loading cancelled")
+            raise
         except Exception as e:
-            print(f"Error loading sessions: {e}")
+            print(f"CRITICAL: Error loading sessions from database: {e}")
+            import traceback
+            traceback.print_exc()
 
     @discord.slash_command(name="schedule_game_v2", description="Start a game scheduling session between two teams")
     async def schedule_game(self, ctx, team1: str, team2: str):

@@ -17,3 +17,6 @@ services:
   - key: DISCORD_TOKEN
     scope: RUN_TIME
     type: SECRET
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    type: SECRET

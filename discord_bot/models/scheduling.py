@@ -1,5 +1,5 @@
 # models/scheduling.py - Updated with PostgreSQL support
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Boolean, Text
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Boolean, Text, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
@@ -331,7 +331,7 @@ def test_database_connection():
     """Test database connection and return status"""
     try:
         db = Session()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         return True, "Database connection successful"
     except Exception as e:

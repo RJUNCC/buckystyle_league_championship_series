@@ -12,12 +12,18 @@ import discord.utils
 # Import database functions
 try:
     from models.scheduling import save_session, delete_session, get_all_active_sessions, load_session, SchedulingSession as DBSchedulingSession
-except ImportError:
-    print("Warning: scheduling module not found. Database persistence disabled.")
-    save_session = lambda x: None
-    load_session = lambda x: None
-    delete_session = lambda x: None
-    get_all_active_active_sessions = lambda: []
+except ImportError as e:
+    print(f"CRITICAL: Failed to import scheduling module: {e}")
+    import traceback
+    traceback.print_exc()
+    # Make it obvious that persistence is disabled
+    save_session = lambda x: print("DATABASE DISABLED: save_session called")
+    load_session = lambda x: print("DATABASE DISABLED: load_session called")
+    delete_session = lambda x: print("DATABASE DISABLED: delete_session called")
+    get_all_active_sessions = lambda: []
+    # Define a dummy class to avoid NameError
+    class DBSchedulingSession:
+        pass
 
 class Player(NamedTuple):
     name: str
@@ -608,20 +614,26 @@ class DraftLotteryCog(commands.Cog):
         try:
             # Wait for bot to be ready
             await self.bot.wait_until_ready()
-            await asyncio.sleep(2)  # Additional safety delay
+            print("DEBUG: Bot is ready, proceeding to load sessions.")
             
             active_sessions = get_all_active_sessions()
+            print(f"DEBUG: Found {len(active_sessions)} active sessions in database.")
+
             for db_session in active_sessions:
-                session = DBSchedulingSession.from_db(db_session)
-                self.active_sessions[int(db_session.channel_id)] = session
-                print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
-                
+                try:
+                    session = DBSchedulingSession.from_db(db_session)
+                    self.active_sessions[int(db_session.channel_id)] = session
+                    print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
+                except Exception as e:
+                    print(f"ERROR: Failed to load session from DB object for channel {db_session.channel_id}: {e}")
+
         except asyncio.CancelledError:
-            # Handle graceful cancellation
             print("📝 Session loading cancelled")
             raise
         except Exception as e:
-            print(f"Error loading sessions: {e}")
+            print(f"CRITICAL: Error loading sessions from database: {e}")
+            import traceback
+            traceback.print_exc()
 
     def get_pick_emoji(self, pick: int) -> str:
         if pick <= 2:
