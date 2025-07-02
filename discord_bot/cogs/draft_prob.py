@@ -1529,7 +1529,7 @@ class DraftLotteryCog(commands.Cog):
 
             embed.add_field(name=player_name, value=schedule_text, inline=False)
 
-        await ctx.respond(embed=embed, ephemeral=True)
+        await ctx.respond(embed=embed)
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
     @commands.has_permissions(administrator=True)
