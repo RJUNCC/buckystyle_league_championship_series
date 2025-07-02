@@ -1,9 +1,48 @@
-[2025-07-02 19:25:22] Traceback (most recent call last):
-[2025-07-02 19:25:22]   File "/app/bot.py", line 37, in <module>
-[2025-07-02 19:25:22]     from cogs.draft_prob import DraftLotteryCog
-[2025-07-02 19:25:22]   File "/app/cogs/draft_prob.py", line 1676
-[2025-07-02 19:25:22]     "export_timestamp": datetime.now().isoformat(),
-[2025-07-02 19:25:22] IndentationError: unexpected indent
-[2025-07-02 19:25:20] ERROR failed health checks after 7 attempts with error Readiness probe failed: dial tcp 10.244.93.64:8080: connect: connection refused
-[2025-07-02 19:25:50] ERROR component terminated with non-zero exit code: 1,
-[]
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,696 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,710 - __main__ - INFO - 🏥 Health check server task created
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,713 - __main__ - INFO - 🔄 Initializing database connection...
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,714 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,788 - models.database_config - INFO - ✅ Database connection successful
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,791 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,817 - models.database_config - INFO - ✅ Database tables created/verified
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,829 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,832 - __main__ - INFO - 🔧 Checking for database migrations...
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,847 - __main__ - INFO - ✅ Database schema is up to date
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,849 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,850 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,850 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,851 - __main__ - INFO -    🎮 BLCSX Stats commands available:
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,851 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,852 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,852 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,852 - __main__ - INFO -    /blcs_update - Update stats (admin only)
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,853 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,854 - __main__ - INFO - ✅ Loaded cog: DraftLotteryCog
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,856 - __main__ - INFO - ✅ Loaded cog: EnhancedSchedulingCog
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,937 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,937 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,940 - __main__ - INFO - ✅ Loaded cog: BLCSXStatsCog
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,940 - __main__ - INFO - 🚀 Starting Discord bot...
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,940 - discord.client - INFO - logging in using static token
+[bot] [2025-07-02 20:08:46] 2025-07-02 20:08:46,956 - __main__ - INFO - ✅ Health check server started on port 8080
+[bot] [2025-07-02 20:08:47] 2025-07-02 20:08:47,357 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
+[bot] [2025-07-02 20:08:47] 2025-07-02 20:08:47,500 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-b-l35q",{"micros":116946,"calls":["id_created",{"micros":744,"calls":[]},"session_lookup_time",{"micros":347,"calls":[]},"session_lookup_finished",{"micros":22,"calls":[]},"discord-sessions-prd-2-4",{"micros":115154,"calls":["start_session",{"micros":105282,"calls":["discord-api-rpc-5f544bbbf7-nwt89",{"micros":82602,"calls":["get_user",{"micros":23952},"get_guilds",{"micros":7444},"send_scheduled_deletion_message",{"micros":12},"guild_join_requests",{"micros":2},"authorized_ip_coro",{"micros":16},"pending_payments",{"micros":5681},"apex_experiments",{"micros":1637},"user_activities",{"micros":5},"played_application_ids",{"micros":3}]}]},"starting_guild_connect",{"micros":41,"calls":[]},"presence_started",{"micros":262,"calls":[]},"guilds_started",{"micros":95,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":1,"calls":[]},"presence_connect",{"micros":9451,"calls":[]},"connect_finished",{"micros":9456,"calls":[]},"build_ready",{"micros":15,"calls":[]},"clean_ready",{"micros":1,"calls":[]},"optimize_ready",{"micros":0,"calls":[]},"split_ready",{"micros":0,"calls":[]}]}]}] (Session ID: 554a651a47f756f60e38a4e5ce93d6b9).
+[bot] [2025-07-02 20:08:47] Ignoring exception in on_connect
+[bot] [2025-07-02 20:08:47] Traceback (most recent call last):
+[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/client.py", line 412, in _run_event
+[bot] [2025-07-02 20:08:47]     await coro(*args, **kwargs)
+[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1214, in on_connect
+[bot] [2025-07-02 20:08:47]     await self.sync_commands()
+[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 742, in sync_commands
+[bot] [2025-07-02 20:08:47]     registered_commands = await self.register_commands(
+[bot] [2025-07-02 20:08:47]                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 606, in register_commands
+[bot] [2025-07-02 20:08:47]     registered = await register("bulk", data, _log=False)
+[bot] [2025-07-02 20:08:47]                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[bot] [2025-07-02 20:08:47]   File "/usr/local/lib/python3.12/site-packages/discord/http.py", line 374, in request
+[bot] [2025-07-02 20:08:47]     raise HTTPException(response, data)
+[bot] [2025-07-02 20:08:47] discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+[bot] [2025-07-02 20:08:47] In 20: Application command names must be unique
+[bot] [2025-07-02 20:08:49] 2025-07-02 20:08:49,527 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
+[bot] [2025-07-02 20:08:49] 2025-07-02 20:08:49,528 - __main__ - INFO - 📊 Connected to 2 servers
+[bot] [2025-07-02 20:08:49] 2025-07-02 20:08:49,528 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
