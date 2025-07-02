@@ -1,10 +1,31 @@
-25-07-02 01:40:44] ✅ Using PostgreSQL with connection pooling
-[2025-07-02 01:40:44] Traceback (most recent call last):
-[2025-07-02 01:40:44]   File "/app/bot.py", line 38, in <module>
-[2025-07-02 01:40:44] ✅ Database tables created/verified
-[2025-07-02 01:40:44]     from cogs.blcsx_stats import BLCSXStatsCog
-[2025-07-02 01:40:44]   File "/app/cogs/blcsx_stats.py", line 1199, in <module>
-[2025-07-02 01:40:44]     BLCSXStatsCog._create_stat_leaderboard_command(stat_key='goals_per_game', display_name='Goals/Game')
-[2025-07-02 01:40:44] TypeError: BLCSXStatsCog._create_stat_leaderboard_command() missing 1 required positional argument: 'self'
-[2025-07-02 01:41:13] ERROR failed health checks after 5 attempts with error Readiness probe failed: dial tcp 10.244.39.102:8080: connect: connection refused
-[2025-07-02 01:41:15] ERROR component terminated with non-zero exit code:
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,570 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,576 - __main__ - INFO - 🏥 Health check server task created
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,577 - __main__ - INFO - 🔄 Initializing database connection...
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,578 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,633 - models.database_config - INFO - ✅ Database connection successful
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,635 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,650 - models.database_config - INFO - ✅ Database tables created/verified
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,659 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,661 - __main__ - INFO - 🔧 Checking for database migrations...
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,675 - __main__ - INFO - ✅ Database schema is up to date
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,677 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,677 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,678 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,679 - __main__ - INFO -    🎮 BLCSX Stats commands available:
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,679 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,679 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,680 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,680 - __main__ - INFO -    /blcs_update - Update stats (admin only)
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,681 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,684 - __main__ - INFO - ✅ Loaded cog: DraftLotteryCog
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,751 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,753 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,761 - __main__ - INFO - ✅ Loaded cog: BLCSXStatsCog
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,761 - __main__ - INFO - 🚀 Starting Discord bot...
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,761 - discord.client - INFO - logging in using static token
+[bot] [2025-07-02 05:11:43] 2025-07-02 05:11:43,788 - __main__ - INFO - ✅ Health check server started on port 8080
+[bot] [2025-07-02 05:11:44] 2025-07-02 05:11:44,081 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
+[bot] [2025-07-02 05:11:44] 2025-07-02 05:11:44,192 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-b-32q5",{"micros":90291,"calls":["id_created",{"micros":652,"calls":[]},"session_lookup_time",{"micros":274,"calls":[]},"session_lookup_finished",{"micros":24,"calls":[]},"discord-sessions-prd-2-7",{"micros":89083,"calls":["start_session",{"micros":57626,"calls":["discord-api-rpc-6d5df96575-7gjzl",{"micros":40831,"calls":["get_user",{"micros":5688},"get_guilds",{"micros":5012},"send_scheduled_deletion_message",{"micros":20},"guild_join_requests",{"micros":3},"authorized_ip_coro",{"micros":16},"pending_payments",{"micros":7004},"apex_experiments",{"micros":860},"user_activities",{"micros":5},"played_application_ids",{"micros":2}]}]},"starting_guild_connect",{"micros":29,"calls":[]},"presence_started",{"micros":16089,"calls":[]},"guilds_started",{"micros":121,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":1,"calls":[]},"presence_connect",{"micros":15198,"calls":[]},"connect_finished",{"micros":15202,"calls":[]},"build_ready",{"micros":12,"calls":[]},"clean_ready",{"micros":0,"calls":[]},"optimize_ready",{"micros":1,"calls":[]},"split_ready",{"micros":0,"calls":[]}]}]}] (Session ID: e29758d80731f97324f0b7151b0990ad).
+[bot] [2025-07-02 05:11:46] 2025-07-02 05:11:46,217 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
+[bot] [2025-07-02 05:11:46] 2025-07-02 05:11:46,218 - __main__ - INFO - 📊 Connected to 2 servers
+[bot] [2025-07-02 05:11:46] 2025-07-02 05:11:46,218 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord

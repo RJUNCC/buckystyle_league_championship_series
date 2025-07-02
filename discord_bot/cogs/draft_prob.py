@@ -604,6 +604,7 @@ class DraftLotteryCog(commands.Cog):
     
     async def load_active_sessions(self):
         """Load all active sessions from database on startup"""
+        print("DEBUG: Attempting to load active sessions from database...")
         try:
             # Wait for bot to be ready
             await self.bot.wait_until_ready()
