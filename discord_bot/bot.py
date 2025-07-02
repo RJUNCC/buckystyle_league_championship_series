@@ -36,6 +36,7 @@ except ImportError as e:
 # Import the specific cogs you want to load
 from cogs.draft_prob import DraftLotteryCog
 from cogs.blcsx_stats import BLCSXStatsCog
+from cogs.scheduling import EnhancedSchedulingCog
 
 # Import ballchasing integration
 from services.ballchasing_stats_updater import initialize_ballchasing_updater
@@ -69,6 +70,7 @@ class RocketLeagueBot(commands.Bot):
         """Load a specific list of cogs."""
         cogs_to_load = [
             DraftLotteryCog,
+            EnhancedSchedulingCog,
         ]
 
         # Conditionally add BLCSXStatsCog if its dependencies are met
