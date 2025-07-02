@@ -1673,13 +1673,33 @@ class DraftLotteryCog(commands.Cog):
     
 
     
-                "export_timestamp": datetime.now().isoformat(),
-                "teams": session.teams,
-                "channel_id": str(channel_id),
-                "schedule_dates": session.schedule_dates,
-                "player_count": len(session.player_schedules),
-                "expected_players": session.expected_players,
-                "players": {}
+    @discord.slash_command(name="export_schedules", description="Export all schedules for the current session to a JSON file")
+    @commands.has_permissions(administrator=True)
+    async def export_schedules(self, ctx):
+        """Export all schedules for the current session to a JSON file"""
+        try:
+            import io
+            channel_id = ctx.channel.id
+            
+            if channel_id not in self.active_sessions:
+                await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+                return
+            
+            session = self.active_sessions[channel_id]
+            
+            if not session.player_schedules:
+                await ctx.respond("No schedules have been submitted yet.", ephemeral=True)
+                return
+            
+            # Create export data structure
+            export_data = {
+            "export_timestamp": datetime.now().isoformat(),
+            "teams": session.teams,
+            "channel_id": str(channel_id),
+            "schedule_dates": session.schedule_dates,
+            "player_count": len(session.player_schedules),
+            "expected_players": session.expected_players,
+            "players": {}
             }
             
             # Add player data with names
