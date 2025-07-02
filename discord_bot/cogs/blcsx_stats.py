@@ -931,6 +931,177 @@ class BLCSXStatsCog(commands.Cog):
             )
             await ctx.response.send_message(embed=embed)
 
+    @discord.slash_command(name="compare", description="Compare two players' BLCSX profiles side-by-side")
+    async def compare_command(self, ctx, player1: discord.Member, player2: discord.Member):
+        """Compares two players' profiles."""
+        await ctx.response.defer()
+
+        try:
+            # Get stats for Player 1
+            mapping1 = self.db.get_player_mapping(player1.id)
+            if not mapping1 or not mapping1.get('ballchasing_player_id'):
+                await ctx.followup.send(f"❌ {player1.display_name} has not linked their ballchasing.com account.", ephemeral=True)
+                return
+            stats1 = self.db.get_player_statistics(mapping1['ballchasing_player_id'])
+            if not stats1:
+                await ctx.followup.send(f"📊 No statistics found for {player1.display_name}.", ephemeral=True)
+                return
+
+            # Get stats for Player 2
+            mapping2 = self.db.get_player_mapping(player2.id)
+            if not mapping2 or not mapping2.get('ballchasing_player_id'):
+                await ctx.followup.send(f"❌ {player2.display_name} has not linked their ballchasing.com account.", ephemeral=True)
+                return
+            stats2 = self.db.get_player_statistics(mapping2['ballchasing_player_id'])
+            if not stats2:
+                await ctx.followup.send(f"📊 No statistics found for {player2.display_name}.", ephemeral=True)
+                return
+
+            all_players_data = self.db.get_all_player_statistics()
+
+            embed = discord.Embed(
+                title=f"📊 {player1.display_name} vs {player2.display_name}",
+                color=discord.Color.blue()
+            )
+            embed.set_thumbnail(url=player1.display_avatar.url)
+            embed.set_image(url=player2.display_avatar.url) # This will show player2's avatar below
+
+            # Helper to format stat lines
+            def format_stat_line(stat_name, stat1_value, stat2_value, is_percentage=False, decimal_places=2):
+                if is_percentage:
+                    s1 = f"{stat1_value:.1f}%"
+                    s2 = f"{stat2_value:.1f}%"
+                elif decimal_places == 0:
+                    s1 = f"{stat1_value:.0f}"
+                    s2 = f"{stat2_value:.0f}"
+                else:
+                    s1 = f"{stat1_value:.{decimal_places}f}"
+                    s2 = f"{stat2_value:.{decimal_places}f}"
+
+                if stat1_value > stat2_value:
+                    return f"**{stat_name}:** {s1} > {s2}"
+                elif stat2_value > stat1_value:
+                    return f"**{stat_name}:** {s1} < {s2}"
+                else:
+                    return f"**{stat_name}:** {s1} = {s2}"
+
+            # Dominance Quotient
+            dq1 = stats1.get('dominance_quotient', 0)
+            dq2 = stats2.get('dominance_quotient', 0)
+            embed.add_field(
+                name="Overall Dominance Quotient",
+                value=format_stat_line("DQ", dq1, dq2, decimal_places=1),
+                inline=False
+            )
+
+            # Core Stats
+            embed.add_field(
+                name="Core Stats",
+                value=(
+                    f"Games Played: {stats1.get('games_played', 0)} vs {stats2.get('games_played', 0)}\n"
+                    f"Win Rate: {stats1.get('wins', 0) / max(stats1.get('games_played', 1), 1) * 100:.1f}% vs {stats2.get('wins', 0) / max(stats2.get('games_played', 1), 1) * 100:.1f}%\n"
+                    f"{format_stat_line("Avg Score", stats1.get('avg_score', 0), stats2.get('avg_score', 0), decimal_places=0)}"
+                ),
+                inline=True
+            )
+
+            # Key Stats
+            embed.add_field(
+                name="Key Stats",
+                value=(
+                    f"{format_stat_line("Goals/Game", stats1.get('goals_per_game', 0), stats2.get('goals_per_game', 0))}\n"
+                    f"{format_stat_line("Assists/Game", stats1.get('assists_per_game', 0), stats2.get('assists_per_game', 0))}\n"
+                    f"{format_stat_line("Saves/Game", stats1.get('saves_per_game', 0), stats2.get('saves_per_game', 0))}\n"
+                    f"{format_stat_line("Shot %", stats1.get('shot_percentage', 0), stats2.get('shot_percentage', 0), is_percentage=True)}\n"
+                    f"{format_stat_line("Avg Speed", stats1.get('avg_speed', 0), stats2.get('avg_speed', 0), decimal_places=0)}"
+                ),
+                inline=True
+            )
+
+            embed.set_footer(text="Comparison based on BLCSX Season 4 data")
+            await ctx.followup.send(embed=embed)
+
+        except Exception as e:
+            logger.error(f"Error in compare command: {e}")
+            embed = discord.Embed(
+                title="Error",
+                description="An error occurred while comparing profiles. Please check the logs.",
+                color=discord.Color.dark_red()
+            )
+            await ctx.followup.send(embed=embed, ephemeral=True)
+
+    def _generate_roast(self, player_stats: Dict, all_players_data: List[Dict]) -> str:
+        """Generates a light-hearted roast based on player statistics."""
+        dq = player_stats.get('dominance_quotient', 0)
+        avg_score = player_stats.get('avg_score', 0)
+        goals = player_stats.get('goals_per_game', 0)
+        assists = player_stats.get('assists_per_game', 0)
+        saves = player_stats.get('saves_per_game', 0)
+        shots = player_stats.get('shots_per_game', 0)
+        shot_pct = player_stats.get('shot_percentage', 0)
+        demos_inflicted = player_stats.get('demos_inflicted_per_game', 0)
+        demos_taken = player_stats.get('demos_taken_per_game', 0)
+        games_played = player_stats.get('games_played', 0)
+        wins = player_stats.get('wins', 0)
+        losses = player_stats.get('losses', 0)
+
+        roasts = []
+
+        # General performance
+        if dq < 30:
+            roasts.append("Are you sure you're playing Rocket League? Your DQ suggests you might be playing 'Carball Simulator: AFK Edition'.")
+        elif dq < 50:
+            roasts.append("Your Dominance Quotient is so average, it's practically a participation trophy.")
+        elif dq > 80:
+            roasts.append("Wow, your DQ is so high, do you even let your teammates touch the ball?")
+
+        # Score
+        if avg_score < 200:
+            roasts.append("Your average score is lower than my grandma's ping. Are you sure you're not just spectating?")
+        elif avg_score > 600:
+            roasts.append("Your score is so high, I'm starting to think you're playing against bots... or toddlers.")
+
+        # Goals
+        if goals < 0.5:
+            roasts.append("Do you even know where the opponent's net is? It's the big thing on the other side of the field, just in case you were wondering.")
+        elif goals > 1.5:
+            roasts.append("You score so much, I bet your teammates are starting to feel a bit redundant.")
+
+        # Saves
+        if saves < 0.5:
+            roasts.append("Your net is more open than a 24/7 diner. Maybe try blocking a few shots instead of admiring the scenery?")
+        elif saves > 2.5:
+            roasts.append("You're a save machine! Are you secretly a brick wall with a controller?")
+
+        # Assists
+        if assists < 0.3:
+            roasts.append("Do you pass? Or do you just believe in the 'every man for himself' philosophy?")
+        elif assists > 1.0:
+            roasts.append("You're dishing out assists like candy on Halloween. Are you trying to make friends or win games?")
+
+        # Shot Percentage
+        if shot_pct < 10:
+            roasts.append("Your shot percentage is so low, you're practically shooting blanks. Maybe try aiming for the net, not the moon?")
+        elif shot_pct > 40:
+            roasts.append("Your shot percentage is insane! Are you using a cheat code or just a really big magnet?")
+
+        # Demos
+        if demos_inflicted > 1.5:
+            roasts.append("You're a demolition derby enthusiast, aren't you? This is Rocket League, not Mad Max!")
+        elif demos_taken > 1.5:
+            roasts.append("You're getting demo'd more often than a cheap tent in a hurricane. Maybe try dodging once in a while?")
+
+        # Win/Loss
+        if games_played > 5 and losses > wins * 2:
+            roasts.append("Your win-loss record is looking a bit like a downhill ski slope. Time to hit the brakes?")
+        elif games_played > 5 and wins > losses * 2:
+            roasts.append("Your win streak is so impressive, I'm starting to think you've bribed the Rocket League gods.")
+
+        if not roasts:
+            roasts.append("You're so perfectly average, I can't even come up with a good roast. Congrats, I guess?")
+
+        return random.choice(roasts)
+
     @discord.slash_command(name="admin_blcs_link", description="[Admin] Link a player to their ballchasing.com ID")
     @commands.has_permissions(administrator=True)
     async def admin_link_command(self, ctx, user: discord.Member, player_id: str, platform: str):
@@ -1117,6 +1288,42 @@ class BLCSXStatsCog(commands.Cog):
             )
             await ctx.response.send_message(embed=embed)
 
+    @discord.slash_command(name="roast", description="Get roasted based on your BLCSX stats!")
+    async def roast_command(self, ctx, player: discord.Member = None):
+        """Roasts a player based on their statistics."""
+        target_user = player or ctx.author
+        await ctx.response.defer()
+
+        try:
+            mapping = self.db.get_player_mapping(target_user.id)
+            if not mapping or not mapping.get('ballchasing_player_id'):
+                await ctx.followup.send(f"❌ {target_user.display_name} has not linked their ballchasing.com account. Can't roast what I can't see!", ephemeral=True)
+                return
+            stats = self.db.get_player_statistics(mapping['ballchasing_player_id'])
+            if not stats:
+                await ctx.followup.send(f"📊 No statistics found for {target_user.display_name}. Can't roast what isn't there!", ephemeral=True)
+                return
+            
+            all_players = self.db.get_all_player_statistics()
+            roast_message = self._generate_roast(stats, all_players)
+
+            embed = discord.Embed(
+                title=f"🔥 Roast Session: {target_user.display_name}",
+                description=roast_message,
+                color=discord.Color.red()
+            )
+            embed.set_thumbnail(url=target_user.display_avatar.url)
+            await ctx.followup.send(embed=embed)
+
+        except Exception as e:
+            logger.error(f"Error in roast command: {e}")
+            embed = discord.Embed(
+                title="Error",
+                description="An error occurred during the roast. Maybe you're unroastable?",
+                color=discord.Color.dark_red()
+            )
+            await ctx.followup.send(embed=embed, ephemeral=True)
+
     def _create_stat_leaderboard_command(self, stat_key: str, display_name: str, higher_is_better: bool = True):
         async def stat_leaderboard_command(self, ctx, limit: int = 10):
             """Generates a leaderboard for a specific statistic."""
@@ -1196,12 +1403,12 @@ class BLCSXStatsCog(commands.Cog):
         )(stat_leaderboard_command.__get__(self, self.__class__)))
 
 # Call the helper function for each desired stat
-BLCSXStatsCog._create_stat_leaderboard_command(stat_key='goals_per_game', display_name='Goals/Game')
-BLCSXStatsCog._create_stat_leaderboard_command(stat_key='assists_per_game', display_name='Assists/Game')
-BLCSXStatsCog._create_stat_leaderboard_command(stat_key='saves_per_game', display_name='Saves/Game')
-BLCSXStatsCog._create_stat_leaderboard_command(stat_key='shot_percentage', display_name='Shot Percentage')
-BLCSXStatsCog._create_stat_leaderboard_command(stat_key='avg_speed', display_name='Average Speed')
-BLCSXStatsCog._create_stat_leaderboard_command(stat_key='avg_score', display_name='Average Score')
+        self._create_stat_leaderboard_command(stat_key='goals_per_game', display_name='Goals/Game')
+        self._create_stat_leaderboard_command(stat_key='assists_per_game', display_name='Assists/Game')
+        self._create_stat_leaderboard_command(stat_key='saves_per_game', display_name='Saves/Game')
+        self._create_stat_leaderboard_command(stat_key='shot_percentage', display_name='Shot Percentage')
+        self._create_stat_leaderboard_command(stat_key='avg_speed', display_name='Average Speed')
+        self._create_stat_leaderboard_command(stat_key='avg_score', display_name='Average Score')
 
 def setup(bot):
     bot.add_cog(BLCSXStatsCog(bot))
