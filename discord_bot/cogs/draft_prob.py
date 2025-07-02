@@ -7,6 +7,7 @@ import random
 from collections import defaultdict
 from typing import Dict, List, Tuple, NamedTuple
 from datetime import datetime, timedelta
+import discord.utils
 
 # Import database functions
 try:
@@ -350,28 +351,35 @@ class DaySelectionView(discord.ui.View):
         except:
             return time_24h
     
-    @discord.ui.button(label="Finalize Schedule", style=discord.ButtonStyle.green)
-    async def finalize_schedule(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def finalize_schedule_callback(self, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-                
-            if self.user_id not in self.session.player_schedules:
-                await interaction.response.send_message("You haven't set any times yet!", ephemeral=True)
+            
+            # Convert schedule_state to the format expected by DBSchedulingSession
+            player_schedule_for_db = {}
+            for day_name, day_data in self.schedule_state.items():
+                status = day_data.get('status')
+                if status == 'not_available':
+                    player_schedule_for_db[day_name] = []
+                elif status == 'all_day':
+                    player_schedule_for_db[day_name] = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
+                elif status == 'partial':
+                    selected_times = [time for time, selected in day_data.items() if time != 'status' and selected]
+                    player_schedule_for_db[day_name] = selected_times
+                # If status is None (not set) or 'unsure', it's not added to player_schedule_for_db
+
+            # Check if all 7 days are set
+            if len(player_schedule_for_db) < 7:
+                await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {len(player_schedule_for_db)}/7 days set.", ephemeral=True)
                 return
-            
-            schedule = self.session.player_schedules[self.user_id]
-            days_set = len(schedule)
-            
-            if days_set < 7:
-                await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {days_set}/7 days set.", ephemeral=True)
-                return
-            
-            # Add user to responded list and save
+
+            # Update the session object with the new schedule
+            self.session.player_schedules[str(self.user_id)] = player_schedule_for_db
             self.session.players_responded.add(str(self.user_id))
-            self.session = save_session(self.session)
-            
+            self.session = save_session(self.session) # Save to DB
+
             # Find the cog to access bot and finalize_scheduling method
             draft_cog = None
             for cog in interaction.client.cogs.values():
@@ -399,11 +407,9 @@ class DaySelectionView(discord.ui.View):
                 await interaction.response.send_message("Error finding scheduling session", ephemeral=True)
                 
         except Exception as e:
-            print(f"Error in finalize_schedule: {e}")
-            try:
-                await interaction.response.send_message("Error finalizing schedule", ephemeral=True)
-            except:
-                pass
+            import traceback
+            traceback.print_exc() # Print full traceback to console
+            await interaction.response.send_message(f"An unexpected error occurred during finalization: {e}", ephemeral=True)
 
 class ConfirmationView(discord.ui.View):
     def __init__(self, session, game_time_info, cog):
@@ -1270,6 +1276,54 @@ class DraftLotteryCog(commands.Cog):
             'date': best_date_info['date']
         }
         
+        # Create Discord Scheduled Event
+        try:
+            # Parse the date and time for the event
+            # Example: "Monday, July 1, 2024" and "6:00 PM"
+            date_str = best_date_info['full_date']
+            time_str = display_time
+            
+            # Adjust year to current year if the month has already passed
+            current_year = datetime.now().year
+            # Attempt to parse with current year
+            try:
+                event_datetime = datetime.strptime(f"{date_str} {time_str}", "%A, %B %d, %Y %I:%M %p")
+            except ValueError:
+                # If parsing fails, try with next year (for cases like December scheduling for January)
+                event_datetime = datetime.strptime(f"{date_str} {time_str}", "%A, %B %d, %Y %I:%M %p")
+                if event_datetime < datetime.now():
+                    event_datetime = event_datetime.replace(year=current_year + 1)
+
+            event_name = f"{session.teams[0]} vs {session.teams[1]} Game"
+            event_description = f"Scheduled game between {session.teams[0]} and {session.teams[1]} based on player availability."
+            
+            # Assuming a 1-hour game
+            event_end_time = event_datetime + timedelta(hours=1)
+
+            # Create the event
+            scheduled_event = await channel.create_scheduled_event(
+                name=event_name,
+                start_time=event_datetime,
+                end_time=event_end_time,
+                description=event_description,
+                entity_type=discord.EntityType.external, # Use external for general events not tied to voice/stage channels
+                location=f"Discord Channel: #{channel.name}" # Or a specific game server/platform
+            )
+            
+            embed_event_success = discord.Embed(
+                title="🎉 Discord Event Created!",
+                description=f"A Discord event has been created for the game: [{event_name}]({scheduled_event.url})",
+                color=0x7289da
+            )
+            await channel.send(embed=embed_event_success)
+
+        except discord.Forbidden:
+            print(f"ERROR: Bot does not have permissions to create scheduled events in channel {channel.name} ({channel.id}).")
+            await channel.send("⚠️ I don't have permission to create Discord events. Please grant me 'Manage Events' permission.")
+        except Exception as e:
+            print(f"ERROR: Failed to create Discord event: {e}")
+            await channel.send(f"❌ An error occurred while trying to create the Discord event: {e}")
+
         embed = discord.Embed(
             title="🎮 Proposed Game Time",
             description=f"**{best_date_info['full_date']} at {display_time}**",
@@ -1568,7 +1622,7 @@ class DraftLotteryCog(commands.Cog):
 
     @discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
     async def view_all_schedules(self, ctx):
-        """Admin command to view all players' schedules in the current session"""
+        """View all players' schedules in the current session"""
         channel_id = ctx.channel.id
         
         if channel_id not in self.active_sessions:
@@ -1607,6 +1661,7 @@ class DraftLotteryCog(commands.Cog):
                 # Gracefully handle corrupted or non-dict schedule data
                 if not isinstance(player_schedule, dict):
                     schedule_text += f"  • ⚠️ Corrupted schedule data. Please use `/my_schedule` to reset.\n\n"
+                    print(f"DEBUG: Corrupted schedule data for user {user_id} in channel {channel_id}")
                     continue
 
                 # Show availability for each day
@@ -1638,6 +1693,7 @@ class DraftLotteryCog(commands.Cog):
                 schedule_text += "\n"  # Add spacing between players
                 
             except Exception as e:
+                print(f"ERROR: Failed to process schedule for user {user_id}: {e}")
                 schedule_text += f"\n**User {user_id}:** Error loading schedule (`{type(e).__name__}: {e}`)\n\n"
         
         # Split into multiple embeds if too long (Discord limit is 4096 characters)
