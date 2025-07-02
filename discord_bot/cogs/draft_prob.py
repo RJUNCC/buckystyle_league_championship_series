@@ -1476,6 +1476,61 @@ class DraftLotteryCog(commands.Cog):
         
         await ctx.respond(embed=embed)
     
+    @discord.slash_command(name="view_all_availability", description="View all submitted schedules for the current session")
+    async def view_all_availability(self, ctx):
+        """Displays all submitted availabilities for the current scheduling session."""
+        channel_id = ctx.channel.id
+
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+
+        session = self.active_sessions[channel_id]
+
+        if not session.players_responded:
+            await ctx.respond("No players have submitted their availability yet.", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title="📅 All Submitted Availabilities",
+            description=f"Showing schedules for the game between **{session.teams[0]}** and **{session.teams[1]}**.",
+            color=0x0099ff
+        )
+
+        for user_id_str in session.players_responded:
+            user_id = int(user_id_str)
+            user = self.bot.get_user(user_id)
+            player_name = user.display_name if user else f"User ID: {user_id}"
+            
+            schedule = session.player_schedules.get(user_id_str)
+            if not schedule:
+                embed.add_field(name=player_name, value="No schedule data found.", inline=False)
+                continue
+
+            schedule_text = ""
+            for day, times in schedule.items():
+                if times:
+                    # Format times from '18:00' to '6PM'
+                    formatted_times = []
+                    for t in sorted(times):
+                        hour = int(t.split(':')[0])
+                        if hour == 0:
+                            formatted_times.append("12AM")
+                        elif hour == 12:
+                            formatted_times.append("12PM")
+                        elif hour > 12:
+                            formatted_times.append(f"{hour-12}PM")
+                        else:
+                            formatted_times.append(f"{hour}AM")
+                    schedule_text += f"**{day}:** {', '.join(formatted_times)}\n"
+            
+            if not schedule_text:
+                schedule_text = "Not available this week."
+
+            embed.add_field(name=player_name, value=schedule_text, inline=False)
+
+        await ctx.respond(embed=embed, ephemeral=True)
+
     @discord.slash_command(name="db_health", description="Check database health and connection")
     @commands.has_permissions(administrator=True)
     async def db_health(self, ctx):

@@ -48,7 +48,6 @@ class RocketLeagueBot(commands.Bot):
         intents.members = True  # Important for profile features
         
         super().__init__(
-            command_prefix='!',
             intents=intents,
             description='Rocket League Discord Bot with PostgreSQL & BLCSX Integration'
         )
