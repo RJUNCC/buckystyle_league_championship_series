@@ -316,6 +316,61 @@ class EnhancedSchedulingCog(commands.Cog):
             )
             await ctx.respond(embed=embed, ephemeral=True)
 
+    @discord.slash_command(name="view_all_availability", description="View all submitted schedules for the current session")
+    async def view_all_availability(self, ctx):
+        """Displays all submitted availabilities for the current scheduling session."""
+        channel_id = ctx.channel.id
+
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+
+        session = self.active_sessions[channel_id]
+
+        if not session.players_responded:
+            await ctx.respond("No players have submitted their availability yet.", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title="📅 All Submitted Availabilities",
+            description=f"Showing schedules for the game between **{session.teams[0]}** and **{session.teams[1]}**.",
+            color=0x0099ff
+        )
+
+        for user_id_str in session.players_responded:
+            user_id = int(user_id_str)
+            user = self.bot.get_user(user_id)
+            player_name = user.display_name if user else f"User ID: {user_id}"
+            
+            schedule = session.player_schedules.get(user_id_str)
+            if not schedule:
+                embed.add_field(name=player_name, value="No schedule data found.", inline=False)
+                continue
+
+            schedule_text = ""
+            for day, times in schedule.items():
+                if times:
+                    # Format times from '18:00' to '6PM'
+                    formatted_times = []
+                    for t in sorted(times):
+                        hour = int(t.split(':')[0])
+                        if hour == 0:
+                            formatted_times.append("12AM")
+                        elif hour == 12:
+                            formatted_times.append("12PM")
+                        elif hour > 12:
+                            formatted_times.append(f"{hour-12}PM")
+                        else:
+                            formatted_times.append(f"{hour}AM")
+                    schedule_text += f"**{day}:** {', '.join(formatted_times)}\n"
+            
+            if not schedule_text:
+                schedule_text = "Not available this week."
+
+            embed.add_field(name=player_name, value=schedule_text, inline=False)
+
+        await ctx.respond(embed=embed, ephemeral=True)
+
     @discord.slash_command(name="my_schedule", description="Set your weekly availability using a modern calendar interface")
     async def my_schedule_v2(self, ctx):
         """Modern calendar interface for setting weekly availability"""
@@ -605,9 +660,72 @@ class FinalizeButton(discord.ui.Button):
             await interaction.response.edit_message(content="✅ **Schedule finalized!** Thank you.", embed=None, view=None)
             
             if self.view.session.is_complete():
-                await self.view.cog.finalize_scheduling(channel, self.view.session)
+                await finalize_scheduling(channel, self.view.session)
         else:
             await interaction.response.send_message("Error: Could not find the scheduling session. Please try again.", ephemeral=True)
 
 def setup(bot):
     bot.add_cog(EnhancedSchedulingCog(bot))
+
+# Placeholder for finalize_scheduling logic
+async def finalize_scheduling(channel, session):
+    # This function will be called when all players have submitted their schedules
+    # Here you would implement the logic to find common times and propose a game time
+    await channel.send("All schedules received! Finding common times...")
+    
+    # Example of finding common times
+    common_times = find_common_available_times(session.player_schedules)
+    
+    if common_times:
+        # Format common times for display
+        formatted_times = "\n".join([f"• {day}: {', '.join(times)}" for day, times in common_times.items()])
+        
+        embed = discord.Embed(
+            title="✅ Common Available Times Found!",
+            description=f"Here are the common times for **{session.teams[0]} vs {session.teams[1]}**:\n\n{formatted_times}",
+            color=0x00ff00
+        )
+        await channel.send(embed=embed)
+    else:
+        embed = discord.Embed(
+            title="❌ No Common Times Found",
+            description="Unfortunately, no common available times were found. Please try again.",
+            color=0xff0000
+        )
+        await channel.send(embed=embed)
+
+def find_common_available_times(player_schedules: Dict[str, Dict[str, List[str]]]) -> Dict[str, List[str]]:
+    """
+    Finds common available time slots among all players.
+    
+    Args:
+        player_schedules: A dictionary where keys are user IDs and values are their schedules.
+                          Each schedule is a dictionary mapping day names to a list of available time slots.
+                          
+    Returns:
+        A dictionary mapping day names to a list of common available time slots.
+    """
+    if not player_schedules:
+        return {}
+    
+    # Get the schedule of the first player to initialize common times
+    all_schedules = list(player_schedules.values())
+    if not all_schedules:
+        return {}
+        
+    common_times = all_schedules[0].copy()
+    
+    # Iterate through the rest of the players' schedules
+    for i in range(1, len(all_schedules)):
+        player_schedule = all_schedules[i]
+        
+        for day, times in common_times.items():
+            if day in player_schedule:
+                # Find intersection of times for the current day
+                common_times[day] = sorted(list(set(times) & set(player_schedule[day])))
+            else:
+                # If a player doesn't have this day in their schedule, there are no common times for it
+                common_times[day] = []
+                
+    # Filter out days with no common times
+    return {day: times for day, times in common_times.items() if times}
