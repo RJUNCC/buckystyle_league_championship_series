@@ -362,6 +362,12 @@ class DaySelectionView(discord.ui.View):
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
+
+            # --- FIX: Reload session to prevent DetachedInstanceError ---
+            session = load_session(self.session.channel_id)
+            if not session:
+                await interaction.response.send_message("Error: Could not find the scheduling session.", ephemeral=True)
+                return
             
             # Convert schedule_state to the format expected by DBSchedulingSession
             player_schedule_for_db = {}
@@ -382,21 +388,20 @@ class DaySelectionView(discord.ui.View):
                 return
 
             # Update the session object with the new schedule
-            self.session.player_schedules[str(self.user_id)] = player_schedule_for_db
-            if str(self.user_id) not in self.session.players_responded:
-                self.session.players_responded.append(str(self.user_id))
-            self.session = save_session(self.session) # Save to DB
+            session.player_schedules[str(self.user_id)] = player_schedule_for_db
+            
+            # --- FIX: Prevent duplicate entries in players_responded ---
+            if str(self.user_id) not in session.players_responded:
+                session.players_responded.append(str(self.user_id))
+
+            save_session(session) # Save to DB
 
             # Find the cog to access bot and finalize_scheduling method
-            draft_cog = None
-            for cog in interaction.client.cogs.values():
-                if hasattr(cog, 'active_sessions') and int(self.session.channel_id) in cog.active_sessions:
-                    draft_cog = cog
-                    break
+            draft_cog = self.view.parent_view.cog if hasattr(self.view.parent_view, 'cog') else self
             
             if draft_cog:
-                channel = draft_cog.bot.get_channel(self.session.channel_id)
-                remaining = self.session.expected_players - len(self.session.players_responded)
+                channel = draft_cog.bot.get_channel(int(session.channel_id))
+                remaining = session.expected_players - len(session.players_responded)
                 
                 if remaining > 0:
                     await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
@@ -408,8 +413,8 @@ class DaySelectionView(discord.ui.View):
                 )
                 
                 # Check if all schedules are complete
-                if self.session.is_complete():
-                    await draft_cog.finalize_scheduling(channel, self.session)
+                if session.is_complete():
+                    await draft_cog.finalize_scheduling(channel, session)
             else:
                 await interaction.response.send_message("Error finding scheduling session", ephemeral=True)
                 
@@ -1769,6 +1774,27 @@ class DraftLotteryCog(commands.Cog):
     
 
     
+    @discord.slash_command(name="cleanup_duplicate_players", description="Admin command to clean up duplicate players in active sessions.")
+    @commands.has_permissions(administrator=True)
+    async def cleanup_duplicate_players(self, ctx):
+        """Cleans up duplicate player entries in the players_responded list for all active sessions."""
+        await ctx.defer(ephemeral=True)
+        
+        active_sessions = get_all_active_sessions()
+        cleaned_sessions = 0
+        
+        for session in active_sessions:
+            original_count = len(session.players_responded)
+            # Use a set to get unique player IDs, then convert back to a list
+            unique_players = list(set(session.players_responded))
+            
+            if len(unique_players) < original_count:
+                session.players_responded = unique_players
+                save_session(session)
+                cleaned_sessions += 1
+                
+        await ctx.followup.send(f"✅ Database cleanup complete. Scanned {len(active_sessions)} active sessions and cleaned {cleaned_sessions} of them.", ephemeral=True)
+
     @discord.slash_command(name="export_schedules", description="Export all schedules for the current session to a JSON file")
     @commands.has_permissions(administrator=True)
     async def export_schedules(self, ctx):
