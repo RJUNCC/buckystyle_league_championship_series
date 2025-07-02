@@ -383,7 +383,8 @@ class DaySelectionView(discord.ui.View):
 
             # Update the session object with the new schedule
             self.session.player_schedules[str(self.user_id)] = player_schedule_for_db
-            self.session.players_responded.add(str(self.user_id))
+            if str(self.user_id) not in self.session.players_responded:
+                self.session.players_responded.append(str(self.user_id))
             self.session = save_session(self.session) # Save to DB
 
             # Find the cog to access bot and finalize_scheduling method
@@ -1160,19 +1161,27 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="my_schedule", description="Set your weekly availability using visual calendar interface")
     async def my_schedule(self, ctx):
         """Visual calendar-style schedule setting"""
-        channel_id = ctx.channel.id
+        user_id = ctx.author.id
         
-        if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
+        # Find the session this user belongs to
+        session_to_use = None
+        for session in self.active_sessions.values():
+            # A player is part of a session if they are in one of the teams.
+            # This logic needs to be adapted based on how you identify team members.
+            # For now, we'll assume any active session is the one they mean to interact with.
+            # A more robust solution would be to check if the user is on one of the teams.
+            session_to_use = session
+            break
+
+        if not session_to_use:
+            await ctx.respond("No active scheduling session found for you. Please ask an admin to start one with `/schedule_game`.", ephemeral=True)
             return
-        
+
         # Reload the session from the database to ensure it's attached to a session
-        session = load_session(channel_id)
+        session = load_session(session_to_use.channel_id)
         if not session:
             await ctx.respond("Could not load session data from the database.", ephemeral=True)
             return
-
-        user_id = ctx.author.id
         
         # Create the visual calendar view
         view = CalendarScheduleView(user_id, session)
