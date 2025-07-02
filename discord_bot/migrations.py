@@ -48,6 +48,9 @@ def apply_migration():
         ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true,
         ADD COLUMN IF NOT EXISTS extra_data JSONB,
         ALTER COLUMN discord_id TYPE BIGINT USING discord_id::BIGINT;
+
+        ALTER TABLE scheduling_sessions
+        ADD COLUMN IF NOT EXISTS proposed_times JSON DEFAULT '[]';
         """)
 
         with engine.connect() as connection:
@@ -57,7 +60,7 @@ def apply_migration():
                     logger.info("Executing ALTER TABLE command...")
                     connection.execute(sql_command)
                     transaction.commit()
-                    logger.info("✅ Migration successful: Columns avg_speed, dominance_quotient, and percentile_rank are present in the player_profiles table.")
+                    logger.info("Migration successful: Columns avg_speed, dominance_quotient, percentile_rank, and proposed_times are present in their respective tables.")
                 except Exception as e:
                     logger.error(f"❌ An error occurred during the transaction: {e}")
                     transaction.rollback()

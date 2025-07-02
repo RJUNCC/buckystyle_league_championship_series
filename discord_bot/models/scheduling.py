@@ -147,10 +147,10 @@ def ensure_data_directory():
         project_root = Path(__file__).resolve().parents[2]
         data_path = project_root / "data"
         data_path.mkdir(parents=True, exist_ok=True)
-        print(f"✅ Data directory ensured at: {data_path}")
+        print(f"[DB INFO] Data directory ensured at: {data_path}")
         return data_path
     except Exception as e:
-        print(f"⚠️ Warning: Could not create data directory: {e}. Using /tmp as fallback.")
+        print(f"[DB WARNING] Could not create data directory: {e}. Using /tmp as fallback.")
         # Fallback for environments where this might fail
         tmp_path = Path("/tmp")
         tmp_path.mkdir(exist_ok=True)
@@ -172,7 +172,7 @@ def create_database_engine():
             max_overflow=10,           # Max additional connections
             echo=False                 # Set to True for SQL debugging
         )
-        print("✅ Using PostgreSQL with connection pooling")
+        print("[DB INFO] Using PostgreSQL with connection pooling")
     else:
         # SQLite settings
         engine = create_engine(
@@ -180,7 +180,7 @@ def create_database_engine():
             pool_pre_ping=True,
             echo=False
         )
-        print("✅ Using SQLite database")
+        print("[DB INFO] Using SQLite database")
     
     return engine
 
@@ -189,14 +189,14 @@ try:
     engine = create_database_engine()
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
-    print("✅ Database tables created/verified")
+    print("[DB INFO] Database tables created/verified")
 except Exception as e:
-    print(f"❌ Database initialization error: {e}")
+    print(f"[DB ERROR] Database initialization error: {e}")
     # Fallback to in-memory SQLite for development
     engine = create_engine('sqlite:///:memory:', echo=False)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
-    print("⚠️ Using in-memory database as fallback")
+    print("[DB WARNING] Using in-memory database as fallback")
 
 def save_session(session_obj):
     """Save or update a scheduling session with better error handling"""
@@ -226,7 +226,7 @@ def save_session(session_obj):
                 existing.team2 = session_obj.teams[1]
             existing.expected_players = getattr(session_obj, 'expected_players', 6)
             db.commit()
-            print(f"📝 Updated session for channel {session_obj.channel_id}")
+            print(f"[DB INFO] Updated session for channel {session_obj.channel_id}")
             return existing # Return the updated object
         else:
             # Create new session
@@ -243,12 +243,12 @@ def save_session(session_obj):
             )
             db.add(new_session)
             db.commit()
-            print(f"💾 Created new session for channel {session_obj.channel_id}")
+            print(f"[DB INFO] Created new session for channel {session_obj.channel_id}")
             return new_session # Return the new object
         
     except Exception as e:
         db.rollback()
-        print(f"❌ Error saving session: {e}")
+        print(f"[DB ERROR] Error saving session: {e}")
         raise
     finally:
         db.close()
@@ -263,11 +263,11 @@ def load_session(channel_id):
         ).first()
         
         if session_data:
-            print(f"📖 Loaded session for channel {channel_id}")
+            print(f"[DB INFO] Loaded session for channel {channel_id}")
         
         return session_data
     except Exception as e:
-        print(f"❌ Error loading session: {e}")
+        print(f"[DB ERROR] Error loading session: {e}")
         return None
     finally:
         db.close()
@@ -282,12 +282,12 @@ def delete_session(channel_id):
         if session_data:
             session_data.is_active = False
             db.commit()
-            print(f"🗑️ Deactivated session for channel {channel_id}")
+            print(f"[DB INFO] Deactivated session for channel {channel_id}")
         else:
-            print(f"⚠️ No session found to delete for channel {channel_id}")
+            print(f"[DB WARNING] No session found to delete for channel {channel_id}")
     except Exception as e:
         db.rollback()
-        print(f"❌ Error deleting session: {e}")
+        print(f"[DB ERROR] Error deleting session: {e}")
     finally:
         db.close()
 
@@ -296,10 +296,10 @@ def get_all_active_sessions():
     db = Session()
     try:
         sessions = db.query(SchedulingSession).filter_by(is_active=True).all()
-        print(f"📋 Retrieved {len(sessions)} active sessions")
+        print(f"[DB INFO] Retrieved {len(sessions)} active sessions")
         return sessions
     except Exception as e:
-        print(f"❌ Error getting active sessions: {e}")
+        print(f"[DB ERROR] Error getting active sessions: {e}")
         return []
     finally:
         db.close()
@@ -318,11 +318,11 @@ def cleanup_old_sessions(days_old=7):
             session.is_active = False
         
         db.commit()
-        print(f"🧹 Cleaned up {len(old_sessions)} old sessions")
+        print(f"[DB INFO] Cleaned up {len(old_sessions)} old sessions")
         return len(old_sessions)
     except Exception as e:
         db.rollback()
-        print(f"❌ Error cleaning up old sessions: {e}")
+        print(f"[DB ERROR] Error cleaning up old sessions: {e}")
         return 0
     finally:
         db.close()
@@ -340,4 +340,4 @@ def test_database_connection():
 # Initialize and test connection
 if __name__ == "__main__":
     success, message = test_database_connection()
-    print(f"🔍 Database test: {message}")
+    print(f"[DB TEST] {message}")
