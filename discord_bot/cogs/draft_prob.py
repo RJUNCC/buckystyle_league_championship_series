@@ -481,7 +481,7 @@ class ConfirmationView(discord.ui.View):
         )
         
         channel = self.cog.bot.get_channel(self.session.channel_id)
-        await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. Use `/my_schedule` to resubmit availability.")
+        await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. An admin can use `/next_game_time` to propose an alternative.")
 
 class DraftLottery:
     def __init__(self):
@@ -1276,6 +1276,13 @@ class DraftLotteryCog(commands.Cog):
             'date': best_date_info['date']
         }
         
+        # Add the proposed time to the session's proposed_times list
+        session.proposed_times.append({
+            'day': best_day,
+            'time': best_time
+        })
+        session = save_session(session) # Save the updated session with the new proposed time
+        
         # Create Discord Scheduled Event
         try:
             # Parse the date and time for the event
@@ -1341,7 +1348,8 @@ class DraftLotteryCog(commands.Cog):
         )
         
         view = ConfirmationView(session, game_info, self)
-        session.confirmation_message = await channel.send("@everyone", embed=embed, view=view)
+        await channel.send(f"@everyone Game Time: {display_time}?")
+        session.confirmation_message = await channel.send(embed=embed, view=view)
 
     def format_available_times_interactive(self, common_times, session):
         """Format available times for display with actual dates"""
@@ -1830,6 +1838,202 @@ class DraftLotteryCog(commands.Cog):
             )
         
         await ctx.respond(embed=embed, ephemeral=True)
+
+    @discord.slash_command(name="schedule_summary", description="View condensed summary of all players' availability")
+    @commands.has_permissions(administrator=True)
+    async def schedule_summary(self, ctx):
+        """Admin command to view a condensed summary of player availability"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        
+        if not session.player_schedules:
+            await ctx.respond("No players have submitted schedules yet.", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="📊 Schedule Summary",
+            description=f"**{session.teams[0]} vs {session.teams[1]}**",
+            color=0x0099ff
+        )
+        
+        # Create availability matrix
+        summary_text = "```\n"
+        summary_text += "Player".ljust(15) + " | "
+        
+        # Header with day abbreviations
+        for date_info in session.schedule_dates:
+            day_abbr = date_info['day_name'][:3]  # Mon, Tue, etc.
+            summary_text += f"{day_abbr}".ljust(6)
+        summary_text += "\n" + "-" * 65 + "\n"
+        
+        # Player rows
+        for user_id, player_schedule in session.player_schedules.items():
+            try:
+                user = self.bot.get_user(int(user_id))
+                player_name = (user.display_name if user else f"User{user_id}")[:14]  # Truncate long names
+                
+                summary_text += player_name.ljust(15) + " | "
+                
+                for date_info in session.schedule_dates:
+                    day_name = date_info['day_name']
+                    
+                    if day_name in player_schedule:
+                        available_times = player_schedule[day_name]
+                        
+                        if not available_times:
+                            summary_text += "❌".ljust(6)
+                        elif len(available_times) >= 6:
+                            summary_text += "✅✅".ljust(6)
+                        else:
+                            summary_text += f"✅{len(available_times)}".ljust(6)
+                    else:
+                        summary_text += "⏳".ljust(6)
+                
+                summary_text += "\n"
+                
+            except Exception as e:
+                summary_text += f"Error".ljust(15) + " | " + "❌".ljust(6) * 7 + "\n"
+        
+        summary_text += "```"
+        
+        embed.add_field(
+            name="Legend",
+            value="❌ = Not available | ✅✅ = All day | ✅3 = 3 time slots | ⏳ = Not set",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="Availability Matrix",
+            value=summary_text,
+            inline=False
+        )
+        
+        # Add common times analysis
+        common_times = session.find_common_times()
+        if common_times:
+            common_text = ""
+            for day_name, times in common_times.items():
+                date_info = session.get_date_info(day_name)
+                day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
+                
+                time_slots = {
+                    '18:00': '6PM', '19:00': '7PM', '20:00': '8PM', 
+                    '21:00': '9PM', '22:00': '10PM', '23:00': '11PM', '00:00': '12AM'
+                }
+                
+                time_display = [time_slots.get(t, t) for t in times[:3]]  # Show first 3
+                if len(times) > 3:
+                    time_display.append(f"+{len(times)-3} more")
+                
+                common_text += f"**{day_display}:** {', '.join(time_display)}\n"
+            
+            embed.add_field(
+                name="🎯 Possible Game Times",
+                value=common_text,
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="⚠️ No Common Times",
+                value="No times work for all players yet.",
+                inline=False
+            )
+        
+        await ctx.respond(embed=embed, ephemeral=True)
+
+    @discord.slash_command(name="next_game_time", description="Propose the next available game time (admin only)")
+    @commands.has_permissions(administrator=True)
+    async def next_game_time(self, ctx):
+        """Admin command to propose the next available game time"""
+        channel_id = ctx.channel.id
+        
+        if channel_id not in self.active_sessions:
+            await ctx.respond("No active scheduling session in this channel. Start one with `/schedule_game Team1 Team2`", ephemeral=True)
+            return
+        
+        session = self.active_sessions[channel_id]
+        
+        # Find common times, excluding already proposed ones
+        common_times = session.find_common_times()
+        
+        if not common_times:
+            await ctx.respond("❌ No more common times found for all players. Consider asking players to update their schedules.", ephemeral=True)
+            return
+        
+        # Pick the best time (same logic as finalize_scheduling)
+        best_day = None
+        best_time = None
+        best_date_info = None
+        
+        for date_info in session.schedule_dates:
+            day_name = date_info['day_name']
+            if day_name in common_times and common_times[day_name]:
+                best_day = day_name
+                best_date_info = date_info
+                # Prefer evening times (6 PM to 10 PM)
+                for time in common_times[day_name]:
+                    hour = int(time.split(':')[0])
+                    if 18 <= hour <= 22:
+                        best_time = time
+                        break
+                if not best_time:
+                    best_time = common_times[day_name][0]
+                break
+        
+        if not best_day or not best_time or not best_date_info:
+            await ctx.respond("❌ Could not determine a suitable next game time. This shouldn't happen if common_times is not empty.", ephemeral=True)
+            return
+        
+        # Format time for display
+        hour = int(best_time.split(':')[0])
+        minute = best_time.split(':')[1]
+        
+        if hour == 0:
+            display_time = f"12:{minute} AM"
+        elif hour < 12:
+            display_time = f"{hour}:{minute} AM"
+        elif hour == 12:
+            display_time = f"12:{minute} PM"
+        else:
+            display_time = f"{hour-12}:{minute} PM"
+        
+        game_info = {
+            'day': best_day, 
+            'time': display_time,
+            'full_date': best_date_info['full_date'],
+            'date': best_date_info['date']
+        }
+        
+        # Add the proposed time to the session's proposed_times list
+        session.proposed_times.append({
+            'day': best_day,
+            'time': best_time
+        })
+        save_session(session) # Save the updated session with the new proposed time
+
+        embed = discord.Embed(
+            title="🎮 Proposed Game Time (Next Option)",
+            description=f"**{best_date_info['full_date']} at {display_time}**",
+            color=0xffa500
+        )
+        embed.add_field(
+            name="⚠️ Confirmation Required",
+            value="All players must confirm this time works for them using the buttons below.",
+            inline=False
+        )
+        embed.add_field(
+            name="Available Times Found",
+            value=self.format_available_times_interactive(common_times, session),
+            inline=False
+        )
+        
+        view = ConfirmationView(session, game_info, self)
+        await ctx.respond(f"@everyone Game Time: {display_time}?", embed=embed, view=view)
 
     @discord.slash_command(name="export_schedules", description="Export all schedules as a file")
     @commands.has_permissions(administrator=True)

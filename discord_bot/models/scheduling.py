@@ -25,8 +25,9 @@ class SchedulingSession(Base):
     schedule_dates = Column(JSON)  # Store the date info
     confirmations = Column(JSON, default={})
     is_active = Column(Boolean, default=True)
+    proposed_times = Column(JSON, default=[]) # New column to store proposed times
 
-    def __init__(self, channel_id, team1, team2, player_schedules=None, players_responded=None, expected_players=6, schedule_dates=None, confirmations=None):
+    def __init__(self, channel_id, team1, team2, player_schedules=None, players_responded=None, expected_players=6, schedule_dates=None, confirmations=None, proposed_times=None):
         self.channel_id = str(channel_id)
         self.team1 = team1
         self.team2 = team2
@@ -35,6 +36,7 @@ class SchedulingSession(Base):
         self.expected_players = expected_players
         self.schedule_dates = schedule_dates if schedule_dates is not None else self.generate_next_week()
         self.confirmations = confirmations if confirmations is not None else {}
+        self.proposed_times = proposed_times if proposed_times is not None else []
         self.created_at = datetime.now()
         self.is_active = True
 
@@ -94,9 +96,14 @@ class SchedulingSession(Base):
             
             if len(day_schedules) >= self.expected_players:
                 if day_schedules:
-                    common_slots = set.intersection(*day_schedules[:self.expected_players])
-                    if common_slots:
-                        common_times[day_name] = sorted(list(common_slots))
+                    all_possible_slots = set.intersection(*day_schedules[:self.expected_players])
+                    
+                    # Filter out already proposed times for this day
+                    proposed_slots_for_day = {p['time'] for p in self.proposed_times if p['day'] == day_name}
+                    available_slots = sorted(list(all_possible_slots - proposed_slots_for_day))
+                    
+                    if available_slots:
+                        common_times[day_name] = available_slots
         
         return dict(common_times) if common_times else None
 
@@ -111,7 +118,8 @@ class SchedulingSession(Base):
             players_responded=db_session.players_responded or [],
             expected_players=db_session.expected_players,
             schedule_dates=db_session.schedule_dates or [],
-            confirmations=db_session.confirmations or {}
+            confirmations=db_session.confirmations or {},
+            proposed_times=db_session.proposed_times or []
         )
         return session
 
@@ -211,6 +219,7 @@ def save_session(session_obj):
             existing.player_schedules = player_schedules_str
             existing.players_responded = players_responded_list
             existing.confirmations = confirmations_str
+            existing.proposed_times = session_obj.proposed_times # Save proposed times
             existing.schedule_dates = getattr(session_obj, 'schedule_dates', [])
             if hasattr(session_obj, 'teams') and len(session_obj.teams) == 2:
                 existing.team1 = session_obj.teams[0]
@@ -229,7 +238,8 @@ def save_session(session_obj):
                 players_responded=players_responded_list,
                 expected_players=getattr(session_obj, 'expected_players', 6),
                 schedule_dates=getattr(session_obj, 'schedule_dates', []),
-                confirmations=confirmations_str
+                confirmations=confirmations_str,
+                proposed_times=getattr(session_obj, 'proposed_times', []) # Save proposed times
             )
             db.add(new_session)
             db.commit()
