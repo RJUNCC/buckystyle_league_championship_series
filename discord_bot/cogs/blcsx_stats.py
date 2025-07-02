@@ -701,8 +701,7 @@ class BLCSXStatsCog(commands.Cog):
         embed.add_field(
             name="Core Performance",
             value=f"Games Played: {player_stats['games_played']}\n"
-                  f"Win Rate: {win_rate:.1f}% ({player_stats['wins']}W-{player_stats['losses']}L)\n"
-                  f"Average Score: {player_stats.get('avg_score', 0):.0f}",
+                  f"Win Rate: {win_rate:.1f}% ({player_stats['wins']}W-{player_stats['losses']}L)",
             inline=True
         )
         
@@ -729,6 +728,7 @@ class BLCSXStatsCog(commands.Cog):
             except ValueError: 
                 return ""
 
+        key_stats.append(f"Average Score: {player_stats.get('avg_score', 0):.0f}{_get_stat_rank_display(player_stats.get('avg_score', 0), all_players, 'avg_score', higher_is_better=True)}")
         key_stats.append(f"Goals/Game: {player_stats.get('goals_per_game', 0):.2f}{_get_stat_rank_display(player_stats.get('goals_per_game', 0), all_players, 'goals_per_game', higher_is_better=True)}")
         key_stats.append(f"Assists/Game: {player_stats.get('assists_per_game', 0):.2f}{_get_stat_rank_display(player_stats.get('assists_per_game', 0), all_players, 'assists_per_game', higher_is_better=True)}")
         key_stats.append(f"Saves/Game: {player_stats.get('saves_per_game', 0):.2f}{_get_stat_rank_display(player_stats.get('saves_per_game', 0), all_players, 'saves_per_game', higher_is_better=True)}")
@@ -1116,6 +1116,92 @@ class BLCSXStatsCog(commands.Cog):
                 color=discord.Color.red()
             )
             await ctx.response.send_message(embed=embed)
+
+    def _create_stat_leaderboard_command(self, stat_key: str, display_name: str, higher_is_better: bool = True):
+        async def stat_leaderboard_command(self, ctx, limit: int = 10):
+            """Generates a leaderboard for a specific statistic."""
+            try:
+                all_players = self.db.get_all_player_statistics()
+                
+                if not all_players:
+                    embed = discord.Embed(
+                        title="No Data",
+                        description="No player statistics available yet. Use `/blcs_update` to fetch them.",
+                        color=discord.Color.orange()
+                    )
+                    await ctx.response.send_message(embed=embed)
+                    return
+                
+                # Filter out players without the specific stat or with None values
+                filtered_players = [p for p in all_players if p.get(stat_key) is not None]
+                
+                # Sort players by the specific stat
+                sorted_players = sorted(filtered_players, key=lambda x: x.get(stat_key, 0), reverse=higher_is_better)
+                
+                limited_players = sorted_players[:min(limit, len(sorted_players))]
+                
+                embed = discord.Embed(
+                    title=f"📊 BLCSX {display_name} Leaderboard",
+                    description=f"Top players by {display_name}",
+                    color=discord.Color.blue()
+                )
+                
+                leaderboard_text = ""
+                for i, player in enumerate(limited_players, 1):
+                    player_name = player.get('discord_username') or player['player_id']
+                    stat_value = player.get(stat_key, 0)
+                    
+                    if stat_key == 'shot_percentage':
+                        stat_display = f"{stat_value:.1f}%"
+                    elif stat_key in ['goals_per_game', 'assists_per_game', 'saves_per_game']:
+                        stat_display = f"{stat_value:.2f}"
+                    else:
+                        stat_display = f"{stat_value:.0f}"
+                    
+                    # Medal for top 3
+                    if i == 1:
+                        medal = "🥇"
+                    elif i == 2:
+                        medal = "🥈"
+                    elif i == 3:
+                        medal = "🥉"
+                    else:
+                        medal = f"{i}."
+                    
+                    leaderboard_text += f"{medal} **{player_name}**: **{stat_display}**\n"
+                
+                embed.add_field(
+                    name="Rankings",
+                    value=leaderboard_text,
+                    inline=False
+                )
+                
+                embed.set_footer(text=f"Showing top {len(limited_players)} of {len(filtered_players)} players by {display_name}")
+                
+                await ctx.response.send_message(embed=embed)
+                
+            except Exception as e:
+                logger.error(f"Error in {stat_key} leaderboard command: {e}")
+                embed = discord.Embed(
+                    title="Error",
+                    description="An error occurred while generating the leaderboard.",
+                    color=discord.Color.red()
+                )
+                await ctx.response.send_message(embed=embed)
+
+        # Attach the command to the cog
+        setattr(self, f"leaderboard_{stat_key.replace('_', '')}_command", commands.slash_command(
+            name=f"leaderboard_{stat_key.replace('_per_game', '').replace('_percentage', '').replace('_', '')}",
+            description=f"Show the leaderboard for {display_name}"
+        )(stat_leaderboard_command.__get__(self, self.__class__)))
+
+# Call the helper function for each desired stat
+BLCSXStatsCog._create_stat_leaderboard_command(stat_key='goals_per_game', display_name='Goals/Game')
+BLCSXStatsCog._create_stat_leaderboard_command(stat_key='assists_per_game', display_name='Assists/Game')
+BLCSXStatsCog._create_stat_leaderboard_command(stat_key='saves_per_game', display_name='Saves/Game')
+BLCSXStatsCog._create_stat_leaderboard_command(stat_key='shot_percentage', display_name='Shot Percentage')
+BLCSXStatsCog._create_stat_leaderboard_command(stat_key='avg_speed', display_name='Average Speed')
+BLCSXStatsCog._create_stat_leaderboard_command(stat_key='avg_score', display_name='Average Score')
 
 def setup(bot):
     bot.add_cog(BLCSXStatsCog(bot))
