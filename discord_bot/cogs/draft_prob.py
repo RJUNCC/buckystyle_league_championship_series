@@ -16,7 +16,7 @@ except ImportError:
     save_session = lambda x: None
     load_session = lambda x: None
     delete_session = lambda x: None
-    get_all_active_sessions = lambda: []
+    get_all_active_active_sessions = lambda: []
 
 class Player(NamedTuple):
     name: str
@@ -1566,7 +1566,6 @@ class DraftLotteryCog(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=True)
 
     @discord.slash_command(name="view_all_schedules", description="View all players' availability schedules")
-    # @commands.has_permissions(administrator=True)
     async def view_all_schedules(self, ctx):
         """Admin command to view all players' schedules in the current session"""
         channel_id = ctx.channel.id
