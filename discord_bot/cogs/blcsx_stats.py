@@ -309,45 +309,256 @@ class DatabaseManager:
 
 
 
-class SimpleStatsCalculator:
-    """Simple stats calculator when pandas is not available"""
+
+
+class DataDrivenDominanceQuotientCalculator:
+    def __init__(self):
+        """
+        Dominance Quotient calculator based on BLCS4 season analysis
+        Designed to identify individual skill regardless of team performance
+        """
+        
+        # Weights based on BLCS4 data analysis
+        # Key insight: Individual stats matter WAY more than team luck
+        self.stat_weights = {
+            # Core individual performance (90% total weight)
+            'avg_score': 0.40,              # Most important - overall game impact
+            'saves_per_game': 0.25,         # Defensive skill highly valued
+            'goals_per_game': 0.15,         # Offensive production
+            'assists_per_game': 0.10,       # Playmaking/team support
+            
+            # Secondary performance indicators (5% total weight)
+            'shooting_pct': 0.03,           # Efficiency over volume
+            'shots_per_game': 0.02,         # Offensive pressure
+            
+            # Team success (5% total weight) - MINIMAL impact
+            'win_rate': 0.05                # Proven to be mostly team luck
+        }
+        
+        # Tournament adjustments based on Bo7 double elimination
+        self.tournament_config = {
+            'min_games_threshold': 8,        # Minimum possible games (0-4, 0-4)
+            'early_elimination_threshold': 14,  # 8-14 games = early out
+            'deep_run_threshold': 22,        # 22+ games = finals/winner
+            'confidence_games': 16,          # Games needed for full win rate confidence
+            
+            # Opportunity adjustments
+            'early_elimination_boost': 0.12,  # 12% boost for early elimination
+            'deep_run_penalty': 0.06,        # 6% penalty for deep runs
+        }
+        
+        # Performance thresholds based on BLCS4 data
+        self.performance_benchmarks = {
+            'elite_score_threshold': 450,     # Top tier like JERID (543), DESI (488)
+            'good_score_threshold': 380,      # Above average performers
+            'average_score_threshold': 320,   # League average range
+            
+            'elite_saves_threshold': 2.2,     # Defensive specialists like who Drose (2.45)
+            'good_saves_threshold': 1.8,      # Above average defense
+            
+            'elite_goals_threshold': 1.1,     # Offensive threats like JERID (1.16)
+            'good_goals_threshold': 0.8,      # Above average offense
+        }
     
-    @staticmethod
-    def calculate_simple_score(player_stats: Dict, all_players: List[Dict]) -> float:
-        """Calculate a simple performance score without pandas"""
+    def calculate_percentile(self, player_value: float, all_values: List[float], 
+                           higher_is_better: bool = True) -> float:
+        """Calculate what percentage of players this value beats"""
+        if not all_values or len(all_values) <= 1:
+            return 50.0
+        
+        # Filter out invalid values
+        valid_values = [v for v in all_values if not pd.isna(v) and v is not None]
+        if not valid_values:
+            return 50.0
+        
+        if higher_is_better:
+            better_count = sum(1 for v in valid_values if v < player_value)
+        else:
+            better_count = sum(1 for v in valid_values if v > player_value)
+        
+        return (better_count / len(valid_values)) * 100
+    
+    def get_tournament_adjustment_factor(self, games_played: int) -> float:
+        """Calculate opportunity adjustment based on games played"""
+        if games_played <= self.tournament_config['early_elimination_threshold']:
+            # Early elimination: Fewer opportunities to showcase skill
+            adjustment = 1.0 + self.tournament_config['early_elimination_boost']
+            adjustment_type = "early elimination boost"
+        elif games_played >= self.tournament_config['deep_run_threshold']:
+            # Deep run: More opportunities to accumulate stats
+            adjustment = 1.0 - self.tournament_config['deep_run_penalty']
+            adjustment_type = "deep run penalty"
+        else:
+            # Standard tournament run
+            adjustment = 1.0
+            adjustment_type = "no adjustment"
+        
+        logger.info(f"Games: {games_played}, adjustment: {adjustment:.3f} ({adjustment_type})")
+        return adjustment
+    
+    def calculate_skill_consistency_bonus(self, player_stats: Dict) -> float:
+        """Bonus for players who excel in multiple areas"""
+        score_tier = 0
+        if player_stats.get('avg_score', 0) >= self.performance_benchmarks['elite_score_threshold']:
+            score_tier = 3  # Elite
+        elif player_stats.get('avg_score', 0) >= self.performance_benchmarks['good_score_threshold']:
+            score_tier = 2  # Good
+        elif player_stats.get('avg_score', 0) >= self.performance_benchmarks['average_score_threshold']:
+            score_tier = 1  # Average
+        
+        # Check if player excels in multiple specific areas
+        specialties = 0
+        if player_stats.get('saves_per_game', 0) >= self.performance_benchmarks['elite_saves_threshold']:
+            specialties += 1  # Defensive specialist
+        if player_stats.get('goals_per_game', 0) >= self.performance_benchmarks['elite_goals_threshold']:
+            specialties += 1  # Offensive threat
+        if player_stats.get('assists_per_game', 0) >= 1.0:
+            specialties += 1  # Playmaker
+        
+        # Multi-skilled players get a small bonus
+        if score_tier >= 2 and specialties >= 2:
+            return 1.05  # 5% bonus for well-rounded elite players
+        elif score_tier >= 1 and specialties >= 1:
+            return 1.02  # 2% bonus for solid specialists
+        else:
+            return 1.0   # No bonus
+    
+    def calculate_win_rate_with_context(self, player_stats: Dict, all_players: List[Dict]) -> float:
+        """Calculate win rate percentile with heavy regression for small samples"""
+        player_games = player_stats.get('games_played', 0)
+        player_wins = player_stats.get('wins', 0)
+        player_win_rate = player_wins / max(player_games, 1)
+        
+        # Calculate league averages
+        total_wins = sum(p.get('wins', 0) for p in all_players)
+        total_games = sum(p.get('games_played', 0) for p in all_players)
+        league_avg_win_rate = total_wins / max(total_games, 1)
+        
+        # Heavy regression to mean for tournament play
+        confidence_factor = min(player_games / self.tournament_config['confidence_games'], 1.0)
+        
+        # Blend individual win rate with league average
+        adjusted_win_rate = (confidence_factor * player_win_rate) + \
+                           ((1 - confidence_factor) * league_avg_win_rate)
+        
+        # Calculate percentile among all adjusted win rates
+        all_adjusted_rates = []
+        for p in all_players:
+            p_games = p.get('games_played', 0)
+            p_wins = p.get('wins', 0)
+            p_win_rate = p_wins / max(p_games, 1)
+            p_confidence = min(p_games / self.tournament_config['confidence_games'], 1.0)
+            p_adjusted = (p_confidence * p_win_rate) + ((1 - p_confidence) * league_avg_win_rate)
+            all_adjusted_rates.append(p_adjusted)
+        
+        percentile = self.calculate_percentile(adjusted_win_rate, all_adjusted_rates, True)
+        
+        logger.info(f"Win rate: {player_win_rate:.3f} -> {adjusted_win_rate:.3f} "
+                   f"(confidence: {confidence_factor:.2f}, percentile: {percentile:.1f})")
+        
+        return percentile
+    
+    def calculate_dominance_quotient(self, player_stats: Dict, all_players: List[Dict]) -> float:
+        """
+        Calculate the Data-Driven Dominance Quotient
+        Based on BLCS4 analysis showing individual stats >> team success
+        """
         if not all_players:
             return 50.0
         
-        # Simple scoring based on win rate and basic stats
-        win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
-        goals = player_stats.get('goals_per_game', 0)
-        assists = player_stats.get('assists_per_game', 0)
-        saves = player_stats.get('saves_per_game', 0)
+        player_name = player_stats.get('player_id', 'Unknown')
+        logger.info(f"\n=== Calculating DQ for {player_name} ===")
         
-        # Simple weighted score
-        score = (win_rate * 40) + (goals * 10) + (assists * 8) + (saves * 8)
-        return min(100, max(0, score))
+        # Extract stat values for percentile calculations
+        stat_lists = {}
+        for stat_key in ['avg_score', 'goals_per_game', 'assists_per_game', 'saves_per_game', 
+                        'shots_per_game', 'shot_percentage']: # Changed shooting_pct to shot_percentage
+            stat_lists[stat_key] = [p.get(stat_key, 0) for p in all_players if p.get(stat_key) is not None]
+        
+        # Calculate percentiles for each stat
+        percentiles = {}
+        weighted_contributions = {}
+        
+        for stat_key, weight in self.stat_weights.items():
+            if stat_key == 'win_rate':
+                # Special handling for win rate
+                percentiles[stat_key] = self.calculate_win_rate_with_context(player_stats, all_players)
+            elif stat_key in stat_lists and stat_lists[stat_key]:
+                player_value = player_stats.get(stat_key, 0)
+                percentiles[stat_key] = self.calculate_percentile(player_value, stat_lists[stat_key], True)
+            else:
+                percentiles[stat_key] = 50.0  # Default if no data
+            
+            # Calculate weighted contribution
+            weighted_contributions[stat_key] = percentiles[stat_key] * weight
+            
+            logger.info(f"{stat_key}: {player_stats.get(stat_key, 0):.2f} -> "
+                       f"{percentiles[stat_key]:.1f}th percentile x {weight:.3f} = "
+                       f"{weighted_contributions[stat_key]:.2f}")
+        
+        # Sum all weighted contributions
+        base_dominance_quotient = sum(weighted_contributions.values())
+        
+        # Apply tournament opportunity adjustment
+        games_played = player_stats.get('games_played', 0)
+        tournament_factor = self.get_tournament_adjustment_factor(games_played)
+        
+        # Apply skill consistency bonus
+        consistency_bonus = self.calculate_skill_consistency_bonus(player_stats)
+        
+        # Calculate final DQ
+        final_dq = base_dominance_quotient * tournament_factor * consistency_bonus
+        
+        # Clamp to 0-100 range
+        final_dq = max(0, min(100, final_dq))
+        
+        logger.info(f"Base DQ: {base_dominance_quotient:.2f}")
+        logger.info(f"Tournament factor: {tournament_factor:.3f}")
+        logger.info(f"Consistency bonus: {consistency_bonus:.3f}")
+        logger.info(f"Final DQ: {final_dq:.1f}")
+        
+        return final_dq
     
-    @staticmethod
-    def calculate_ranking(player_value: float, all_values: List[float]) -> Dict:
-        """Calculate ranking without pandas"""
-        if not all_values:
-            return {'rank': 1, 'total': 1, 'percentile': 50.0}
-        
-        sorted_values = sorted(all_values, reverse=True)
-        rank = 1
-        for i, value in enumerate(sorted_values, 1):
-            if player_value >= value:
-                rank = i
-                break
-        
-        percentile = (len([v for v in all_values if v < player_value]) / len(all_values)) * 100
-        
-        return {
-            'rank': rank,
-            'total': len(all_values),
-            'percentile': max(0, min(100, percentile))
+    def analyze_player_profile(self, player_stats: Dict, all_players: List[Dict]) -> Dict:
+        """Provide detailed analysis of a player's strengths and weaknesses"""
+        analysis = {
+            'dominance_quotient': self.calculate_dominance_quotient(player_stats, all_players),
+            'player_type': '',
+            'strengths': [],
+            'weaknesses': [],
+            'comparison_to_league': {}
         }
+        
+        # Determine player type based on stats
+        avg_score = player_stats.get('avg_score', 0)
+        saves_per_game = player_stats.get('saves_per_game', 0)
+        goals_per_game = player_stats.get('goals_per_game', 0)
+        win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1) * 100
+        
+        # Player type classification
+        if avg_score >= self.performance_benchmarks['elite_score_threshold']:
+            if win_rate >= 55:
+                analysis['player_type'] = "Elite Carry (High skill + winning team)"
+            else:
+                analysis['player_type'] = "Elite Victim (High skill + bad team)"
+        elif avg_score >= self.performance_benchmarks['good_score_threshold']:
+            analysis['player_type'] = "Solid Contributor"
+        elif win_rate >= 55:
+            analysis['player_type'] = "Team Passenger (Carried by good team)"
+        else:
+            analysis['player_type'] = "Developing Player"
+        
+        # Identify strengths
+        if saves_per_game >= self.performance_benchmarks['elite_saves_threshold']:
+            analysis['strengths'].append("Elite Defender")
+        if goals_per_game >= self.performance_benchmarks['elite_goals_threshold']:
+            analysis['strengths'].append("Offensive Threat")
+        if player_stats.get('assists_per_game', 0) >= 1.0:
+            analysis['strengths'].append("Playmaker")
+        if avg_score >= self.performance_benchmarks['elite_score_threshold']:
+            analysis['strengths'].append("Overall Impact")
+        
+        return analysis
 
 class BLCSXStatsCog(commands.Cog):
     def __init__(self, bot):
@@ -367,20 +578,16 @@ class BLCSXStatsCog(commands.Cog):
         self.ballchasing_token = ballchasing_token
         self.db = DatabaseManager(database_url)
         
-        # Load configuration for the calculator
-        # Construct the absolute path within the container's file system
-        config_path = "/app/shared/config/conf/blcsx_calculator_config.yaml"
-        self.calculator_config = OmegaConf.load(config_path).tournament_calculator
-        self.stat_weights = OmegaConf.to_container(self.calculator_config.stat_weights_initial, resolve=True)
-
-        # Performance indicators
+        self.calculator = DataDrivenDominanceQuotientCalculator()
+        
+        # Performance indicators (emojis removed as requested)
         self.performance_indicators = {
-            'elite': {'emoji': '🏆', 'threshold': 90, 'color': 0x4CAF50, 'name': 'ELITE'},
-            'excellent': {'emoji': '🥇', 'threshold': 80, 'color': 0x8BC34A, 'name': 'EXCELLENT'},
-            'good': {'emoji': '✅', 'threshold': 65, 'color': 0xFFC107, 'name': 'GOOD'},
-            'average': {'emoji': '➖', 'threshold': 35, 'color': 0xFF9800, 'name': 'AVERAGE'},
-            'poor': {'emoji': '📉', 'threshold': 20, 'color': 0xF44336, 'name': 'POOR'},
-            'terrible': {'emoji': '🔻', 'threshold': 0, 'color': 0xB71C1C, 'name': 'TERRIBLE'}
+            'elite': {'threshold': 90, 'color': 0x4CAF50, 'name': 'ELITE'},
+            'excellent': {'threshold': 80, 'color': 0x8BC34A, 'name': 'EXCELLENT'},
+            'good': {'threshold': 65, 'color': 0xFFC107, 'name': 'GOOD'},
+            'average': {'threshold': 35, 'color': 0xFF9800, 'name': 'AVERAGE'},
+            'poor': {'threshold': 20, 'color': 0xF44336, 'name': 'POOR'},
+            'terrible': {'threshold': 0, 'color': 0xB71C1C, 'name': 'TERRIBLE'}
         }
         
         logger.info("BLCSX Stats Cog initialized")
@@ -392,278 +599,54 @@ class BLCSXStatsCog(commands.Cog):
                 return data
         return self.performance_indicators['terrible']
 
-    def calculate_tournament_context_weights(self, all_player_data: List[Dict]) -> Dict:
-        """Calculate weights based on tournament-specific factors"""
-        total_games = sum(p.get('games_played', 0) for p in all_player_data)
-        avg_games = total_games / len(all_player_data) if all_player_data else 0
-        
-        # Adjust weights based on how complete the tournament is
-        tournament_completion = min(total_games / self.calculator_config.tournament_config.expected_total_games, 1.0)
-        
-        if tournament_completion < 0.25:
-            # Very early tournament: Almost pure individual performance
-            individual_weight = 0.85
-            team_weight = 0.05
-            consistency_weight = 0.05
-            clutch_weight = 0.05
-        elif tournament_completion < 0.5:
-            # Early-mid tournament: Some team results matter
-            individual_weight = 0.75
-            team_weight = 0.10
-            consistency_weight = 0.10
-            clutch_weight = 0.05
-        elif tournament_completion < 0.8:
-            # Late tournament: Results becoming more important
-            individual_weight = 0.65
-            team_weight = 0.15
-            consistency_weight = 0.15
-            clutch_weight = 0.05
-        else:
-            # Tournament complete: Full weighting
-            individual_weight = 0.60
-            team_weight = 0.20
-            consistency_weight = 0.15
-            clutch_weight = 0.05
-        
-        return {
-            'individual': individual_weight,
-            'team': team_weight,
-            'consistency': consistency_weight,
-            'clutch': clutch_weight,
-            'completion': tournament_completion
-        }
-
-    def calculate_bracket_position_adjustment(self, player_stats: Dict, all_players: List[Dict]) -> float:
-        """Adjust for bracket position disadvantages"""
-        player_games = player_stats.get('games_played', 0)
-        
-        # Categorize based on actual Bo7 tournament game counts
-        if player_games <= self.calculator_config.tournament_config.early_elimination_threshold:
-            # Early elimination (8-14 games): Fewer opportunities
-            opportunity_factor = 1.15  # 15% boost for early elimination
-            elimination_type = "early"
-        elif player_games <= self.calculator_config.tournament_config.mid_elimination_threshold:
-            # Mid elimination (15-21 games): Average opportunities  
-            opportunity_factor = 1.05  # 5% boost for mid elimination
-            elimination_type = "mid"
-        elif player_games >= self.calculator_config.tournament_config.deep_run_threshold:
-            # Deep run (22+ games): Many opportunities to accumulate stats
-            opportunity_factor = 0.92  # 8% penalty (had more opportunities)
-            elimination_type = "deep"
-        else:
-            # Standard run
-            opportunity_factor = 1.0
-            elimination_type = "standard"
-        
-        logger.info(f"Player games: {player_games}, elimination type: {elimination_type}, opportunity factor: {opportunity_factor}")
-        return opportunity_factor
-
-    def calculate_consistency_metrics(self, player_stats: Dict) -> Dict:
-        """Calculate consistency metrics (would need game-by-game data in real implementation)"""
-        # Note: This is simplified - in reality you'd analyze game-by-game performance
-        
-        # Estimate consistency based on available stats
-        avg_score = player_stats.get('avg_score', 0)
-        
-        # Higher consistency for players with moderate but stable stats
-        # vs players with high variance (some great games, some terrible ones)
-        
-        # Simplified consistency calculation
-        # In real implementation, you'd calculate standard deviation of game scores
-        estimated_consistency = min(100, max(0, 100 - abs(avg_score - 400) / 10))
-        
-        return {
-            'score_consistency': estimated_consistency,
-            'performance_stability': estimated_consistency
-        }
     
-    def calculate_clutch_factor(self, player_stats: Dict, all_players: List[Dict]) -> float:
-        """Calculate clutch performance (simplified without game-by-game data)"""
-        # In a real implementation, you'd analyze:
-        # - Performance in Game 7s
-        # - Performance when series is tied
-        # - Performance in elimination games
-        
-        # Simplified: Use shot percentage and saves as proxies for clutch performance
-        shot_pct = player_stats.get('shot_percentage', 0)
-        saves_per_game = player_stats.get('saves_per_game', 0)
-        
-        # Players who convert shots and make saves under pressure
-        clutch_score = (shot_pct / 100 * 50) + min(saves_per_game * 10, 50)
-        
-        return min(100, max(0, clutch_score))
 
-    def calculate_percentile(self, player_value: float, all_values: List[float]) -> float:
-        """Calculate percentile rank of a value"""
-        if not all_values:
-            return 50.0
-        return (sum(1 for v in all_values if v < player_value) / len(all_values)) * 100
-
-    def calculate_dominance_quotient(self, player_stats: Dict, all_players: List[Dict]) -> float:
-        """Calculate tournament-optimized Dominance Quotient"""
-        if not all_players:
-            return 50.0
-        
-        # Calculate bracket position adjustment
-        opportunity_factor = self.calculate_bracket_position_adjustment(player_stats, all_players)
-        
-        # Calculate percentiles for standard stats
-        percentiles = {}
-        stats_to_evaluate = ['goals_per_game', 'assists_per_game', 'saves_per_game',
-                           'shots_per_game', 'shot_percentage', 'avg_score',
-                           'demos_inflicted_per_game', 'avg_speed']
-        
-        for stat in stats_to_evaluate:
-            if stat in player_stats:
-                player_value = player_stats[stat]
-                all_values = [p[stat] for p in all_players if stat in p]
-                percentiles[stat] = self.calculate_percentile(player_value, all_values)
-        
-        # Calculate win rate with tournament context
-        tournament_context = self.calculate_tournament_context_weights(all_players)
-        
-        if tournament_context['completion'] < 0.3:
-            # Very early tournament: Heavy regression to mean
-            win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
-            league_avg_win_rate = sum(p.get('wins', 0) for p in all_players) / sum(p.get('games_played', 1) for p in all_players)
-            
-            # Games-based confidence (more games = more confidence in win rate)
-            # Full confidence at 16 games (about 2 full Bo7 matches)
-            confidence = min(player_stats.get('games_played', 0) / 16, 1.0)
-            adjusted_win_rate = (confidence * win_rate) + ((1 - confidence) * league_avg_win_rate)
-            
-            all_win_rates = [p.get('wins', 0) / p.get('games_played', 1) for p in all_players if p.get('games_played', 0) > 0]
-            win_rate_percentile = self.calculate_percentile(adjusted_win_rate, all_win_rates)
-            
-            logger.info(f"Win rate adjustment: Original: {win_rate:.2f}, Adjusted: {adjusted_win_rate:.2f}, Confidence: {confidence:.2f}")
-        else:
-            # Late tournament: Use actual win rate
-            win_rate = player_stats.get('wins', 0) / max(player_stats.get('games_played', 1), 1)
-            all_win_rates = [p.get('wins', 0) / p.get('games_played', 1) for p in all_players if p.get('games_played', 0) > 0]
-            win_rate_percentile = self.calculate_percentile(win_rate, all_win_rates)
-        
-        percentiles['win_rate'] = win_rate_percentile
-        
-        # Calculate consistency metrics
-        consistency_metrics = self.calculate_consistency_metrics(player_stats)
-        percentiles['score_consistency'] = consistency_metrics['score_consistency']
-        
-        # Calculate clutch factor
-        clutch_score = self.calculate_clutch_factor(player_stats, all_players)
-        percentiles['clutch_factor'] = clutch_score
-        
-        # Calculate weighted dominance quotient
-        dominance_quotient = 0
-        total_weight_used = 0
-        
-        for stat, weight in self.calculator_config.base_weights.items():
-            if stat == 'individual_performance':
-                # Apply individual stat weights
-                individual_contribution = 0
-                individual_weight_sum = 0
-                for s_stat, s_weight in self.stat_weights.items():
-                    if s_stat in percentiles and s_weight > 0:
-                        individual_contribution += percentiles[s_stat] * s_weight
-                        individual_weight_sum += s_weight
-                if individual_weight_sum > 0:
-                    dominance_quotient += (individual_contribution / individual_weight_sum) * weight
-                    total_weight_used += weight
-            elif stat == 'consistency':
-                if 'score_consistency' in percentiles:
-                    dominance_quotient += percentiles['score_consistency'] * weight
-                    total_weight_used += weight
-            elif stat == 'clutch_performance':
-                if 'clutch_factor' in percentiles:
-                    dominance_quotient += percentiles['clutch_factor'] * weight
-                    total_weight_used += weight
-            elif stat == 'team_success':
-                if 'win_rate' in percentiles:
-                    # Adjust win rate weight based on games played
-                    games_played = player_stats.get('games_played', 0)
-                    games_played_threshold_for_minimal_impact = 5
-                    min_games_for_full_win_rate_impact = 15
-
-                    if games_played <= games_played_threshold_for_minimal_impact:
-                        win_rate_weight_modifier = 0.0
-                    elif games_played >= min_games_for_full_win_rate_impact:
-                        win_rate_weight_modifier = 1.0
-                    else:
-                        win_rate_weight_modifier = (games_played - games_played_threshold_for_minimal_impact) / \
-                                                   (min_games_for_full_win_rate_impact - games_played_threshold_for_minimal_impact)
-
-                    logger.info(f"  Win rate weight modifier: {win_rate_weight_modifier:.2f}")
-                    dominance_quotient += percentiles['win_rate'] * weight * win_rate_weight_modifier
-                    total_weight_used += weight * win_rate_weight_modifier # Adjust total weight used as well
-        
-        # Apply opportunity factor
-        dominance_quotient *= opportunity_factor
-        
-        # Handle negative demo impact (if configured)
-        if 'demos_taken_per_game' in percentiles and self.stat_weights.get('demos_taken_per_game', 0) > 0:
-            inverted_demo_percentile = 100 - percentiles['demos_taken_per_game']
-            dominance_quotient += inverted_demo_percentile * self.stat_weights['demos_taken_per_game']
-            total_weight_used += self.stat_weights['demos_taken_per_game']
-        
-        # Normalize and clamp
-        if total_weight_used > 0:
-            final_dq = dominance_quotient / total_weight_used
-        else:
-            final_dq = 50.0 # Default if no weights applied
-        
-        final_dq = max(0, min(100, final_dq))
-        
-        # Tournament-specific logging
-        logger.info(f"Tournament DQ calculation for {player_stats.get('player_id', 'Unknown')}:")
-        logger.info(f"  Games played: {player_stats.get('games_played', 0)} (opportunity factor: {opportunity_factor:.2f})")
-        logger.info(f"  Tournament completion: {tournament_context['completion']:.1%}")
-        logger.info(f"  Final DQ: {final_dq:.1f}")
-        
-        return final_dq
-
-    @discord.slash_command(name="profile", description="Show a player's comprehensive BLCSX profile card")
-    async def new_profile_command(self, ctx, player: discord.Member = None):
-        """Display a modern, data-rich player profile card."""
+    @discord.slash_command(name="blcs_profile", description="Show comprehensive BLCSX player profile with rankings")
+    async def profile_command(self, ctx, player: discord.Member = None):
+        """Modern profile command with detailed rankings"""
         target_user = player or ctx.author
+        
         await ctx.response.defer()
-
+        
         try:
-            # Get player mapping to find their ballchasing ID
+            # Get player mapping
             mapping = self.db.get_player_mapping(target_user.id)
-            if not mapping or not mapping.get('ballchasing_player_id'):
+            if not mapping:
                 embed = discord.Embed(
-                    title="❌ Player Not Linked",
-                    description=f"{target_user.display_name} has not linked their ballchasing.com account.\nUse `/blcs_link` or have an admin use `/admin_blcs_link`.",
+                    title="Player Not Found",
+                    description=f"No ballchasing.com mapping found for {target_user.display_name}.\nUse `/blcs_link` to connect your account.",
                     color=discord.Color.red()
                 )
                 await ctx.followup.send(embed=embed)
                 return
-
-            # Get player statistics from the correct database
+            
+            # Get player statistics
             player_stats = self.db.get_player_statistics(mapping['ballchasing_player_id'])
             if not player_stats:
                 embed = discord.Embed(
-                    title="📊 No Statistics Found",
-                    description=f"No statistics found for {target_user.display_name}.\nRun `/blcs_update` after games have been played and uploaded to the group.",
+                    title="No Statistics",
+                    description=f"No statistics found for {target_user.display_name}.\nData may still be processing.",
                     color=discord.Color.orange()
                 )
                 await ctx.followup.send(embed=embed)
                 return
-
-            # Get all players for percentile calculations
+            
+            # Get all players for comparison
             all_players = self.db.get_all_player_statistics()
-
-            # Generate the modern profile embed
+            
+            # Generate modern profile embed
             embed = self.create_profile_embed(target_user, player_stats, all_players)
+            
             await ctx.followup.send(embed=embed)
-
+            
         except Exception as e:
-            logger.error(f"Error in new_profile_command: {e}")
+            logger.error(f"Error in profile command: {e}")
             embed = discord.Embed(
-                title="An Error Occurred",
-                description="Could not generate the player profile. Please check the logs.",
-                color=discord.Color.dark_red()
+                title="Error",
+                description="An error occurred while generating the profile.",
+                color=discord.Color.red()
             )
-            await ctx.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed)
 
     def create_profile_embed(self, user: discord.User, player_stats: Dict, all_players: List[Dict]) -> discord.Embed:
         """Create modern profile embed with rankings and indicators"""
@@ -673,56 +656,55 @@ class BLCSXStatsCog(commands.Cog):
         
         # Calculate simple dominance quotient
         dq = player_stats.get('dominance_quotient', 
-                             SimpleStatsCalculator.calculate_simple_score(player_stats, all_players))
+                             self.calculator.calculate_dominance_quotient(player_stats, all_players))
         
         # Calculate ranking
         all_dqs = [p.get('dominance_quotient', 50.0) for p in all_players]
-        dq_ranking = SimpleStatsCalculator.calculate_ranking(dq, all_dqs)
-        dq_indicator = self.get_performance_indicator(dq_ranking['percentile'])
+        dq_ranking = self.calculator.calculate_percentile(dq, all_dqs)
+        dq_indicator = self.get_performance_indicator(dq_ranking)
         
         # Main embed
         embed = discord.Embed(
-            title=f"🎮 {user.display_name}'s BLCSX Profile",
+            title=f"{user.display_name}'s BLCSX Profile",
             color=0x7289DA
         )
         embed.set_thumbnail(url=user.display_avatar.url)
         
         # === DOMINANCE QUOTIENT (Most Important) ===
         embed.add_field(
-            name="🏆 **PERFORMANCE SCORE** (Overall Skill)",
-            value=f"**{dq:.1f}%** {dq_indicator['emoji']} *{dq_indicator['name']}*\n"
-                  f"📊 **Rank #{dq_ranking['rank']}** of {dq_ranking['total']} players\n"
-                  f"📈 **{dq_ranking['percentile']:.1f}th percentile**",
+            name="PERFORMANCE SCORE (Overall Skill)",
+            value=f"**DQ: {dq:.1f}** ({dq_indicator['name']})\n"
+                  f"Percentile: {dq_ranking:.1f}th",
             inline=False
         )
         
         # === CORE PERFORMANCE STATS ===
         embed.add_field(
-            name="📋 **Core Performance**",
-            value=f"🎯 **Games Played:** {player_stats['games_played']}\n"
-                  f"🏆 **Win Rate:** {win_rate:.1f}% ({player_stats['wins']}W-{player_stats['losses']}L)\n"
-                  f"⭐ **Average Score:** {player_stats.get('avg_score', 0):.0f}",
+            name="Core Performance",
+            value=f"Games Played: {player_stats['games_played']}\n"
+                  f"Win Rate: {win_rate:.1f}% ({player_stats['wins']}W-{player_stats['losses']}L)\n"
+                  f"Average Score: {player_stats.get('avg_score', 0):.0f}",
             inline=True
         )
         
         # === KEY STATS ===
         key_stats = []
-        key_stats.append(f"⚽ **Goals/Game:** {player_stats.get('goals_per_game', 0):.2f}")
-        key_stats.append(f"🤝 **Assists/Game:** {player_stats.get('assists_per_game', 0):.2f}")
-        key_stats.append(f"🛡️ **Saves/Game:** {player_stats.get('saves_per_game', 0):.2f}")
-        key_stats.append(f"📊 **Shot %:** {player_stats.get('shot_percentage', 0):.1f}%")
-        key_stats.append(f"⚡ **Avg Speed:** {player_stats.get('avg_speed', 0):.0f}")
+        key_stats.append(f"Goals/Game: {player_stats.get('goals_per_game', 0):.2f}")
+        key_stats.append(f"Assists/Game: {player_stats.get('assists_per_game', 0):.2f}")
+        key_stats.append(f"Saves/Game: {player_stats.get('saves_per_game', 0):.2f}")
+        key_stats.append(f"Shot %: {player_stats.get('shot_percentage', 0):.1f}%")
+        key_stats.append(f"Avg Speed: {player_stats.get('avg_speed', 0):.0f}")
         
         embed.add_field(
-            name="📊 **Key Statistics**",
+            name="Key Statistics",
             value="\n".join(key_stats),
             inline=True
         )
         
         # === PERFORMANCE INDICATORS LEGEND ===
-        legend = "🏆 Elite (90%+) | 🥇 Excellent (80%+) | ✅ Good (65%+) | ➖ Average (35-65%) | 📉 Poor (20-35%) | 🔻 Terrible (<20%)"
+        legend = "Elite (90%+) | Excellent (80%+) | Good (65%+) | Average (35-65%) | Poor (20-35%) | Terrible (<20%)"
         embed.add_field(
-            name="📖 **Performance Legend**",
+            name="Performance Legend",
             value=legend,
             inline=False
         )
@@ -753,16 +735,15 @@ class BLCSXStatsCog(commands.Cog):
                 if player_stats:
                     processed_players.append(player_stats)
             
-            # Calculate dominance quotients for all players first
+            # Calculate dominance quotients for all players
             for player_stats in processed_players:
-                # This uses the complex calculation method, not the simple one
-                player_stats['dominance_quotient'] = self.calculate_dominance_quotient(player_stats, processed_players)
+                player_stats['dominance_quotient'] = self.calculator.calculate_dominance_quotient(player_stats, processed_players)
 
             # Now that all DQs are calculated, determine percentile ranks and update the database
             all_dqs = [p['dominance_quotient'] for p in processed_players]
             for player_stats in processed_players:
-                ranking = SimpleStatsCalculator.calculate_ranking(player_stats['dominance_quotient'], all_dqs)
-                player_stats['percentile_rank'] = ranking['percentile']
+                percentile_rank = self.calculator.calculate_percentile(player_stats['dominance_quotient'], all_dqs)
+                player_stats['percentile_rank'] = percentile_rank
                 
                 # Update database with the fully processed stats
                 self.db.update_player_statistics(player_stats)
@@ -1055,7 +1036,7 @@ class BLCSXStatsCog(commands.Cog):
             
             # Create leaderboard embed
             embed = discord.Embed(
-                title="🏆 BLCSX Performance Leaderboard",
+                title="BLCSX Performance Leaderboard",
                 description="Rankings based on overall player performance analysis",
                 color=discord.Color.gold()
             )
@@ -1072,27 +1053,27 @@ class BLCSXStatsCog(commands.Cog):
                 
                 # Medal for top 3
                 if i == 1:
-                    medal = "🥇"
+                    medal = "1."
                 elif i == 2:
-                    medal = "🥈"
+                    medal = "2."
                 elif i == 3:
-                    medal = "🥉"
+                    medal = "3."
                 else:
-                    medal = f"**{i}.**"
+                    medal = f"{i}."
                 
-                leaderboard_text += f"{medal} **{player_name}** {indicator['emoji']}\n"
-                leaderboard_text += f"    ⭐ Avg Score: **{player.get('avg_score', 0):.0f}** | 🏆 DQ: **{dq:.1f}** | 🎯 {player['games_played']} games | 📈 {win_rate:.1f}% WR\n\n"
+                leaderboard_text += f"{medal} **{player_name}** ({indicator['name']})\n"
+                leaderboard_text += f"    DQ: **{dq:.1f}** | Avg Score: **{player.get('avg_score', 0):.0f}** | {player['games_played']} games | {win_rate:.1f}% WR\n\n"
             
             embed.add_field(
-                name="📊 Rankings",
+                name="Rankings",
                 value=leaderboard_text,
                 inline=False
             )
             
             # Add legend
-            legend = "🏆 Elite | 🥇 Excellent | ✅ Good | ➖ Average | 📉 Poor | 🔻 Terrible"
+            legend = "Elite | Excellent | Good | Average | Poor | Terrible"
             embed.add_field(
-                name="📖 Performance Indicators",
+                name="Performance Indicators",
                 value=legend,
                 inline=False
             )
