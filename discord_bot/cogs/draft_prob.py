@@ -1444,6 +1444,35 @@ class DraftLotteryCog(commands.Cog):
             value=f"{session.teams[0]} vs {session.teams[1]}",
             inline=False
         )
+
+        # Add common times analysis
+        common_times = session.find_common_times()
+        if common_times:
+            common_text = ""
+            time_slots_display = {
+                '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM',
+                '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
+            }
+            for day_name, times in common_times.items():
+                date_info = session.get_date_info(day_name)
+                day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
+
+                # Display all times for the day
+                time_display = [time_slots_display.get(t, t) for t in times]
+
+                common_text += f"**{day_display}:** {', '.join(time_display)}\n"
+
+            embed.add_field(
+                name="🎯 Possible Game Times",
+                value=common_text,
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="⚠️ No Common Times",
+                value="No times work for all players yet.",
+                inline=False
+            )
         
         await ctx.respond(embed=embed)
     
