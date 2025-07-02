@@ -48,7 +48,7 @@ class RocketLeagueBot(commands.Bot):
         
         super().__init__(
             intents=intents,
-            description='Rocket League Discord Bot with PostgreSQL & BLCSX Integration'
+            description='Rocket League Discord Bot with PostgreSQL & BLCSX Integration - Resync'
         )
     
     async def on_ready(self):
