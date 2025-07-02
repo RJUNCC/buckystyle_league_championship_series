@@ -663,9 +663,28 @@ class BLCSXStatsCog(commands.Cog):
         dq_ranking = self.calculator.calculate_percentile(dq, all_dqs)
         dq_indicator = self.get_performance_indicator(dq_ranking)
         
+        # Calculate overall rank for player name prefix
+        all_dqs_sorted = sorted(all_dqs, reverse=True)
+        overall_rank = all_dqs_sorted.index(dq) + 1 if dq in all_dqs_sorted else len(all_dqs) + 1
+
+        # Helper to get rank emoji prefix for player name
+        def _get_player_name_prefix(rank: int) -> str:
+            if rank == 1:
+                return "🥇 "
+            elif rank == 2:
+                return "🥈 "
+            elif rank == 3:
+                return "🥉 "
+            else:
+                digit_map = {'0': '0️⃣', '1': '1️⃣', '2': '2️⃣', '3': '3️⃣', '4': '4️⃣',
+                             '5': '5️⃣', '6': '6️⃣', '7': '7️⃣', '8': '8️⃣', '9': '9️⃣'}
+                return "".join(digit_map.get(digit, '') for digit in str(rank)) + " "
+
+        player_name_prefix = _get_player_name_prefix(overall_rank)
+        
         # Main embed
         embed = discord.Embed(
-            title=f"{user.display_name}'s BLCSX Profile",
+            title=f"{player_name_prefix}{user.display_name}'s BLCSX Profile",
             color=0x7289DA
         )
         embed.set_thumbnail(url=user.display_avatar.url)
@@ -689,11 +708,32 @@ class BLCSXStatsCog(commands.Cog):
         
         # === KEY STATS ===
         key_stats = []
-        key_stats.append(f"Goals/Game: {player_stats.get('goals_per_game', 0):.2f}")
-        key_stats.append(f"Assists/Game: {player_stats.get('assists_per_game', 0):.2f}")
-        key_stats.append(f"Saves/Game: {player_stats.get('saves_per_game', 0):.2f}")
-        key_stats.append(f"Shot %: {player_stats.get('shot_percentage', 0):.1f}%")
-        key_stats.append(f"Avg Speed: {player_stats.get('avg_speed', 0):.0f}")
+        
+        # Helper to get rank display with emojis
+        def _get_stat_rank_display(player_value, all_players_data, stat_key, higher_is_better=True):
+            all_values = sorted([p.get(stat_key, 0) for p in all_players_data if p.get(stat_key) is not None], reverse=higher_is_better)
+            if not all_values:
+                return ""
+            
+            try:
+                rank = all_values.index(player_value) + 1
+                total = len(all_values)
+                
+                if rank <= 3: # Top 3
+                    if rank == 1: return " 🥇"
+                    if rank == 2: return " 🥈"
+                    if rank == 3: return " 🥉"
+                elif rank > total - 3: # Bottom 3
+                    return " 🔻"
+                return ""
+            except ValueError: 
+                return ""
+
+        key_stats.append(f"Goals/Game: {player_stats.get('goals_per_game', 0):.2f}{_get_stat_rank_display(player_stats.get('goals_per_game', 0), all_players, 'goals_per_game', higher_is_better=True)}")
+        key_stats.append(f"Assists/Game: {player_stats.get('assists_per_game', 0):.2f}{_get_stat_rank_display(player_stats.get('assists_per_game', 0), all_players, 'assists_per_game', higher_is_better=True)}")
+        key_stats.append(f"Saves/Game: {player_stats.get('saves_per_game', 0):.2f}{_get_stat_rank_display(player_stats.get('saves_per_game', 0), all_players, 'saves_per_game', higher_is_better=True)}")
+        key_stats.append(f"Shot %: {player_stats.get('shot_percentage', 0):.1f}%{_get_stat_rank_display(player_stats.get('shot_percentage', 0), all_players, 'shot_percentage', higher_is_better=True)}")
+        key_stats.append(f"Avg Speed: {player_stats.get('avg_speed', 0):.0f}{_get_stat_rank_display(player_stats.get('avg_speed', 0), all_players, 'avg_speed', higher_is_better=True)}")
         
         embed.add_field(
             name="Key Statistics",
@@ -701,13 +741,7 @@ class BLCSXStatsCog(commands.Cog):
             inline=True
         )
         
-        # === PERFORMANCE INDICATORS LEGEND ===
-        legend = "Elite (90%+) | Excellent (80%+) | Good (65%+) | Average (35-65%) | Poor (20-35%) | Terrible (<20%)"
-        embed.add_field(
-            name="Performance Legend",
-            value=legend,
-            inline=False
-        )
+        
         
         embed.set_footer(text=f"BLCSX Season 4 | Last updated: {player_stats.get('last_updated', 'Unknown')}")
         
@@ -1036,7 +1070,7 @@ class BLCSXStatsCog(commands.Cog):
             
             # Create leaderboard embed
             embed = discord.Embed(
-                title="BLCSX Performance Leaderboard",
+                title="🏆 BLCSX Performance Leaderboard",
                 description="Rankings based on overall player performance analysis",
                 color=discord.Color.gold()
             )
@@ -1053,30 +1087,22 @@ class BLCSXStatsCog(commands.Cog):
                 
                 # Medal for top 3
                 if i == 1:
-                    medal = "1."
+                    medal = "🥇"
                 elif i == 2:
-                    medal = "2."
+                    medal = "🥈"
                 elif i == 3:
-                    medal = "3."
+                    medal = "🥉"
                 else:
                     medal = f"{i}."
                 
                 leaderboard_text += f"{medal} **{player_name}** ({indicator['name']})\n"
-                leaderboard_text += f"    DQ: **{dq:.1f}** | Avg Score: **{player.get('avg_score', 0):.0f}** | {player['games_played']} games | {win_rate:.1f}% WR\n\n"
+                leaderboard_text += f"    DQ: **{dq:.1f}** | Avg Score: **{player.get('avg_score', 0):.0f}** | {win_rate:.1f}% WR\n\n"
             
             embed.add_field(
-                name="Rankings",
+                name="📊 Rankings",
                 value=leaderboard_text,
                 inline=False
             )
-            
-            # Add legend
-            # legend = "Elite | Excellent | Good | Average | Poor | Terrible"
-            # embed.add_field(
-            #     name="Performance Indicators",
-            #     value=legend,
-            #     inline=False
-            # )
             
             embed.set_footer(text=f"Showing top {len(limited_players)} of {len(all_players)} players")
             
