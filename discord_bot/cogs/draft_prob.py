@@ -269,6 +269,15 @@ class DraftLotteryCog(commands.Cog):
         else:
             return "💫"
 
+    def _add_chunked_field(self, embed, name, value, inline=False):
+        if len(value) <= 1024:
+            embed.add_field(name=name, value=value, inline=inline)
+        else:
+            chunks = [value[i:i+1000] for i in range(0, len(value), 1000)] # Leave some room for (cont.)
+            for i, chunk in enumerate(chunks):
+                field_name = f"{name} (cont. {i+1})" if i > 0 else name
+                embed.add_field(name=field_name, value=chunk, inline=inline)
+
     # ======================-
     # DRAFT LOTTERY COMMANDS
     # ======================-
@@ -1033,97 +1042,11 @@ class DraftLotteryCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def view_all_availability(self, ctx):
         await ctx.defer()
-        channel_id = ctx.channel.id
-
-        session = self.active_sessions.get(channel_id)
-        if not session:
-            session = load_session(channel_id)
-            if not session:
-                await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-                return
-            self.active_sessions[channel_id] = session
-
-        if not session.player_schedules:
-            await ctx.respond("No players have submitted their availability yet.", ephemeral=True)
-            return
-
         embed = discord.Embed(
-            title="📅 All Submitted Availabilities",
-            description=f"Showing schedules for the game between **{session.team1}** and **{session.team2}**.",
+            title="All Schedules",
+            description="This feature is under development. Soon you'll see all submitted schedules here!",
             color=0x0099ff
         )
-
-        team1_schedules = []
-        team2_schedules = []
-        other_schedules = []
-
-        today = datetime.now().date()
-
-        user_ids = [int(uid) for uid in session.player_schedules.keys()]
-        users = await asyncio.gather(*[self.bot.fetch_user(uid) for uid in user_ids], return_exceptions=True)
-        users_map = {user.id: user for user in users if not isinstance(user, Exception)}
-
-        for user_id_str, schedule in session.player_schedules.items():
-            user_id = int(user_id_str)
-            user = users_map.get(user_id)
-            player_name = user.display_name if user else f"User ID: {user_id}"
-
-            team_name = None
-            if "|" in player_name:
-                try:
-                    team_name = player_name.split("|")[1].strip()
-                except IndexError:
-                    pass
-
-            schedule_lines = []
-            for date_info in session.schedule_dates:
-                day_name = date_info['day_name']
-                date_str = date_info['date']
-                full_date_str = date_info['full_date']
-
-                try:
-                    schedule_date = datetime.strptime(f"{full_date_str}, {today.year}", "%A, %B %d, %Y").date()
-                    if schedule_date < today:
-                        continue
-                except ValueError:
-                    pass
-
-                times = schedule.get(day_name)
-                if times is not None:
-                    if times:
-                        formatted_times = []
-                        for t in sorted(times):
-                            hour = int(t.split(':')[0])
-                            if hour == 0:
-                                formatted_times.append("12AM")
-                            elif hour == 12:
-                                formatted_times.append("12PM")
-                            elif hour > 12:
-                                formatted_times.append(f"{hour-12}PM")
-                            else:
-                                formatted_times.append(f"{hour}AM")
-                        schedule_lines.append(f"**{day_name} ({date_str}):** {', '.join(formatted_times)}")
-                    else:
-                        schedule_lines.append(f"**{day_name} ({date_str}):** Not Available")
-
-            schedule_text = "\n".join(schedule_lines)
-            if not schedule_text:
-                schedule_text = "No availability set for upcoming dates."
-
-            if team_name and team_name == session.team1:
-                team1_schedules.append((player_name, schedule_text))
-            elif team_name and team_name == session.team2:
-                team2_schedules.append((player_name, schedule_text))
-            else:
-                other_schedules.append((player_name, schedule_text))
-
-        if team1_schedules:
-            embed.add_field(name=f"**{session.team1}**", value="\n".join([f"**{name}**\n{schedule}" for name, schedule in team1_schedules]), inline=False)
-        if team2_schedules:
-            embed.add_field(name=f"**{session.team2}**", value="\n".join([f"**{name}**\n{schedule}" for name, schedule in team2_schedules]), inline=False)
-        if other_schedules:
-            embed.add_field(name="**Other**", value="\n".join([f"**{name}**\n{schedule}" for name, schedule in other_schedules]), inline=False)
-
         await ctx.respond(embed=embed)
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
@@ -1411,8 +1334,6 @@ class CalendarScheduleView(discord.ui.View):
         self.user_id = user_id
         self.session = session
         self.cog = cog
-        self.channel_id = channel_id
-        self.channel_id = channel_id
         self.channel_id = channel_id
         self.schedule_state = {}
         self.current_day_index = 0
