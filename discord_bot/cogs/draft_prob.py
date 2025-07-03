@@ -1052,29 +1052,45 @@ class DraftLotteryCog(commands.Cog):
         new_session_obj = DBSchedulingSession(channel_id=str(channel_id), team1=team1, team2=team2)
         
         save_session(new_session_obj)
-        saved_db_session = load_session(channel_id)
+        session = load_session(channel_id)
 
-        if not saved_db_session:
+        if not session:
             await ctx.respond("❌ **Error:** Could not save the new scheduling session to the database. Please check the logs.", ephemeral=True)
             return
 
-        self.active_sessions[channel_id] = saved_db_session
+        self.active_sessions[channel_id] = session
         
         embed = discord.Embed(
             title="🎮 Game Scheduling Started!",
             description=(
-                f"**Scheduling game between {team1} and {team2}**\n\n"
-                f"📋 **What Players Need to Do:**\n"
-                f"All **6 players** (3 from each team) choose an interface:\n"
-                f"• `/my_schedule` - Visual calendar interface ⭐\n\n"
-                f"• Times range from 6 PM to 12 AM (7 time slots)\n"
-                f"• Easy buttons for 'Not Available' and 'All Day'\n\n"
-                f"🎯 **Process:**\n"
-                f"1️⃣ All 6 players set their weekly availability\n"
-                f"2️⃣ Bot finds common times and proposes game time\n"
-                f"3️⃣ All players confirm with ✅/❌ buttons\n"
-                f"4️⃣ If anyone declines, they update schedule and repeat\n\n"
-                f"⏳ **Progress:** Waiting for {saved_db_session.expected_players} players...\n"
+                f"**Scheduling game between {team1} and {team2}**
+
+"
+                f"📋 **What Players Need to Do:**
+"
+                f"All **6 players** (3 from each team) choose an interface:
+"
+                f"• `/my_schedule` - Visual calendar interface ⭐
+
+"
+                f"• Times range from 6 PM to 12 AM (7 time slots)
+"
+                f"• Easy buttons for 'Not Available' and 'All Day'
+
+"
+                f"🎯 **Process:**
+"
+                f"1️⃣ All 6 players set their weekly availability
+"
+                f"2️⃣ Bot finds common times and proposes game time
+"
+                f"3️⃣ All players confirm with ✅/❌ buttons
+"
+                f"4️⃣ If anyone declines, they update schedule and repeat
+
+"
+                f"⏳ **Progress:** Waiting for {session.expected_players} players...
+"
             ),
             color=0x00ff00
         )
