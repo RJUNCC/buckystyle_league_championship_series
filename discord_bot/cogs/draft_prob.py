@@ -996,6 +996,25 @@ class DraftLotteryCog(commands.Cog):
                 value=f"Waiting for {remaining} more players to use `/my_schedule`",
                 inline=False
             )
+            
+            submitted_players_list = []
+            for user_id in session.player_schedules.keys():
+                user = self.bot.get_user(int(user_id))
+                player_name = user.display_name if user else f"User ID: {user_id}"
+                submitted_players_list.append(player_name)
+            
+            if submitted_players_list:
+                embed.add_field(
+                    name="✅ Players Who Submitted Schedules",
+                    value="\n".join(submitted_players_list),
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="✅ Players Who Submitted Schedules",
+                    value="None yet.",
+                    inline=False
+                )
         else:
             embed.add_field(
                 name="Status", 
@@ -1009,41 +1028,42 @@ class DraftLotteryCog(commands.Cog):
             inline=False
         )
 
-        confirmed_players = []
-        unconfirmed_players = []
-        for user_id in session.player_schedules.keys():
-            user = self.bot.get_user(int(user_id))
-            player_name = user.display_name if user else f"User ID: {user_id}"
-            if session.confirmations.get(user_id, False): # Default to False if not in confirmations
-                confirmed_players.append(player_name)
+        if remaining == 0: # Only show confirmed/unconfirmed if all schedules are in
+            confirmed_players = []
+            unconfirmed_players = []
+            for user_id in session.player_schedules.keys():
+                user = self.bot.get_user(int(user_id))
+                player_name = user.display_name if user else f"User ID: {user_id}"
+                if session.confirmations.get(user_id, False): # Default to False if not in confirmations
+                    confirmed_players.append(player_name)
+                else:
+                    unconfirmed_players.append(player_name)
+
+            if confirmed_players:
+                embed.add_field(
+                    name="✅ Confirmed Players",
+                    value="\n".join(confirmed_players),
+                    inline=False
+                )
             else:
-                unconfirmed_players.append(player_name)
+                embed.add_field(
+                    name="✅ Confirmed Players",
+                    value="None yet.",
+                    inline=False
+                )
 
-        if confirmed_players:
-            embed.add_field(
-                name="✅ Confirmed Players",
-                value="\n".join(confirmed_players),
-                inline=False
-            )
-        else:
-            embed.add_field(
-                name="✅ Confirmed Players",
-                value="None yet.",
-                inline=False
-            )
-
-        if unconfirmed_players:
-            embed.add_field(
-                name="❌ Unconfirmed Players",
-                value="\n".join(unconfirmed_players),
-                inline=False
-            )
-        else:
-            embed.add_field(
-                name="❌ Unconfirmed Players",
-                value="All players confirmed!",
-                inline=False
-            )
+            if unconfirmed_players:
+                embed.add_field(
+                    name="❌ Unconfirmed Players",
+                    value="\n".join(unconfirmed_players),
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="❌ Unconfirmed Players",
+                    value="All players confirmed!",
+                    inline=False
+                )
 
         # Check for proposed game time
         proposed_game_time = None
