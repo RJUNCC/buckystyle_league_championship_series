@@ -1041,13 +1041,85 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="view_all_availability", description="View all submitted schedules for the current session")
     @commands.has_permissions(administrator=True)
     async def view_all_availability(self, ctx):
-        await ctx.defer()
-        embed = discord.Embed(
-            title="All Schedules",
-            description="This feature is under development. Soon you'll see all submitted schedules here!",
-            color=0x0099ff
-        )
-        await ctx.respond(embed=embed)
+        await ctx.defer(ephemeral=True)
+
+        try:
+            from models.scheduling import get_all_active_sessions
+            
+            active_sessions = get_all_active_sessions()
+            
+            if not active_sessions:
+                await ctx.followup.send("No active scheduling sessions found.", ephemeral=True)
+                return
+
+            # For simplicity, let's assume we're interested in the session for the current channel first
+            # Or, if multiple, we can list them out. For now, let's focus on the current channel's session.
+            current_channel_session = next((s for s in active_sessions if str(s.channel_id) == str(ctx.channel.id)), None)
+
+            if not current_channel_session:
+                # If no session for current channel, list all active sessions
+                embed = discord.Embed(
+                    title="Active Scheduling Sessions",
+                    description="No active session in this channel. Here are sessions in other channels:",
+                    color=0x0099ff
+                )
+                for session in active_sessions:
+                    embed.add_field(
+                        name=f"Channel ID: {session.channel_id}",
+                        value=f"Teams: {session.team1} vs {session.team2}\nPlayers: {len(session.player_schedules)}/{session.expected_players}",
+                        inline=False
+                    )
+                await ctx.followup.send(embed=embed, ephemeral=True)
+                return
+
+            session = current_channel_session
+            
+            if not session.player_schedules:
+                await ctx.followup.send(f"No schedules submitted yet for {session.team1} vs {session.team2} in this channel.", ephemeral=True)
+                return
+
+            embed = discord.Embed(
+                title=f"Schedules for {session.team1} vs {session.team2}",
+                description=f"**Channel:** <#{session.channel_id}>\n**Players Submitted:** {len(session.player_schedules)}/{session.expected_players}",
+                color=0x0099ff
+            )
+
+            for user_id, player_schedule in session.player_schedules.items():
+                user = self.bot.get_user(int(user_id))
+                player_name = user.display_name if user else f"User ID: {user_id}"
+                
+                schedule_text = []
+                for day_name, times in player_schedule.items():
+                    if times:
+                        # Convert 24-hour to 12-hour format for display
+                        display_times = []
+                        for time_str in times:
+                            hour = int(time_str.split(':')[0])
+                            minute = time_str.split(':')[1]
+                            if hour == 0:
+                                display_times.append(f"12:{minute} AM")
+                            elif hour < 12:
+                                display_times.append(f"{hour}:{minute} AM")
+                            elif hour == 12:
+                                display_times.append(f"12:{minute} PM")
+                            else:
+                                display_times.append(f"{hour-12}:{minute} PM")
+                        schedule_text.append(f"**{day_name}:** {', '.join(display_times)}")
+                    else:
+                        schedule_text.append(f"**{day_name}:** Not Available")
+                
+                embed.add_field(
+                    name=f"👤 {player_name}",
+                    value="\n".join(schedule_text) if schedule_text else "No schedule details.",
+                    inline=False
+                )
+            
+            await ctx.followup.send(embed=embed, ephemeral=True)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            await ctx.followup.send(f"An error occurred while fetching schedules: {str(e)}", ephemeral=True)
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
     @commands.has_permissions(administrator=True)
