@@ -904,7 +904,7 @@ class DraftLotteryCog(commands.Cog):
         )
         
         view = ConfirmationView(session, game_info, self)
-        message = await channel.send(f"@here Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        message = await channel.send(f"@everyone Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
         view.message = message
 
     @discord.slash_command(name="next_game_time", description="Propose the next available game time.")
@@ -1008,6 +1008,42 @@ class DraftLotteryCog(commands.Cog):
             value=f"{session.team1} vs {session.team2}",
             inline=False
         )
+
+        confirmed_players = []
+        unconfirmed_players = []
+        for user_id in session.player_schedules.keys():
+            user = self.bot.get_user(int(user_id))
+            player_name = user.display_name if user else f"User ID: {user_id}"
+            if session.confirmations.get(user_id, False): # Default to False if not in confirmations
+                confirmed_players.append(player_name)
+            else:
+                unconfirmed_players.append(player_name)
+
+        if confirmed_players:
+            embed.add_field(
+                name="✅ Confirmed Players",
+                value="\n".join(confirmed_players),
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="✅ Confirmed Players",
+                value="None yet.",
+                inline=False
+            )
+
+        if unconfirmed_players:
+            embed.add_field(
+                name="❌ Unconfirmed Players",
+                value="\n".join(unconfirmed_players),
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="❌ Unconfirmed Players",
+                value="All players confirmed!",
+                inline=False
+            )
 
         # Check for proposed game time
         proposed_game_time = None
@@ -1259,8 +1295,44 @@ class DraftLotteryCog(commands.Cog):
             inline=False
         )
 
+        confirmed_players = []
+        unconfirmed_players = []
+        for user_id in session.player_schedules.keys():
+            user = self.bot.get_user(int(user_id))
+            player_name = user.display_name if user else f"User ID: {user_id}"
+            if session.confirmations.get(user_id, False):
+                confirmed_players.append(player_name)
+            else:
+                unconfirmed_players.append(player_name)
+
+        if confirmed_players:
+            embed.add_field(
+                name="✅ Confirmed Players",
+                value="\n".join(confirmed_players),
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="✅ Confirmed Players",
+                value="None yet.",
+                inline=False
+            )
+
+        if unconfirmed_players:
+            embed.add_field(
+                name="❌ Unconfirmed Players",
+                value="\n".join(unconfirmed_players),
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="❌ Unconfirmed Players",
+                value="All players confirmed!",
+                inline=False
+            )
+
         view = ConfirmationView(session, game_info, self)
-        message = await ctx.respond(f"@here Game Time: {proposed_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        message = await ctx.respond(f"@everyone Game Time: {proposed_date_info['full_date']} @ {display_time}", embed=embed, view=view)
         view.message = message
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
