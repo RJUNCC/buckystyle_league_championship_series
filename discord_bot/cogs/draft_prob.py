@@ -33,8 +33,6 @@ class DraftResult(NamedTuple):
     draft_order: List[Tuple[int, str, int]]
     eliminated: List[Tuple[str, int]]
 
-
-
 class DaySelect(discord.ui.Select):
     def __init__(self, options, user_id, session, parent_view):
         super().__init__(
@@ -44,23 +42,23 @@ class DaySelect(discord.ui.Select):
         self.user_id = user_id
         self.session = session
         self.parent_view = parent_view
-        
+
     async def callback(self, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-                
+
             selected_day = self.values[0]
             date_info = self.session.get_date_info(selected_day)
             time_view = TimeSelectionView(self.user_id, selected_day, self.session, self.parent_view)
-            
+
             embed = discord.Embed(
                 title=f"📅 Setting Availability for {date_info['full_date']}",
                 description=f"Select all times you're available on **{date_info['full_date']}**:",
                 color=0x0099ff
             )
-            
+
             await interaction.response.edit_message(
                 embed=embed,
                 view=time_view
@@ -80,7 +78,7 @@ class TimeSelectionView(discord.ui.View):
         self.session = session
         self.parent_view = parent_view
         self.selected_times = set()
-        
+
     @discord.ui.select(
         placeholder="Select available times (you can select multiple)",
         options=[
@@ -92,7 +90,7 @@ class TimeSelectionView(discord.ui.View):
             discord.SelectOption(label="11:00 PM", value="23:00"),
             discord.SelectOption(label="12:00 AM", value="00:00"),
         ],
-        max_values=7,  # Updated to match the number of options
+        max_values=7,
         min_values=0
     )
     async def time_select(self, select: discord.ui.Select, interaction: discord.Interaction):
@@ -100,20 +98,20 @@ class TimeSelectionView(discord.ui.View):
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-                
+
             self.selected_times = set(select.values)
-            
+
             embed = discord.Embed(
                 title=f"📅 {self.day} Availability",
                 color=0x0099ff
             )
-            
+
             if self.selected_times:
                 times_display = ", ".join([self.format_time_display(t) for t in sorted(self.selected_times)])
                 embed.description = f"**Selected times:** {times_display}\n\nClick 'Confirm Times' to save these times or select different ones."
             else:
                 embed.description = f"**No times selected** (not available)\n\nClick 'Not Available' to confirm or select times above."
-            
+
             await interaction.response.edit_message(
                 embed=embed,
                 view=self
@@ -124,12 +122,12 @@ class TimeSelectionView(discord.ui.View):
                 await interaction.response.send_message("Error selecting times", ephemeral=True)
             except:
                 pass
-    
+
     def format_time_display(self, time_24h):
         try:
             hour = int(time_24h.split(':')[0])
             minute = time_24h.split(':')[1]
-            
+
             if hour == 0:
                 return f"12:{minute} AM"
             elif hour < 12:
@@ -140,199 +138,187 @@ class TimeSelectionView(discord.ui.View):
                 return f"{hour-12}:{minute} PM"
         except:
             return time_24h
-    
+
     @discord.ui.button(label="Confirm Times", style=discord.ButtonStyle.green)
     async def confirm_times(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-                
-            # Save the times for this day
-            if self.user_id not in self.session.player_schedules:
-                self.session.player_schedules[self.user_id] = {}
-                
-            self.session.player_schedules[self.user_id][self.day] = list(self.selected_times)
-            self.session = save_session(self.session)
-            
-            # Go back to day selection with updated info
+
+            if str(self.user_id) not in self.session.player_schedules:
+                self.session.player_schedules[str(self.user_id)] = {}
+
+            self.session.player_schedules[str(self.user_id)][self.day] = list(self.selected_times)
+            save_session(self.session)
+
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** times saved!")
-                
+
         except Exception as e:
             print(f"Error in confirm_times: {e}")
             try:
                 await interaction.response.send_message("Error confirming times", ephemeral=True)
             except:
                 pass
-    
+
     @discord.ui.button(label="Not Available", style=discord.ButtonStyle.red)
     async def not_available(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-                
-            if self.user_id not in self.session.player_schedules:
-                self.session.player_schedules[self.user_id] = {}
-                
-            self.session.player_schedules[self.user_id][self.day] = []
-            self.session = save_session(self.session)
-            
-            # Go back to day selection with updated info
+
+            if str(self.user_id) not in self.session.player_schedules:
+                self.session.player_schedules[str(self.user_id)] = {}
+
+            self.session.player_schedules[str(self.user_id)][self.day] = []
+            save_session(self.session)
+
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** marked as not available!")
-            
+
         except Exception as e:
             print(f"Error in not_available: {e}")
             try:
                 await interaction.response.send_message("Error setting unavailable", ephemeral=True)
             except:
                 pass
-    
+
     @discord.ui.button(label="Available All Day", style=discord.ButtonStyle.blurple)
     async def all_day(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-                
-            # Set all available times (6 PM to 12 AM - 7 hour slots)
+
             all_times = ["18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00"]
-                
-            if self.user_id not in self.session.player_schedules:
-                self.session.player_schedules[self.user_id] = {}
-                
-            self.session.player_schedules[self.user_id][self.day] = all_times
-            self.session = save_session(self.session)
-            
-            # Go back to day selection with updated info
+
+            if str(self.user_id) not in self.session.player_schedules:
+                self.session.player_schedules[str(self.user_id)] = {}
+
+            self.session.player_schedules[str(self.user_id)][self.day] = all_times
+            save_session(self.session)
+
             await self.return_to_day_selection(interaction, f"✅ **{self.day}** set to all day available!")
-            
+
         except Exception as e:
             print(f"Error in all_day: {e}")
             try:
                 await interaction.response.send_message("Error setting all day", ephemeral=True)
             except:
                 pass
-    
+
     @discord.ui.button(label="← Back to Day Selection", style=discord.ButtonStyle.secondary)
     async def back_to_days(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-            
+
             await self.return_to_day_selection(interaction, "Select another day to set your availability:")
-            
+
         except Exception as e:
             print(f"Error in back_to_days: {e}")
             try:
                 await interaction.response.send_message("Error going back", ephemeral=True)
             except:
                 pass
-    
+
     async def return_to_day_selection(self, interaction, message):
-        """Return to the day selection view with updated progress"""
-        schedule = self.session.player_schedules.get(self.user_id, {})
+        schedule = self.session.player_schedules.get(str(self.user_id), {})
         days_set = len(schedule)
-        
+
         embed = discord.Embed(
             title="📅 Set Your Weekly Availability",
             description=f"{message}\n\n**Progress: {days_set}/7 days completed**\n\nSelect another day to continue or finalize when all 7 days are set.",
             color=0x0099ff if days_set < 7 else 0x00ff00
         )
-        
-        # Show current status for each day with actual dates
+
         status_text = ""
         for date_info in self.session.schedule_dates:
             day_name = date_info['day_name']
             day_display = f"{date_info['day_name']}, {date_info['date']}"
-            
+
             if day_name in schedule:
                 if not schedule[day_name]:
                     status_text += f"**{day_display}:** ❌ Not available\n"
-                elif len(schedule[day_name]) >= 6:  # Updated threshold for 1-hour intervals (6+ out of 7 slots = "all day")
+                elif len(schedule[day_name]) >= 6:
                     status_text += f"**{day_display}:** ✅ All day\n"
                 else:
                     status_text += f"**{day_display}:** ✅ {len(schedule[day_name])} time slots\n"
             else:
                 status_text += f"**{day_display}:** ⏳ Not set\n"
-        
+
         embed.add_field(name="📋 Current Schedule", value=status_text, inline=False)
-        
+
         await interaction.response.edit_message(
             embed=embed,
             view=self.parent_view
         )
 
 class DaySelectionView(discord.ui.View):
-    def __init__(self, user_id, session):
-        super().__init__(timeout=600)  # 10 minute timeout
+    def __init__(self, user_id, session, cog):
+        super().__init__(timeout=600)
         self.user_id = user_id
         self.session = session
-        
-        # Create dynamic options based on actual dates
+        self.cog = cog
         self.create_day_options()
-        
+
     def create_day_options(self):
-        """Create dropdown options with actual dates"""
         options = []
         for date_info in self.session.schedule_dates:
-            # Format: "Monday, 06/29"
             label = f"{date_info['day_name']}, {date_info['date']}"
             options.append(
                 discord.SelectOption(
                     label=label,
-                    value=date_info['day_name'],  # Still use day name as value for compatibility
-                    description=date_info['full_date'],  # "Monday, June 29"
+                    value=date_info['day_name'],
+                    description=date_info['full_date'],
                     emoji="📅"
                 )
             )
-        
-        # Add the select to the view
         self.add_item(DaySelect(options, self.user_id, self.session, self))
-    
+
     @discord.ui.button(label="View My Schedule", style=discord.ButtonStyle.secondary)
     async def view_schedule(self, button: discord.ui.Button, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
-                
-            if self.user_id not in self.session.player_schedules:
+
+            if str(self.user_id) not in self.session.player_schedules:
                 await interaction.response.send_message("You haven't set any times yet!", ephemeral=True)
                 return
-                
-            schedule = self.session.player_schedules[self.user_id]
+
+            schedule = self.session.player_schedules[str(self.user_id)]
             schedule_text = "**Your Schedule for the Next Week:**\n\n"
-            
+
             days_set = 0
             for date_info in self.session.schedule_dates:
                 day_name = date_info['day_name']
                 day_display = f"{date_info['day_name']}, {date_info['date']}"
-                
+
                 if day_name in schedule:
                     days_set += 1
                     if not schedule[day_name]:
                         schedule_text += f"**{day_display}:** ❌ Not available\n"
-                    elif len(schedule[day_name]) >= 20:
+                    elif len(schedule[day_name]) >= 6:
                         schedule_text += f"**{day_display}:** ✅ All day available\n"
                     else:
                         times = [self.format_time_display(t) for t in sorted(schedule[day_name])]
                         schedule_text += f"**{day_display}:** ✅ {', '.join(times)}\n"
                 else:
                     schedule_text += f"**{day_display}:** ⏳ Not set\n"
-            
+
             schedule_text += f"\n**Progress:** {days_set}/7 days completed"
-            
+
             if days_set == 7:
                 schedule_text += "\n🎉 **Ready to finalize!** Use the 'Finalize Schedule' button."
-                
+
             embed = discord.Embed(
                 title="📋 Your Weekly Schedule",
                 description=schedule_text,
                 color=0x0099ff
             )
-            
+
             await interaction.response.send_message(embed=embed, ephemeral=True)
         except Exception as e:
             print(f"Error in view_schedule: {e}")
@@ -340,12 +326,12 @@ class DaySelectionView(discord.ui.View):
                 await interaction.response.send_message("Error viewing schedule", ephemeral=True)
             except:
                 pass
-    
+
     def format_time_display(self, time_24h):
         try:
             hour = int(time_24h.split(':')[0])
             minute = time_24h.split(':')[1]
-            
+
             if hour == 0:
                 return f"12:{minute} AM"
             elif hour < 12:
@@ -356,99 +342,74 @@ class DaySelectionView(discord.ui.View):
                 return f"{hour-12}:{minute} PM"
         except:
             return time_24h
-    
+
+    @discord.ui.button(label="✅ Finalize Schedule", style=discord.ButtonStyle.green)
     async def finalize_schedule_callback(self, interaction: discord.Interaction):
         try:
             if interaction.user.id != self.user_id:
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
 
-            # --- FIX: Reload session to prevent DetachedInstanceError ---
             session = load_session(self.session.channel_id)
             if not session:
                 await interaction.response.send_message("Error: Could not find the scheduling session.", ephemeral=True)
                 return
-            
-            # Convert schedule_state to the format expected by DBSchedulingSession
-            player_schedule_for_db = {}
-            for day_name, day_data in self.schedule_state.items():
-                status = day_data.get('status')
-                if status == 'not_available':
-                    player_schedule_for_db[day_name] = []
-                elif status == 'all_day':
-                    player_schedule_for_db[day_name] = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
-                elif status == 'partial':
-                    selected_times = [time for time, selected in day_data.items() if time != 'status' and selected]
-                    player_schedule_for_db[day_name] = selected_times
-                # If status is None (not set) or 'unsure', it's not added to player_schedule_for_db
 
-            # Check if all 7 days are set
-            if len(player_schedule_for_db) < 7:
-                await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {len(player_schedule_for_db)}/7 days set.", ephemeral=True)
+            player_schedule = session.player_schedules.get(str(self.user_id), {})
+            if len(player_schedule) < 7:
+                await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {len(player_schedule)}/7 days set.", ephemeral=True)
                 return
 
-            # Update the session object with the new schedule
-            session.player_schedules[str(self.user_id)] = player_schedule_for_db
-            
-            # --- FIX: Prevent duplicate entries in players_responded ---
             if str(self.user_id) not in session.players_responded:
                 session.players_responded.append(str(self.user_id))
 
-            save_session(session) # Save to DB
+            save_session(session)
 
-            # Find the cog to access bot and finalize_scheduling method
-            draft_cog = self.view.parent_view.cog if hasattr(self.view.parent_view, 'cog') else self
-            
-            if draft_cog:
-                channel = draft_cog.bot.get_channel(int(session.channel_id))
-                remaining = session.expected_players - len(session.players_responded)
-                
-                if remaining > 0:
-                    await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
-                
-                await interaction.response.edit_message(
-                    content="✅ **Schedule finalized!** Thank you for submitting your availability.",
-                    embed=None,
-                    view=None
-                )
-                
-                # Check if all schedules are complete
-                if session.is_complete():
-                    await draft_cog.finalize_scheduling(channel, session)
-            else:
-                await interaction.response.send_message("Error finding scheduling session", ephemeral=True)
-                
+            channel = self.cog.bot.get_channel(int(session.channel_id))
+            remaining = session.expected_players - len(session.players_responded)
+
+            if remaining > 0:
+                await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
+
+            await interaction.response.edit_message(
+                content="✅ **Schedule finalized!** Thank you for submitting your availability.",
+                embed=None,
+                view=None
+            )
+
+            if len(session.players_responded) >= session.expected_players:
+                await self.cog.finalize_scheduling(channel, session)
+
         except Exception as e:
             import traceback
-            traceback.print_exc() # Print full traceback to console
+            traceback.print_exc()
             await interaction.response.send_message(f"An unexpected error occurred during finalization: {e}", ephemeral=True)
+
 
 class ConfirmationView(discord.ui.View):
     def __init__(self, session, game_time_info, cog):
-        super().__init__(timeout=600)  # 10 minute timeout
+        super().__init__(timeout=600)
         self.session = session
         self.game_time_info = game_time_info
         self.cog = cog
-        
+
     @discord.ui.button(label="✅ Confirm", style=discord.ButtonStyle.green)
     async def confirm_game(self, button: discord.ui.Button, interaction: discord.Interaction):
-        user_id = interaction.user.id
-        
-        # Check if user is part of this game
+        user_id = str(interaction.user.id)
+
         if user_id not in self.session.player_schedules:
             await interaction.response.send_message("You're not part of this scheduled game!", ephemeral=True)
             return
-            
+
         self.session.confirmations[user_id] = True
-        self.session = save_session(self.session)
+        save_session(self.session)
         confirmed = sum(1 for c in self.session.confirmations.values() if c)
         total = len(self.session.player_schedules)
-        
+
         await interaction.response.send_message(f"✅ You confirmed the game time! ({confirmed}/{total} confirmed)", ephemeral=True)
-        
-        # Check if everyone confirmed
+
         if confirmed >= self.session.expected_players:
-            channel = self.cog.bot.get_channel(self.session.channel_id)
+            channel = self.cog.bot.get_channel(int(self.session.channel_id))
             final_embed = discord.Embed(
                 title="🎮 Game Confirmed!",
                 description=f"**{self.game_time_info['full_date']} at {self.game_time_info['time']}**",
@@ -459,41 +420,40 @@ class ConfirmationView(discord.ui.View):
                 value="✅ All players confirmed! Game is scheduled.",
                 inline=False
             )
-            
+
             await channel.send("@everyone")
             await channel.send(embed=final_embed)
-            
-            # Clean up session
-            if self.session.channel_id in self.cog.active_sessions:
-                del self.cog.active_sessions[self.session.channel_id]
-                delete_session(self.session.channel_id)
-    
+
+            delete_session(self.session.channel_id)
+            if int(self.session.channel_id) in self.cog.active_sessions:
+                del self.cog.active_sessions[int(self.session.channel_id)]
+
+
     @discord.ui.button(label="❌ Can't Make It", style=discord.ButtonStyle.red)
     async def decline_game(self, button: discord.ui.Button, interaction: discord.Interaction):
-        user_id = interaction.user.id
-        
+        user_id = str(interaction.user.id)
+
         if user_id not in self.session.player_schedules:
             await interaction.response.send_message("You're not part of this scheduled game!", ephemeral=True)
             return
-            
+
         self.session.confirmations[user_id] = False
         
-        # Reset this player's status so they can resubmit
-        if str(user_id) in self.session.player_schedules:
-            del self.session.player_schedules[str(user_id)]
-        if str(user_id) in self.session.players_responded:
-            self.session.players_responded.remove(str(user_id))
-        
-        self.session.players_responded.remove(str(user_id))
-        self.session = save_session(self.session)
+        if user_id in self.session.player_schedules:
+            del self.session.player_schedules[user_id]
+        if user_id in self.session.players_responded:
+            self.session.players_responded.remove(user_id)
+
+        save_session(self.session)
 
         await interaction.response.send_message(
             "❌ You declined the game time. Please update your schedule using `/my_schedule` and set more accurate times.",
             ephemeral=True
         )
-        
-        channel = self.cog.bot.get_channel(self.session.channel_id)
+
+        channel = self.cog.bot.get_channel(int(self.session.channel_id))
         await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. An admin can use `/next_game_time` to propose an alternative.")
+
 
 class DraftLottery:
     def __init__(self):
@@ -590,13 +550,10 @@ class DraftLotteryCog(commands.Cog):
         self.bot = bot
         self.lottery = DraftLottery()
         self.last_result = None
-        self.active_sessions = {}
-        self.background_task = None  # Track the task for proper cleanup
-        
-        # Don't create the task in __init__ - use cog_load instead
+        self.active_sessions: Dict[int, DBSchedulingSession] = {}
+        self.background_task = None
     
     async def cog_load(self):
-        """Called when the cog is loaded - safer place for async tasks"""
         try:
             self.background_task = asyncio.create_task(self.load_active_sessions())
             print("✅ Background task for loading sessions started")
@@ -604,7 +561,6 @@ class DraftLotteryCog(commands.Cog):
             print(f"Error starting background task: {e}")
     
     async def cog_unload(self):
-        """Called when the cog is unloaded - clean up tasks"""
         if self.background_task and not self.background_task.done():
             self.background_task.cancel()
             try:
@@ -615,10 +571,8 @@ class DraftLotteryCog(commands.Cog):
                 print(f"Error cancelling background task: {e}")
     
     async def load_active_sessions(self):
-        """Load all active sessions from database on startup"""
         print("DEBUG: Attempting to load active sessions from database...")
         try:
-            # Wait for bot to be ready
             await self.bot.wait_until_ready()
             print("DEBUG: Bot is ready, proceeding to load sessions.")
             
@@ -627,8 +581,8 @@ class DraftLotteryCog(commands.Cog):
 
             for db_session in active_sessions:
                 try:
-                    session = DBSchedulingSession.from_db(db_session)
-                    self.active_sessions[int(db_session.channel_id)] = session
+                    # The object from DB is already a DBSchedulingSession
+                    self.active_sessions[int(db_session.channel_id)] = db_session
                     print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
                 except Exception as e:
                     print(f"ERROR: Failed to load session from DB object for channel {db_session.channel_id}: {e}")
@@ -651,15 +605,13 @@ class DraftLotteryCog(commands.Cog):
         else:
             return "💫"
 
-    # ======================
+    # ======================-
     # DRAFT LOTTERY COMMANDS
-    # ======================
+    # ======================-
 
     @discord.slash_command(name="draft", description="Run the dramatic draft lottery presentation")
     async def run_draft_lottery(self, ctx):
-        """Run the dramatic draft lottery presentation"""
         
-        # Initial announcement
         embed = discord.Embed(
             title="🏀 DRAFT LOTTERY COMMENCING 🏀",
             description="**The fate of 10 players will be decided...**\n\n" +
@@ -671,10 +623,9 @@ class DraftLotteryCog(commands.Cog):
         )
         embed.set_footer(text="Preparing lottery balls... 🎱")
         
-        message = await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
         await asyncio.sleep(3)
         
-        # Dramatic countdown
         for i in range(3, 0, -1):
             embed = discord.Embed(
                 title="🎲 LOTTERY BEGINNING IN...",
@@ -684,7 +635,6 @@ class DraftLotteryCog(commands.Cog):
             await ctx.edit(embed=embed)
             await asyncio.sleep(1)
         
-        # "Drawing" message
         embed = discord.Embed(
             title="🎱 DRAWING LOTTERY BALLS...",
             description="*The rocket league gods are deciding...*",
@@ -693,13 +643,10 @@ class DraftLotteryCog(commands.Cog):
         await ctx.edit(embed=embed)
         await asyncio.sleep(2)
         
-        # Conduct the actual lottery
         result = self.lottery.conduct_draft()
         self.last_result = result
         
-        # Calculate the actual probabilities each player had for their position
         def get_pick_probability(player_name: str, pick_position: int, is_eliminated: bool = False) -> float:
-            # Find player's tier
             player_tier = None
             for tier, names in self.lottery.players.items():
                 if player_name in names:
@@ -710,20 +657,17 @@ class DraftLotteryCog(commands.Cog):
                 return 0.0
             
             if is_eliminated:
-                return 20.0  # Default elimination chance
+                return 20.0
             else:
-                # For drafted players, use their weight for that pick position
                 base_weights = self.lottery.weights[player_tier]
                 if pick_position <= len(base_weights):
                     return base_weights[pick_position - 1]
                 else:
                     return 1.0
         
-        # Initialize running lists
         eliminated_list = ""
         draft_list = ""
         
-        # First, dramatically reveal the eliminated players
         if result.eliminated:
             await asyncio.sleep(2)
             embed = discord.Embed(
@@ -738,7 +682,6 @@ class DraftLotteryCog(commands.Cog):
                 elimination_chance = get_pick_probability(player, 0, is_eliminated=True)
                 eliminated_list += f"💀 **{player}** ({elimination_chance:.1f}%)\n"
                 
-                # Update the same message for elimination
                 embed = discord.Embed(
                     title=f"❌ ELIMINATED PLAYER #{i+1}",
                     description=f"## 💀 **{player}**\n*Elimination chance: {elimination_chance:.1f}%*",
@@ -752,7 +695,6 @@ class DraftLotteryCog(commands.Cog):
                 await ctx.edit(embed=embed)
                 await asyncio.sleep(6)
         
-        # Transition message
         await asyncio.sleep(2)
         embed = discord.Embed(
             title="🎯 NOW FOR THE DRAFT ORDER...",
@@ -768,17 +710,14 @@ class DraftLotteryCog(commands.Cog):
         await ctx.edit(embed=embed)
         await asyncio.sleep(4)
         
-        # Sort draft order by pick number in reverse (8 to 1)
         sorted_draft = sorted(result.draft_order, key=lambda x: x[0], reverse=True)
         
         for i, (pick, player, tier) in enumerate(sorted_draft):
             pick_emoji = self.get_pick_emoji(pick)
             pick_chance = get_pick_probability(player, pick)
             
-            # Add current pick to draft list (maintain 1-8 order)
             draft_entry = f"{pick_emoji} **Pick #{pick}:** `{player}` ({pick_chance:.1f}%)\n"
             
-            # Build the draft list in proper 1-8 order
             all_picks = []
             if draft_list:
                 for line in draft_list.split('\n'):
@@ -786,7 +725,6 @@ class DraftLotteryCog(commands.Cog):
                         all_picks.append(line)
             all_picks.append(draft_entry.strip())
             
-            # Sort by pick number to maintain 1-8 order
             def extract_pick_num(line):
                 try:
                     return int(line.split('#')[1].split(':')[0])
@@ -796,7 +734,6 @@ class DraftLotteryCog(commands.Cog):
             all_picks.sort(key=extract_pick_num)
             draft_list = '\n'.join(all_picks)
             
-            # Update the same message for each pick
             if pick <= 2:
                 embed = discord.Embed(
                     title=f"🎉 #{pick} OVERALL PICK! 🎉",
@@ -855,7 +792,6 @@ class DraftLotteryCog(commands.Cog):
                 await ctx.edit(embed=embed)
                 await asyncio.sleep(7)
         
-        # Final summary message
         await asyncio.sleep(3)
         
         final_embed = discord.Embed(
@@ -877,7 +813,6 @@ class DraftLotteryCog(commands.Cog):
                 inline=False
             )
         
-        # Add tier breakdown
         tier_counts = {1: 0, 2: 0, 3: 0}
         for _, _, tier in result.draft_order:
             tier_counts[tier] += 1
@@ -891,12 +826,10 @@ class DraftLotteryCog(commands.Cog):
 
     @discord.slash_command(name="sim", description="Run simulation analysis")
     async def run_simulation(self, ctx, runs: int = 1000):
-        """Run simulation analysis"""
         if runs < 1 or runs > 10000:
             await ctx.respond("❌ Please choose between 1 and 10,000 simulations.", ephemeral=True)
             return
         
-        # Loading message
         embed = discord.Embed(
             title="🔄 Running Simulation...",
             description=f"Simulating {runs:,} draft lotteries...",
@@ -904,16 +837,13 @@ class DraftLotteryCog(commands.Cog):
         )
         await ctx.respond(embed=embed)
         
-        # Run simulation
         results = self.lottery.run_simulation(runs)
         
-        # Build results embed
         embed = discord.Embed(
             title=f"📊 SIMULATION RESULTS ({runs:,} runs)",
             color=0x3498db
         )
         
-        # Tier 1 protection verification
         tier1_elim_pct = (results['tier1_eliminations'] / runs) * 100
         embed.add_field(
             name="🛡️ Tier 1 Protection",
@@ -921,7 +851,6 @@ class DraftLotteryCog(commands.Cog):
             inline=False
         )
         
-        # Player statistics
         all_players = []
         for tier, names in self.lottery.players.items():
             all_players.extend([(name, tier) for name in names])
@@ -952,7 +881,6 @@ class DraftLotteryCog(commands.Cog):
 
     @discord.slash_command(name="weights", description="Show the probability weights used in the lottery")
     async def show_weights(self, ctx):
-        """Show the probability weights used in the lottery"""
         embed = discord.Embed(
             title="🎯 LOTTERY PROBABILITY WEIGHTS",
             description="Higher numbers = higher chance of selection at that pick position",
@@ -975,7 +903,6 @@ class DraftLotteryCog(commands.Cog):
 
     @discord.slash_command(name="tiers", description="Show player tier assignments")
     async def show_tiers(self, ctx):
-        """Show player tier assignments"""
         embed = discord.Embed(
             title="🏀 PLAYER TIER ASSIGNMENTS",
             description="Players are grouped by skill level with different draft probabilities",
@@ -997,14 +924,12 @@ class DraftLotteryCog(commands.Cog):
 
     @discord.slash_command(name="last_draft", description="Show the last draft result")
     async def show_last_draft(self, ctx):
-        """Show the last draft result"""
         if not self.last_result:
             await ctx.respond("❌ No draft has been run yet. Use `/draft` to run a lottery!", ephemeral=True)
             return
         
         result = self.last_result
         
-        # Build draft order text
         draft_text = ""
         for pick, player, tier in result.draft_order:
             pick_emoji = self.get_pick_emoji(pick)
@@ -1016,7 +941,6 @@ class DraftLotteryCog(commands.Cog):
             color=0x1f8b4c
         )
         
-        # Add elimination section if any
         if result.eliminated:
             elim_text = ""
             for player, tier in result.eliminated:
@@ -1028,7 +952,6 @@ class DraftLotteryCog(commands.Cog):
                 inline=False
             )
         
-        # Add tier breakdown
         tier_counts = {1: 0, 2: 0, 3: 0}
         for _, _, tier in result.draft_order:
             tier_counts[tier] += 1
@@ -1041,24 +964,19 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="tournament_seeding", description="Generate dramatic tournament seeding for 8 teams")
     @commands.has_permissions(administrator=True)
     async def tournament_seeding(self, ctx):
-        """Generate dramatic tournament seeding ceremony"""
         try:
-            # Team names
             teams = [
                 "YNs", "Team 2", "Mulignans", "16 Keycaps",
                 "Team 5", "Mounties", "Team 7", "Ice Truck Killers"
             ]
             
-            # Shuffle teams randomly
             shuffled_teams = teams.copy()
             random.shuffle(shuffled_teams)
             
-            # Create seeding dictionary
             seeding = {}
             for i, team in enumerate(shuffled_teams, 1):
                 seeding[i] = team
             
-            # Initial announcement
             embed = discord.Embed(
                 title="🏆 TOURNAMENT SEEDING CEREMONY 🏆",
                 description="The moment you've all been waiting for...\nThe seeds have been determined!\n\nDrumroll please... 🥁🥁🥁",
@@ -1067,7 +985,6 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond(embed=embed)
             await asyncio.sleep(3)
             
-            # Dramatic phrases for each seed
             dramatic_phrases = [
                 "👑 Taking the throne as our #1 seed...",
                 "🥈 Claiming the prestigious #2 position...",
@@ -1081,7 +998,6 @@ class DraftLotteryCog(commands.Cog):
             
             seeding_text = ""
             
-            # Announce each seed dramatically
             for seed in range(1, 9):
                 seeding_text += f"**SEED #{seed}**: {seeding[seed]}\n"
                 
@@ -1101,7 +1017,6 @@ class DraftLotteryCog(commands.Cog):
                 await ctx.edit(embed=embed)
                 await asyncio.sleep(4)
             
-            # Final summary
             final_embed = discord.Embed(
                 title="🎊 LET THE TOURNAMENT BEGIN! 🎊",
                 description="All seeds and matchups have been determined!",
@@ -1121,25 +1036,28 @@ class DraftLotteryCog(commands.Cog):
         except Exception as e:
             await ctx.channel.send(f"Error generating tournament seeding: {str(e)}")
 
-    # ======================
+    # ======================-
     # SCHEDULING COMMANDS
-    # ======================
+    # ======================-
 
     @discord.slash_command(name="schedule_game", description="Start a game scheduling session between two teams")
     @commands.has_permissions(administrator=True)
     async def schedule_game(self, ctx, team1: str, team2: str):
-        """Start a game scheduling session"""
         channel_id = ctx.channel.id
         
-        # Check if there's already an active session in this channel
         if channel_id in self.active_sessions:
             await ctx.respond("There's already an active scheduling session in this channel. Use `/cancel_schedule` to cancel it first.", ephemeral=True)
             return
         
-        # Create new scheduling session
-        session = DBSchedulingSession(channel_id=str(channel_id), team1=team1, team2=team2)
-        self.active_sessions[channel_id] = session
-        self.active_sessions[channel_id] = save_session(session)
+        new_session_obj = DBSchedulingSession(channel_id=str(channel_id), team1=team1, team2=team2)
+        
+        saved_db_session = save_session(new_session_obj)
+        
+        if not saved_db_session:
+            await ctx.respond("❌ **Error:** Could not save the new scheduling session to the database. Please check the logs.", ephemeral=True)
+            return
+
+        self.active_sessions[channel_id] = saved_db_session
         
         embed = discord.Embed(
             title="🎮 Game Scheduling Started!",
@@ -1155,7 +1073,7 @@ class DraftLotteryCog(commands.Cog):
                 f"2️⃣ Bot finds common times and proposes game time\n"
                 f"3️⃣ All players confirm with ✅/❌ buttons\n"
                 f"4️⃣ If anyone declines, they update schedule and repeat\n\n"
-                f"⏳ **Progress:** Waiting for {session.expected_players} players...\n"
+                f"⏳ **Progress:** Waiting for {saved_db_session.expected_players} players...\n"
             ),
             color=0x00ff00
         )
@@ -1165,85 +1083,67 @@ class DraftLotteryCog(commands.Cog):
 
     @discord.slash_command(name="my_schedule", description="Set your weekly availability using visual calendar interface")
     async def my_schedule(self, ctx):
-        """Visual calendar-style schedule setting"""
         user_id = ctx.author.id
         
-        # Find the session this user belongs to
         session_to_use = None
-        for session in self.active_sessions.values():
-            # A player is part of a session if they are in one of the teams.
-            # This logic needs to be adapted based on how you identify team members.
-            # For now, we'll assume any active session is the one they mean to interact with.
-            # A more robust solution would be to check if the user is on one of the teams.
-            session_to_use = session
-            break
+        # This is a simplification. In a real bot, you'd have a better way
+        # to map a user to their teams and games.
+        if self.active_sessions:
+            session_to_use = list(self.active_sessions.values())[0]
 
         if not session_to_use:
             await ctx.respond("No active scheduling session found for you. Please ask an admin to start one with `/schedule_game`.", ephemeral=True)
             return
 
-        # Reload the session from the database to ensure it's attached to a session
         session = load_session(session_to_use.channel_id)
         if not session:
             await ctx.respond("Could not load session data from the database.", ephemeral=True)
             return
         
-        # Create the visual calendar view
-        view = CalendarScheduleView(user_id, session)
+        view = DaySelectionView(user_id, session, self)
         
-        # Allow players to reset/modify their schedule
         if str(user_id) in session.players_responded:
             embed = discord.Embed(
-                title="🔄 Update Your Schedule (Calendar View)",
-                description="Use the calendar below to update your availability. Click time slots to toggle them on/off.",
+                title="🔄 Update Your Schedule",
+                description="Use the dropdown below to update your availability.",
                 color=0xffa500
             )
         else:
             embed = discord.Embed(
-                title="📅 Set Your Weekly Availability (Calendar View)",
-                description="Use the calendar below to set your available times. Click time slots to select them.",
+                title="📅 Set Your Weekly Availability",
+                description="Use the dropdown below to set your available times.",
                 color=0x0099ff
             )
         
-        # Add initial progress info
-        days_completed = 0
-        status_text = ""
+        schedule = session.player_schedules.get(str(user_id), {})
+        days_set = len(schedule)
         
+        status_text = ""
         for date_info in session.schedule_dates:
             day_name = date_info['day_name']
             day_display = f"{date_info['day_name']}, {date_info['date']}"
-            status_text += f"**{day_display}:** ⏳ Not set\n"
-        
-        embed.add_field(
-            name=f"📋 Progress: {days_completed}/7 days completed",
-            value=status_text,
-            inline=False
-        )
-        
-        embed.add_field(
-            name="💡 How to use:",
-            value=(
-                "• **Green buttons** = Available times\n"
-                "• **Gray buttons** = Not available\n"
-                "• **All day** = Available 6PM-12AM\n"
-                "• **Not Available** = Unavailable that day\n"
-                "• **Unsure** = Uncertain availability"
-            ),
-            inline=False
-        )
+
+            if day_name in schedule:
+                if not schedule[day_name]:
+                    status_text += f"**{day_display}:** ❌ Not available\n"
+                elif len(schedule[day_name]) >= 6:
+                    status_text += f"**{day_display}:** ✅ All day\n"
+                else:
+                    status_text += f"**{day_display}:** ✅ {len(schedule[day_name])} time slots\n"
+            else:
+                status_text += f"**{day_display}:** ⏳ Not set\n"
+
+        embed.add_field(name=f"📋 Progress: {days_set}/7 days completed", value=status_text, inline=False)
         
         try:
-            # Send the calendar interface directly in DM
             await ctx.author.send(embed=embed, view=view)
-            await ctx.respond(f"{ctx.author.mention}, check your DMs for the visual calendar interface!", ephemeral=True)
+            await ctx.respond(f"{ctx.author.mention}, check your DMs for the scheduling interface!", ephemeral=True)
         except discord.Forbidden:
             await ctx.respond("I couldn't send you a DM. Please enable DMs from server members and try again.", ephemeral=True)
         except Exception as e:
             await ctx.respond(f"Error sending calendar interface: {str(e)}", ephemeral=True)
 
     async def finalize_scheduling(self, channel, session):
-        """Find common times and start confirmation process"""
-        # Ensure session is a DBSchedulingSession object
         if not isinstance(session, DBSchedulingSession):
             print(f"Error: session is not DBSchedulingSession, it is {type(session)}")
             return
@@ -1259,7 +1159,6 @@ class DraftLotteryCog(commands.Cog):
             await channel.send(embed=embed)
             return
         
-        # Pick the best time
         best_day = None
         best_time = None
         best_date_info = None
@@ -1269,7 +1168,6 @@ class DraftLotteryCog(commands.Cog):
             if day_name in common_times and common_times[day_name]:
                 best_day = day_name
                 best_date_info = date_info
-                # Prefer evening times (6 PM to 10 PM)
                 for time in common_times[day_name]:
                     hour = int(time.split(':')[0])
                     if 18 <= hour <= 22:
@@ -1288,7 +1186,6 @@ class DraftLotteryCog(commands.Cog):
             await channel.send(embed=embed)
             return
         
-        # Format time for display
         hour = int(best_time.split(':')[0])
         minute = best_time.split(':')[1]
         
@@ -1308,45 +1205,34 @@ class DraftLotteryCog(commands.Cog):
             'date': best_date_info['date']
         }
         
-        # Add the proposed time to the session's proposed_times list
         session.proposed_times.append({
             'day': best_day,
             'time': best_time
         })
-        session = save_session(session) # Save the updated session with the new proposed time
+        save_session(session)
         
-        # Create Discord Scheduled Event
         try:
-            # Parse the date and time for the event
-            # Example: "Monday, July 1, 2024" and "6:00 PM"
             date_str = best_date_info['full_date']
             time_str = display_time
             
-            # Adjust year to current year if the month has already passed
             current_year = datetime.now().year
-            # Attempt to parse with current year
             try:
-                event_datetime = datetime.strptime(f"{date_str} {time_str}", "%A, %B %d, %Y %I:%M %p")
+                event_datetime = datetime.strptime(f"{date_str}, {current_year} {time_str}", "%A, %B %d, %Y %I:%M %p")
             except ValueError:
-                # If parsing fails, try with next year (for cases like December scheduling for January)
-                event_datetime = datetime.strptime(f"{date_str} {time_str}", "%A, %B %d, %Y %I:%M %p")
-                if event_datetime < datetime.now():
-                    event_datetime = event_datetime.replace(year=current_year + 1)
+                event_datetime = datetime.strptime(f"{date_str}, {current_year+1} {time_str}", "%A, %B %d, %Y %I:%M %p")
 
-            event_name = f"{session.teams[0]} vs {session.teams[1]} Game"
-            event_description = f"Scheduled game between {session.teams[0]} and {session.teams[1]} based on player availability."
+            event_name = f"{session.team1} vs {session.team2} Game"
+            event_description = f"Scheduled game between {session.team1} and {session.team2} based on player availability."
             
-            # Assuming a 1-hour game
             event_end_time = event_datetime + timedelta(hours=1)
 
-            # Create the event
-            scheduled_event = await channel.create_scheduled_event(
+            scheduled_event = await channel.guild.create_scheduled_event(
                 name=event_name,
                 start_time=event_datetime,
                 end_time=event_end_time,
                 description=event_description,
-                entity_type=discord.EntityType.external, # Use external for general events not tied to voice/stage channels
-                location=f"Discord Channel: #{channel.name}" # Or a specific game server/platform
+                entity_type=discord.EntityType.external,
+                location=f"Discord Channel: #{channel.name}"
             )
             
             embed_event_success = discord.Embed(
@@ -1380,13 +1266,11 @@ class DraftLotteryCog(commands.Cog):
         )
         
         view = ConfirmationView(session, game_info, self)
-        await channel.send(f"@everyone Game Time: {display_time}?")
-        session.confirmation_message = await channel.send(embed=embed, view=view)
+        await channel.send(f"@everyone Game Time: {display_time}?", embed=embed, view=view)
 
     @discord.slash_command(name="next_game_time", description="Propose the next available game time.")
     @commands.has_permissions(administrator=True)
     async def next_game_time(self, ctx):
-        """Propose the next available game time if a previous one was declined."""
         channel_id = ctx.channel.id
         if channel_id not in self.active_sessions:
             await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
@@ -1397,8 +1281,7 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond("Could not load session data from the database.", ephemeral=True)
             return
 
-        # Ensure all players have submitted their schedules
-        if not session.is_complete():
+        if len(session.players_responded) < session.expected_players:
             await ctx.respond(f"Still waiting for {session.expected_players - len(session.players_responded)} players to submit their availability.", ephemeral=True)
             return
 
@@ -1406,14 +1289,13 @@ class DraftLotteryCog(commands.Cog):
         await ctx.respond("Attempting to find and propose the next available game time.", ephemeral=True)
 
     def format_available_times_interactive(self, common_times, session):
-        """Format available times for display with actual dates"""
         formatted = []
         for date_info in session.schedule_dates:
             day_name = date_info['day_name']
             if day_name in common_times and common_times[day_name]:
                 times = common_times[day_name]
                 display_times = []
-                for time in times[:5]:  # Show first 5 times
+                for time in times[:5]:
                     hour = int(time.split(':')[0])
                     minute = time.split(':')[1]
                     if hour == 0:
@@ -1434,8 +1316,8 @@ class DraftLotteryCog(commands.Cog):
         return "\n".join(formatted) if formatted else "No common times found"
 
     @discord.slash_command(name="cancel_schedule", description="Cancel the current scheduling session")
+    @commands.has_permissions(administrator=True)
     async def cancel_schedule(self, ctx):
-        """Cancel the current scheduling session"""
         channel_id = ctx.channel.id
         
         if channel_id in self.active_sessions:
@@ -1447,19 +1329,17 @@ class DraftLotteryCog(commands.Cog):
 
     @discord.slash_command(name="schedule_status", description="Check the status of the current scheduling session")
     async def schedule_status(self, ctx):
-        """Check the status of the current scheduling session"""
         channel_id = ctx.channel.id
         
         if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-            return
-        
-        # Reload the session from the database to ensure it's attached to a session
-        session = load_session(channel_id)
-        if not session:
-            await ctx.respond("Could not load session data from the database.", ephemeral=True)
-            return
-            
+            session = load_session(channel_id)
+            if not session:
+                await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+                return
+            self.active_sessions[channel_id] = session
+        else:
+            session = self.active_sessions[channel_id]
+
         remaining = session.expected_players - len(session.players_responded)
         
         embed = discord.Embed(
@@ -1491,7 +1371,6 @@ class DraftLotteryCog(commands.Cog):
             inline=False
         )
 
-        # Add common times analysis
         common_times = session.find_common_times()
         if common_times:
             common_text = ""
@@ -1503,7 +1382,6 @@ class DraftLotteryCog(commands.Cog):
                 date_info = session.get_date_info(day_name)
                 day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
 
-                # Display all times for the day
                 time_display = [time_slots_display.get(t, t) for t in times]
 
                 common_text += f"**{day_display}:** {', '.join(time_display)}\n"
@@ -1523,15 +1401,18 @@ class DraftLotteryCog(commands.Cog):
         await ctx.respond(embed=embed)
     
     @discord.slash_command(name="view_all_availability", description="View all submitted schedules for the current session")
+    @commands.has_permissions(administrator=True)
     async def view_all_availability(self, ctx):
-        """Displays all submitted availabilities for the current scheduling session."""
         channel_id = ctx.channel.id
 
         if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-            return
-
-        session = self.active_sessions[channel_id]
+            session = load_session(channel_id)
+            if not session:
+                await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+                return
+            self.active_sessions[channel_id] = session
+        else:
+            session = self.active_sessions[channel_id]
 
         if not session.players_responded:
             await ctx.respond("No players have submitted their availability yet.", ephemeral=True)
@@ -1539,37 +1420,48 @@ class DraftLotteryCog(commands.Cog):
 
         embed = discord.Embed(
             title="📅 All Submitted Availabilities",
-            description=f"Showing schedules for the game between **{session.teams[0]}** and **{session.teams[1]}**.",
+            description=f"Showing schedules for the game between **{session.team1}** and **{session.team2}**.",
             color=0x0099ff
         )
 
-        for user_id_str in session.players_responded:
+        unique_player_ids = set(session.players_responded)
+
+        all_player_ids = set(session.player_schedules.keys())
+        
+        all_known_players = unique_player_ids.union(all_player_ids)
+
+
+        for user_id_str in all_known_players:
             user_id = int(user_id_str)
             user = self.bot.get_user(user_id)
             player_name = user.display_name if user else f"User ID: {user_id}"
             
             schedule = session.player_schedules.get(user_id_str)
+            
             if not schedule:
                 embed.add_field(name=player_name, value="No schedule data found.", inline=False)
                 continue
 
             schedule_text = ""
-            for day, times in schedule.items():
-                if times:
-                    # Format times from '18:00' to '6PM'
-                    formatted_times = []
-                    for t in sorted(times):
-                        hour = int(t.split(':')[0])
-                        if hour == 0:
-                            formatted_times.append("12AM")
-                        elif hour == 12:
-                            formatted_times.append("12PM")
-                        elif hour > 12:
-                            formatted_times.append(f"{hour-12}PM")
-                        else:
-                            formatted_times.append(f"{hour}AM")
-                    schedule_text += f"**{day}:** {', '.join(formatted_times)}\n"
-            
+            for day_name in [di['day_name'] for di in session.schedule_dates]:
+                times = schedule.get(day_name)
+                if times is not None:
+                    if times:
+                        formatted_times = []
+                        for t in sorted(times):
+                            hour = int(t.split(':')[0])
+                            if hour == 0:
+                                formatted_times.append("12AM")
+                            elif hour == 12:
+                                formatted_times.append("12PM")
+                            elif hour > 12:
+                                formatted_times.append(f"{hour-12}PM")
+                            else:
+                                formatted_times.append(f"{hour}AM")
+                        schedule_text += f"**{day_name}:** {', '.join(formatted_times)}\n"
+                    else:
+                        schedule_text += f"**{day_name}:** Not Available\n"
+
             if not schedule_text:
                 schedule_text = "Not available this week."
 
@@ -1580,27 +1472,22 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="db_health", description="Check database health and connection")
     @commands.has_permissions(administrator=True)
     async def db_health(self, ctx):
-        """Check database health and connection status"""
         try:
             from models.scheduling import engine, get_all_active_sessions
             from sqlalchemy import text
             import time
             
-            # Test connection
             start_time = time.time()
             
-            # Try a simple query with proper SQLAlchemy 2.0 syntax
             with engine.connect() as conn:
                 result = conn.execute(text("SELECT 1"))
                 result.fetchone()
             
-            connection_time = (time.time() - start_time) * 1000  # Convert to ms
+            connection_time = (time.time() - start_time) * 1000
             
-            # Get database info
             db_url = str(engine.url)
             db_type = "PostgreSQL" if "postgresql" in db_url else "SQLite"
             
-            # Count active sessions
             try:
                 active_sessions = get_all_active_sessions()
                 session_count = len(active_sessions)
@@ -1617,7 +1504,6 @@ class DraftLotteryCog(commands.Cog):
             embed.add_field(name="Active Sessions", value=str(session_count), inline=True)
             embed.add_field(name="Memory Sessions", value=str(len(self.active_sessions)), inline=True)
             
-            # Show database URL (masked for security)
             masked_url = db_url.split('@')[0] + '@***' if '@' in db_url else db_url
             embed.add_field(name="Database URL", value=f"`{masked_url}`", inline=False)
             
@@ -1639,17 +1525,15 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="backup_sessions", description="Backup current scheduling sessions")
     @commands.has_permissions(administrator=True)
     async def backup_sessions(self, ctx):
-        """Export current sessions for backup"""
-        await ctx.defer(ephemeral=True)  # Defer the response to prevent timeouts
+        await ctx.defer(ephemeral=True)
         try:
             import io
             
             sessions_data = {}
             
-            # Get active sessions from memory
             for channel_id, session in self.active_sessions.items():
                 sessions_data[str(channel_id)] = {
-                    'teams': session.teams,
+                    'teams': [session.team1, session.team2],
                     'player_schedules': session.player_schedules,
                     'players_responded': list(session.players_responded),
                     'schedule_dates': session.schedule_dates,
@@ -1657,7 +1541,6 @@ class DraftLotteryCog(commands.Cog):
                     'confirmations': getattr(session, 'confirmations', {})
                 }
             
-            # Also get sessions from database
             try:
                 db_sessions = get_all_active_sessions()
                 for db_session in db_sessions:
@@ -1677,7 +1560,6 @@ class DraftLotteryCog(commands.Cog):
                 await ctx.followup.send("No active sessions to backup.", ephemeral=True)
                 return
             
-            # Create backup file
             json_data = json.dumps(sessions_data, indent=2, default=str)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"sessions_backup_{timestamp}.json"
@@ -1701,11 +1583,9 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="debug_sessions", description="Debug database sessions")
     @commands.has_permissions(administrator=True)
     async def debug_sessions(self, ctx):
-        """Debug what sessions are in database vs memory"""
         try:
             from models.scheduling import get_all_active_sessions
             
-            # Get from database
             db_sessions = get_all_active_sessions()
             
             embed = discord.Embed(
@@ -1720,11 +1600,14 @@ class DraftLotteryCog(commands.Cog):
                 inline=False
             )
             
+            db_session_info = []
+            if db_sessions:
+                for s in db_sessions:
+                    db_session_info.append(f"Channel {s.channel_id}: {s.team1} vs {s.team2} (Active: {s.is_active})")
+
             embed.add_field(
                 name="Database Sessions", 
-                value=f"{len(db_sessions)} sessions\n" +
-                    
-                "".join([f"Channel {s.channel_id}: {s.team1} vs {s.team2} (Active: {s.is_active})" for s in db_sessions]) if db_sessions else "None",
+                value=f"{len(db_sessions)} sessions\n" + "\n".join(db_session_info) if db_sessions else "None",
                 inline=False
             )
             
@@ -1736,27 +1619,23 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="reload_sessions", description="Manually reload sessions from database")
     @commands.has_permissions(administrator=True)
     async def reload_sessions(self, ctx):
-        """Manually reload sessions from database"""
         embed = discord.Embed(
             title="🔄 Sessions Reloaded",
             description="",
             color=0x00ff00
         )
         try:
-            from models.scheduling import get_all_active_sessions, SchedulingSession as DBSchedulingSession
+            from models.scheduling import get_all_active_sessions
             
-            # Clear current sessions
             old_count = len(self.active_sessions)
             self.active_sessions.clear()
             
-            # Load from database
             db_sessions = get_all_active_sessions()
             loaded_count = 0
             
             for db_session in db_sessions:
                 try:
-                    session = DBSchedulingSession.from_db(db_session)
-                    self.active_sessions[int(db_session.channel_id)] = session
+                    self.active_sessions[int(db_session.channel_id)] = db_session
                     loaded_count += 1
                 except Exception as e:
                     print(f"Error loading session {db_session.channel_id}: {e}")
@@ -1771,13 +1650,9 @@ class DraftLotteryCog(commands.Cog):
             
         await ctx.respond(embed=embed, ephemeral=True)
 
-    
-
-    
     @discord.slash_command(name="cleanup_duplicate_players", description="Admin command to clean up duplicate players in active sessions.")
     @commands.has_permissions(administrator=True)
     async def cleanup_duplicate_players(self, ctx):
-        """Cleans up duplicate player entries in the players_responded list for all active sessions."""
         await ctx.defer(ephemeral=True)
         
         active_sessions = get_all_active_sessions()
@@ -1785,7 +1660,6 @@ class DraftLotteryCog(commands.Cog):
         
         for session in active_sessions:
             original_count = len(session.players_responded)
-            # Use a set to get unique player IDs, then convert back to a list
             unique_players = list(set(session.players_responded))
             
             if len(unique_players) < original_count:
@@ -1798,7 +1672,6 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="export_schedules", description="Export all schedules for the current session to a JSON file")
     @commands.has_permissions(administrator=True)
     async def export_schedules(self, ctx):
-        """Export all schedules for the current session to a JSON file"""
         try:
             import io
             channel_id = ctx.channel.id
@@ -1813,18 +1686,16 @@ class DraftLotteryCog(commands.Cog):
                 await ctx.respond("No schedules have been submitted yet.", ephemeral=True)
                 return
             
-            # Create export data structure
             export_data = {
-            "export_timestamp": datetime.now().isoformat(),
-            "teams": session.teams,
-            "channel_id": str(channel_id),
-            "schedule_dates": session.schedule_dates,
-            "player_count": len(session.player_schedules),
-            "expected_players": session.expected_players,
-            "players": {}
+                "export_timestamp": datetime.now().isoformat(),
+                "teams": [session.team1, session.team2],
+                "channel_id": str(channel_id),
+                "schedule_dates": session.schedule_dates,
+                "player_count": len(session.player_schedules),
+                "expected_players": session.expected_players,
+                "players": {}
             }
             
-            # Add player data with names
             for user_id, player_schedule in session.player_schedules.items():
                 try:
                     user = self.bot.get_user(int(user_id))
@@ -1841,10 +1712,9 @@ class DraftLotteryCog(commands.Cog):
                         "error": str(e)
                     }
             
-            # Create file
             json_data = json.dumps(export_data, indent=2, default=str)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"schedules_{session.teams[0].replace(' ', '_')}_vs_{session.teams[1].replace(' ', '_')}_{timestamp}.json"
+            filename = f"schedules_{session.team1.replace(' ', '_')}_vs_{session.team2.replace(' ', '_')}_{timestamp}.json"
             
             file = discord.File(
                 io.StringIO(json_data),
@@ -1861,286 +1731,6 @@ class DraftLotteryCog(commands.Cog):
             
         except Exception as e:
             await ctx.respond(f"Error exporting schedules: {str(e)}", ephemeral=True)
-
-class CalendarScheduleView(discord.ui.View):
-    def __init__(self, user_id, session):
-        super().__init__(timeout=600)  # 10 minute timeout
-        self.user_id = user_id
-        self.session = session  # This is now a DBSchedulingSession object
-        self.current_day_index = 0  # Start with first day
-        
-        # Track schedule state: {day: {time: selected_state}}
-        # selected_state: None, 'available', 'all_day', 'not_available', 'unsure'
-        self.schedule_state = {}
-        
-        # Initialize schedule state from existing data if any
-        # Access player_schedules directly from the DBSchedulingSession object
-        existing_schedule = self.session.player_schedules.get(str(self.user_id), {})
-        for date_info in self.session.schedule_dates:
-            day_name = date_info['day_name']
-            self.schedule_state[day_name] = {}
-            
-            if day_name in existing_schedule:
-                existing_times = existing_schedule[day_name]
-                if not existing_times:  # Empty list = not available
-                    self.schedule_state[day_name]['status'] = 'not_available'
-                elif len(existing_times) >= 6:  # 6+ slots = all day
-                    self.schedule_state[day_name]['status'] = 'all_day'
-                else:
-                    self.schedule_state[day_name]['status'] = 'partial'
-                    # Mark specific times as available
-                    for time_slot in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']:
-                        self.schedule_state[day_name][time_slot] = time_slot in existing_times
-            else:
-                self.schedule_state[day_name]['status'] = None
-        
-        self.create_calendar_buttons()
-    
-    def create_calendar_buttons(self):
-        """Create a simplified calendar that fits Discord's 5-row limit"""
-        # We'll use a day-by-day approach instead of a full grid
-        # Show current day being edited
-        
-        current_day_index = getattr(self, 'current_day_index', 0)
-        if current_day_index >= len(self.session.schedule_dates):
-            current_day_index = 0
-            
-        current_date_info = self.session.schedule_dates[current_day_index]
-        current_day_name = current_date_info['day_name']
-        
-        # Row 0: Day navigation
-        prev_button = discord.ui.Button(
-            label="◀ Prev Day", 
-            style=discord.ButtonStyle.secondary,
-            row=0
-        )
-        prev_button.callback = self.prev_day_callback
-        self.add_item(prev_button)
-        
-        day_display_button = discord.ui.Button(
-            label=f"{current_date_info['day_name']}, {current_date_info['date']}",
-            style=discord.ButtonStyle.primary,
-            disabled=True,
-            row=0
-        )
-        self.add_item(day_display_button)
-        
-        next_button = discord.ui.Button(
-            label="Next Day ▶",
-            style=discord.ButtonStyle.secondary, 
-            row=0
-        )
-        next_button.callback = self.next_day_callback
-        self.add_item(next_button)
-        
-        # Row 1 & 2: Time slots (3-4 per row)
-        time_slots = ['6PM', '7PM', '8PM', '9PM', '10PM', '11PM', '12AM']
-        time_values = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
-        
-        for i, (time_label, time_value) in enumerate(zip(time_slots, time_values)):
-            # Determine button style
-            is_selected = self.schedule_state[current_day_name].get(time_value, False)
-            day_status = self.schedule_state[current_day_name].get('status')
-            
-            if day_status == 'all_day':
-                style = discord.ButtonStyle.green
-            elif day_status == 'not_available':
-                style = discord.ButtonStyle.red
-            elif day_status == 'unsure':
-                style = discord.ButtonStyle.secondary
-            elif is_selected:
-                style = discord.ButtonStyle.green
-            else:
-                style = discord.ButtonStyle.gray
-            
-            row = 1 if i < 4 else 2  # First 4 in row 1, rest in row 2
-            
-            time_button = TimeSlotButton(
-                label=time_label,
-                time_value=time_value,
-                day_name=current_day_name,
-                style=style,
-                row=row
-            )
-            self.add_item(time_button)
-        
-        # Row 3: Day action buttons
-        all_day_button = DayActionButton(
-            label="All Day Available",
-            action="all_day",
-            style=discord.ButtonStyle.blurple,
-            row=3
-        )
-        self.add_item(all_day_button)
-        
-        not_available_button = DayActionButton(
-            label="Not Available",
-            action="not_available",
-            style=discord.ButtonStyle.red,
-            row=3
-        )
-        self.add_item(not_available_button)
-        
-        unsure_button = DayActionButton(
-            label="Unsure",
-            action="unsure",
-            style=discord.ButtonStyle.secondary,
-            row=3
-        )
-        self.add_item(unsure_button)
-        
-        # Row 4: Finalize button
-        finalize_button = discord.ui.Button(
-            label="✅ Finalize Schedule",
-            style=discord.ButtonStyle.green,
-            row=4
-        )
-        finalize_button.callback = self.finalize_schedule_callback
-        self.add_item(finalize_button)
-    
-    async def update_view(self, interaction: discord.Interaction):
-        """Update the view with new buttons and embed content"""
-        self.clear_items()
-        self.create_calendar_buttons()
-        
-        # Update embed
-        embed = interaction.message.embeds[0]
-        embed.title = f"📅 Editing: {self.session.schedule_dates[self.current_day_index]['full_date']}"
-        
-        # Update progress
-        days_completed = 0
-        status_text = ""
-        for day_name, state in self.schedule_state.items():
-            date_info = self.session.get_date_info(day_name)
-            day_display = f"{date_info['day_name']}, {date_info['date']}"
-            
-            if state.get('status') == 'not_available':
-                status_text += f"**{day_display}:** ❌ Not available\n"
-                days_completed += 1
-            elif state.get('status') == 'all_day':
-                status_text += f"**{day_display}:** ✅ All day\n"
-                days_completed += 1
-            elif state.get('status') == 'unsure':
-                status_text += f"**{day_display}:** ❓ Unsure\n"
-                days_completed += 1
-            elif state.get('status') == 'partial':
-                times_count = sum(1 for t, s in state.items() if s and t != 'status')
-                status_text += f"**{day_display}:** ✅ {times_count} time slots\n"
-                days_completed += 1
-            else:
-                status_text += f"**{day_display}:** ⏳ Not set\n"
-        
-        # Update the progress field
-        embed.set_field_at(
-            0, 
-            name=f"📋 Progress: {days_completed}/7 days completed",
-            value=status_text,
-            inline=False
-        )
-        
-        await interaction.response.edit_message(embed=embed, view=self)
-    
-    async def prev_day_callback(self, interaction: discord.Interaction):
-        self.current_day_index = (self.current_day_index - 1) % 7
-        await self.update_view(interaction)
-        
-    async def next_day_callback(self, interaction: discord.Interaction):
-        self.current_day_index = (self.current_day_index + 1) % 7
-        await self.update_view(interaction)
-        
-    async def finalize_schedule_callback(self, interaction: discord.Interaction):
-        try:
-            # Convert internal state to the format expected by the session object
-            final_schedule = {}
-            days_completed = 0
-            
-            for day_name, state in self.schedule_state.items():
-                if state.get('status') is not None:
-                    days_completed += 1
-                    
-                    if state.get('status') == 'not_available' or state.get('status') == 'unsure':
-                        final_schedule[day_name] = []
-                    elif state.get('status') == 'all_day':
-                        final_schedule[day_name] = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
-                    elif state.get('status') == 'partial':
-                        final_schedule[day_name] = [time for time, selected in state.items() if selected and time != 'status']
-            
-            if days_completed < 7:
-                await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {days_completed}/7 days set.", ephemeral=True)
-                return
-            
-            # Save to session object
-            self.session.player_schedules[str(self.user_id)] = final_schedule
-            if str(self.user_id) not in self.session.players_responded:
-                self.session.players_responded.append(str(self.user_id))
-            
-            self.session = save_session(self.session)
-            
-            # Find cog and finalize
-            draft_cog = None
-            for cog in interaction.client.cogs.values():
-                if hasattr(cog, 'active_sessions') and int(self.session.channel_id) in cog.active_sessions:
-                    draft_cog = cog
-                    break
-            
-            if draft_cog:
-                channel = draft_cog.bot.get_channel(int(self.session.channel_id))
-                remaining = self.session.expected_players - len(self.session.players_responded)
-                
-                if remaining > 0:
-                    await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
-                
-                await interaction.response.edit_message(
-                    content="✅ **Schedule finalized!** Thank you for submitting your availability.",
-                    embed=None,
-                    view=None
-                )
-                
-                if self.session.is_complete():
-                    await draft_cog.finalize_scheduling(channel, self.session)
-            else:
-                await interaction.response.send_message("Error finding scheduling session", ephemeral=True)
-                
-        except Exception as e:
-            print(f"Error in finalize_schedule_callback: {e}")
-            try:
-                await interaction.response.send_message("Error finalizing schedule", ephemeral=True)
-            except:
-                pass
-
-class TimeSlotButton(discord.ui.Button):
-    def __init__(self, label, time_value, day_name, style, row):
-        super().__init__(label=label, style=style, row=row)
-        self.time_value = time_value
-        self.day_name = day_name
-        
-    async def callback(self, interaction: discord.Interaction):
-        view = self.view
-        state = view.schedule_state[self.day_name]
-        
-        # Toggle selection
-        state[self.time_value] = not state.get(self.time_value, False)
-        state['status'] = 'partial'  # Mark as partially set
-        
-        await view.update_view(interaction)
-
-class DayActionButton(discord.ui.Button):
-    def __init__(self, label, action, style, row):
-        super().__init__(label=label, style=style, row=row)
-        self.action = action
-        
-    async def callback(self, interaction: discord.Interaction):
-        view = self.view
-        day_name = view.session.schedule_dates[view.current_day_index]['day_name']
-        
-        if self.action == "all_day":
-            view.schedule_state[day_name]['status'] = 'all_day'
-        elif self.action == "not_available":
-            view.schedule_state[day_name]['status'] = 'not_available'
-        elif self.action == "unsure":
-            view.schedule_state[day_name]['status'] = 'unsure'
-            
-        await view.update_view(interaction)
 
 def setup(bot):
     bot.add_cog(DraftLotteryCog(bot))

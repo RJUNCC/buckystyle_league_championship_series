@@ -199,75 +199,87 @@ except Exception as e:
     print("[DB WARNING] Using in-memory database as fallback")
 
 def save_session(session_obj):
-    """Save or update a scheduling session with better error handling"""
+    """Save or update a scheduling session with better error handling and logging"""
     db = Session()
     try:
-        # Convert sets to lists for JSON serialization (if applicable)
-        players_responded_list = list(session_obj.players_responded) if isinstance(session_obj.players_responded, set) else session_obj.players_responded
-        
-        # Ensure player_schedules keys are strings for JSON serialization
-        player_schedules_str = {str(k): v for k, v in session_obj.player_schedules.items()}
-        
-        confirmations_str = {str(k): v for k, v in session_obj.confirmations.items()}
-        
-        existing = db.query(SchedulingSession).filter_by(
-            channel_id=str(session_obj.channel_id)
-        ).first()
+        # Use getattr to safely access attributes
+        channel_id = str(getattr(session_obj, 'channel_id', None))
+        if not channel_id:
+            print("[DB ERROR] session_obj missing channel_id")
+            return None
+
+        # Prepare data for serialization
+        players_responded_list = list(getattr(session_obj, 'players_responded', []))
+        player_schedules_str = {str(k): v for k, v in getattr(session_obj, 'player_schedules', {}).items()}
+        confirmations_str = {str(k): v for k, v in getattr(session_obj, 'confirmations', {}).items()}
+        proposed_times_list = getattr(session_obj, 'proposed_times', [])
+        schedule_dates_list = getattr(session_obj, 'schedule_dates', [])
+        teams = getattr(session_obj, 'teams', [None, None])
+        team1, team2 = teams[0], teams[1]
+        expected_players = getattr(session_obj, 'expected_players', 6)
+
+        # Find existing session or create a new one
+        existing = db.query(SchedulingSession).filter_by(channel_id=channel_id).first()
         
         if existing:
             # Update existing session
             existing.player_schedules = player_schedules_str
             existing.players_responded = players_responded_list
             existing.confirmations = confirmations_str
-            existing.proposed_times = session_obj.proposed_times # Save proposed times
-            existing.schedule_dates = getattr(session_obj, 'schedule_dates', [])
-            if hasattr(session_obj, 'teams') and len(session_obj.teams) == 2:
-                existing.team1 = session_obj.teams[0]
-                existing.team2 = session_obj.teams[1]
-            existing.expected_players = getattr(session_obj, 'expected_players', 6)
-            db.commit()
-            print(f"[DB INFO] Updated session for channel {session_obj.channel_id}")
-            return existing # Return the updated object
+            existing.proposed_times = proposed_times_list
+            existing.schedule_dates = schedule_dates_list
+            if team1: existing.team1 = team1
+            if team2: existing.team2 = team2
+            existing.expected_players = expected_players
+            print(f"[DB INFO] Updating session for channel {channel_id}")
         else:
             # Create new session
-            new_session = SchedulingSession(
-                channel_id=str(session_obj.channel_id),
-                team1=session_obj.teams[0],
-                team2=session_obj.teams[1],
+            existing = SchedulingSession(
+                channel_id=channel_id,
+                team1=team1,
+                team2=team2,
                 player_schedules=player_schedules_str,
                 players_responded=players_responded_list,
-                expected_players=getattr(session_obj, 'expected_players', 6),
-                schedule_dates=getattr(session_obj, 'schedule_dates', []),
+                expected_players=expected_players,
+                schedule_dates=schedule_dates_list,
                 confirmations=confirmations_str,
-                proposed_times=getattr(session_obj, 'proposed_times', []) # Save proposed times
+                proposed_times=proposed_times_list
             )
-            db.add(new_session)
-            db.commit()
-            print(f"[DB INFO] Created new session for channel {session_obj.channel_id}")
-            return new_session # Return the new object
+            db.add(existing)
+            print(f"[DB INFO] Creating new session for channel {channel_id}")
         
+        db.commit()
+        print(f"[DB SUCCESS] Session saved for channel {channel_id}")
+        return existing
+
     except Exception as e:
         db.rollback()
-        print(f"[DB ERROR] Error saving session: {e}")
+        print(f"[DB CRITICAL] CRITICAL: Error saving session for channel {getattr(session_obj, 'channel_id', 'UNKNOWN')}: {e}")
+        # Consider more robust error handling here, like logging to a file
         raise
     finally:
         db.close()
 
 def load_session(channel_id):
-    """Load a scheduling session from database with error handling"""
+    """Load a scheduling session from database with improved error handling and logging"""
     db = Session()
     try:
+        print(f"[DB INFO] Attempting to load session for channel {channel_id}")
         session_data = db.query(SchedulingSession).filter_by(
             channel_id=str(channel_id),
             is_active=True
         ).first()
         
         if session_data:
-            print(f"[DB INFO] Loaded session for channel {channel_id}")
-        
-        return session_data
+            print(f"[DB SUCCESS] Loaded session for channel {channel_id}")
+            # Eagerly load related data if needed, though not necessary with this schema
+            return session_data
+        else:
+            print(f"[DB WARNING] No active session found for channel {channel_id}")
+            return None
+            
     except Exception as e:
-        print(f"[DB ERROR] Error loading session: {e}")
+        print(f"[DB CRITICAL] CRITICAL: Error loading session for channel {channel_id}: {e}")
         return None
     finally:
         db.close()
