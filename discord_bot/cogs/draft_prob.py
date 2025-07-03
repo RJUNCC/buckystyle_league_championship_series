@@ -99,26 +99,19 @@ class ConfirmationView(discord.ui.View):
             return
 
         session.confirmations[user_id] = False
-        
-        if user_id in session.player_schedules:
-            del session.player_schedules[user_id]
-
-        # Reset all confirmations
-        for user_id in session.confirmations:
-            session.confirmations[user_id] = False
-
         save_session(session)
 
         await interaction.response.send_message(
-            "❌ You declined the game time. All confirmations have been reset. Please update your schedule using `/my_schedule` and set more accurate times.",
+            "❌ You declined the game time. The system will now attempt to find the next suitable time.",
             ephemeral=True
         )
 
         if self.message:
-            await self.message.edit(content=f"@here Game Time: {self.game_time_info['full_date']} @ {self.game_time_info['time']} (0/{len(session.player_schedules)} confirmed) - Scheduling restarted due to a decline.")
+            # Update the message to reflect the decline and new search
+            await self.message.edit(content=f"@everyone Game Time: {self.game_time_info['full_date']} @ {self.game_time_info['time']} (Declined by {interaction.user.display_name}) - Searching for next time...")
 
         channel = self.cog.bot.get_channel(int(session.channel_id))
-        await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. An admin can use `/next_game_time` to propose an alternative.")
+        await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. Searching for the next available time...")
         
         # Automatically propose the next game time
         await self.cog.finalize_scheduling(channel, session)
@@ -907,7 +900,7 @@ class DraftLotteryCog(commands.Cog):
         )
         
         view = ConfirmationView(session, game_info, self)
-        message = await channel.send(f"@everyone Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        message = await channel.send(f"@{session.team1} @{session.team2} Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
         view.message = message
 
     @discord.slash_command(name="next_game_time", description="Propose the next available game time.")
@@ -1365,7 +1358,7 @@ class DraftLotteryCog(commands.Cog):
             )
 
         view = ConfirmationView(session, game_info, self)
-        message = await ctx.respond(f"@everyone Game Time: {proposed_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        message = await ctx.respond(f"@{session.team1} @{session.team2} Game Time: {proposed_date_info['full_date']} @ {display_time}", embed=embed, view=view)
         view.message = message
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
