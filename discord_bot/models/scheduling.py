@@ -199,33 +199,29 @@ except Exception as e:
     print("[DB WARNING] Using in-memory database as fallback")
 
 def save_session(session_obj):
-    """Save or update a scheduling session, detaching the object before returning."""
+    """Save or update a scheduling session."""
     db = Session()
     try:
         channel_id = str(getattr(session_obj, 'channel_id', None))
         if not channel_id:
             print("[DB ERROR] session_obj missing channel_id")
-            return None
+            return
 
-        # Check if a session with this channel_id already exists
-        existing = db.query(SchedulingSession).filter_by(channel_id=channel_id).first()
+        persistent_session = db.query(SchedulingSession).filter_by(channel_id=channel_id).first()
 
-        if existing:
-            # If it exists, update its attributes
-            for key, value in session_obj.__dict__.items():
-                if not key.startswith('_'):
-                    setattr(existing, key, value)
-            merged_session = db.merge(existing)
+        if persistent_session:
+            # Update existing session
+            persistent_session.player_schedules = session_obj.player_schedules
+            persistent_session.players_responded = session_obj.players_responded
+            persistent_session.confirmations = session_obj.confirmations
+            persistent_session.proposed_times = session_obj.proposed_times
+            persistent_session.is_active = session_obj.is_active
         else:
-            # If it doesn't exist, create a new one
-            merged_session = db.merge(session_obj)
-
-        db.commit()
+            # Create new session
+            db.add(session_obj)
         
-        # Expunge the object from the session to detach it
-        db.expunge(merged_session)
-        print(f"[DB SUCCESS] Session saved and detached for channel {channel_id}")
-        return merged_session
+        db.commit()
+        print(f"[DB SUCCESS] Session saved for channel {channel_id}")
 
     except Exception as e:
         db.rollback()

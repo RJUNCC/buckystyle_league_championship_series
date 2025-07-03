@@ -1471,6 +1471,7 @@ class CalendarScheduleView(discord.ui.View):
                 session.players_responded.append(str(self.user_id))
 
             save_session(session)
+            self.cog.active_sessions[int(session.channel_id)] = session
 
             channel = self.cog.bot.get_channel(int(session.channel_id))
             remaining = session.expected_players - len(session.players_responded)
