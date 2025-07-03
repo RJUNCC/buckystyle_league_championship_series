@@ -1032,6 +1032,7 @@ class DraftLotteryCog(commands.Cog):
     @discord.slash_command(name="view_all_availability", description="View all submitted schedules for the current session")
     @commands.has_permissions(administrator=True)
     async def view_all_availability(self, ctx):
+        await ctx.defer()
         channel_id = ctx.channel.id
 
         session = self.active_sessions.get(channel_id)
@@ -1058,9 +1059,13 @@ class DraftLotteryCog(commands.Cog):
 
         today = datetime.now().date()
 
+        user_ids = [int(uid) for uid in session.player_schedules.keys()]
+        users = await asyncio.gather(*[self.bot.fetch_user(uid) for uid in user_ids], return_exceptions=True)
+        users_map = {user.id: user for user in users if not isinstance(user, Exception)}
+
         for user_id_str, schedule in session.player_schedules.items():
             user_id = int(user_id_str)
-            user = self.bot.get_user(user_id)
+            user = users_map.get(user_id)
             player_name = user.display_name if user else f"User ID: {user_id}"
 
             team_name = None
@@ -1070,7 +1075,7 @@ class DraftLotteryCog(commands.Cog):
                 except IndexError:
                     pass
 
-            schedule_text = ""
+            schedule_lines = []
             for date_info in session.schedule_dates:
                 day_name = date_info['day_name']
                 date_str = date_info['date']
@@ -1097,10 +1102,11 @@ class DraftLotteryCog(commands.Cog):
                                 formatted_times.append(f"{hour-12}PM")
                             else:
                                 formatted_times.append(f"{hour}AM")
-                        schedule_text += f"**{day_name} ({date_str}):** {', '.join(formatted_times)}\n"
+                        schedule_lines.append(f"**{day_name} ({date_str}):** {', '.join(formatted_times)}")
                     else:
-                        schedule_text += f"**{day_name} ({date_str}):** Not Available\n"
+                        schedule_lines.append(f"**{day_name} ({date_str}):** Not Available")
 
+            schedule_text = "\n".join(schedule_lines)
             if not schedule_text:
                 schedule_text = "No availability set for upcoming dates."
 
