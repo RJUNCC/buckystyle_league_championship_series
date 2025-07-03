@@ -207,9 +207,19 @@ def save_session(session_obj):
             print("[DB ERROR] session_obj missing channel_id")
             return None
 
-        # Merge the provided session object into the current database session
-        # This will update an existing record or insert a new one
-        merged_session = db.merge(session_obj)
+        # Check if a session with this channel_id already exists
+        existing = db.query(SchedulingSession).filter_by(channel_id=channel_id).first()
+
+        if existing:
+            # If it exists, update its attributes
+            for key, value in session_obj.__dict__.items():
+                if not key.startswith('_'):
+                    setattr(existing, key, value)
+            merged_session = db.merge(existing)
+        else:
+            # If it doesn't exist, create a new one
+            merged_session = db.merge(session_obj)
+
         db.commit()
         
         # Expunge the object from the session to detach it
