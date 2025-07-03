@@ -1,66 +1,297 @@
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,709 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,718 - __main__ - INFO - 🏥 Health check server task created
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,719 - __main__ - INFO - 🔄 Initializing database connection...
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,720 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,779 - models.database_config - INFO - ✅ Database connection successful
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,781 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,797 - models.database_config - INFO - ✅ Database tables created/verified
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,806 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,808 - __main__ - INFO - 🔧 Checking for database migrations...
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,822 - __main__ - INFO - ✅ Database schema is up to date
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,824 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,825 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,825 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,825 - __main__ - INFO -    🎮 BLCSX Stats commands available:
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,825 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,825 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,825 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,826 - __main__ - INFO -    /blcs_update - Update stats (admin only)
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,826 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,834 - __main__ - INFO - ✅ Loaded cog: DraftLotteryCog
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,897 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,898 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,899 - __main__ - INFO - ✅ Loaded cog: BLCSXStatsCog
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,899 - __main__ - INFO - 🚀 Starting Discord bot...
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,899 - discord.client - INFO - logging in using static token
-[bot] [2025-07-03 02:58:18] 2025-07-03 02:58:18,945 - __main__ - INFO - ✅ Health check server started on port 8080
-[bot] [2025-07-03 02:58:19] 2025-07-03 02:58:19,219 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
-[bot] [2025-07-03 02:58:19] 2025-07-03 02:58:19,312 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-d-8734",{"micros":71654,"calls":["id_created",{"micros":378,"calls":[]},"session_lookup_time",{"micros":3633,"calls":[]},"session_lookup_finished",{"micros":13,"calls":[]},"discord-sessions-prd-2-18",{"micros":67152,"calls":["start_session",{"micros":59504,"calls":["discord-api-rpc-bdd745bbd-57qck",{"micros":44174,"calls":["get_user",{"micros":6547},"get_guilds",{"micros":5833},"send_scheduled_deletion_message",{"micros":35},"guild_join_requests",{"micros":4697},"authorized_ip_coro",{"micros":10},"pending_payments",{"micros":6207},"apex_experiments",{"micros":964},"user_activities",{"micros":5},"played_application_ids",{"micros":3}]}]},"starting_guild_connect",{"micros":27,"calls":[]},"presence_started",{"micros":279,"calls":[]},"guilds_started",{"micros":103,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":1,"calls":[]},"presence_connect",{"micros":7201,"calls":[]},"connect_finished",{"micros":7205,"calls":[]},"build_ready",{"micros":30,"calls":[]},"clean_ready",{"micros":1,"calls":[]},"optimize_ready",{"micros":0,"calls":[]},"split_ready",{"micros":1,"calls":[]}]}]}] (Session ID: ca729906bb5efb44548fa1dbdac4b855).
-[bot] [2025-07-03 02:58:21] 2025-07-03 02:58:21,342 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
-[bot] [2025-07-03 02:58:21] 2025-07-03 02:58:21,343 - __main__ - INFO - 📊 Connected to 2 servers
-[bot] [2025-07-03 02:58:21] 2025-07-03 02:58:21,344 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
-[bot] [2025-07-03 02:59:34] Ignoring exception in command schedule_game:
-[bot] [2025-07-03 02:59:34] Traceback (most recent call last):
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 138, in wrapped
-[bot] [2025-07-03 02:59:34]     ret = await coro(arg)
-[bot] [2025-07-03 02:59:34]           ^^^^^^^^^^^^^^^
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 1078, in _invoke
-[bot] [2025-07-03 02:59:34]     await self.callback(self.cog, ctx, **kwargs)
-[bot] [2025-07-03 02:59:34]   File "/app/cogs/draft_prob.py", line 1076, in schedule_game
-[bot] [2025-07-03 02:59:34]     f"⏳ **Progress:** Waiting for {saved_db_session.expected_players} players...\n"
-[bot] [2025-07-03 02:59:34]                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 566, in __get__
-[bot] [2025-07-03 02:59:34]     return self.impl.get(state, dict_)  # type: ignore[no-any-return]
-[bot] [2025-07-03 02:59:34]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1086, in get
-[bot] [2025-07-03 02:59:34]     value = self._fire_loader_callables(state, key, passive)
-[bot] [2025-07-03 02:59:34]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1116, in _fire_loader_callables
-[bot] [2025-07-03 02:59:34]     return state._load_expired(state, passive)
-[bot] [2025-07-03 02:59:34]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/state.py", line 803, in _load_expired
-[bot] [2025-07-03 02:59:34]     self.manager.expired_attribute_loader(self, toload, passive)
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1603, in load_scalar_attributes
-[bot] [2025-07-03 02:59:34]     raise orm_exc.DetachedInstanceError(
-[bot] [2025-07-03 02:59:34] sqlalchemy.orm.exc.DetachedInstanceError: Instance <SchedulingSession at 0x7eca9ff41550> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
-[bot] [2025-07-03 02:59:34] 
-[bot] [2025-07-03 02:59:34] The above exception was the direct cause of the following exception:
-[bot] [2025-07-03 02:59:34] 
-[bot] [2025-07-03 02:59:34] Traceback (most recent call last):
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/discord/bot.py", line 1137, in invoke_application_command
-[bot] [2025-07-03 02:59:34]     await ctx.command.invoke(ctx)
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 435, in invoke
-[bot] [2025-07-03 02:59:34]     await injected(ctx)
-[bot] [2025-07-03 02:59:34]   File "/usr/local/lib/python3.12/site-packages/discord/commands/core.py", line 146, in wrapped
-[bot] [2025-07-03 02:59:34]     raise ApplicationCommandInvokeError(exc) from exc
-[bot] [2025-07-03 02:59:34] discord.errors.ApplicationCommandInvokeError: Application Command raised an exception: DetachedInstanceError: Instance <SchedulingSession at 0x7eca9ff41550> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+[{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"severity": 8,
+	"message": "\"(\" was not closed",
+	"source": "Pylance",
+	"startLineNumber": 1063,
+	"startColumn": 30,
+	"endLineNumber": 1063,
+	"endColumn": 31
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"severity": 8,
+	"message": "\"(\" was not closed",
+	"source": "Pylance",
+	"startLineNumber": 1065,
+	"startColumn": 25,
+	"endLineNumber": 1065,
+	"endColumn": 26
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"severity": 8,
+	"message": "String literal is unterminated",
+	"source": "Pylance",
+	"startLineNumber": 1068,
+	"startColumn": 1,
+	"endLineNumber": 1068,
+	"endColumn": 2
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_name\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1143,
+	"startColumn": 16,
+	"endLineNumber": 1143,
+	"endColumn": 24
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"schedule\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1143,
+	"startColumn": 28,
+	"endLineNumber": 1143,
+	"endColumn": 36
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"schedule\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1144,
+	"startColumn": 24,
+	"endLineNumber": 1144,
+	"endColumn": 32
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_name\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1144,
+	"startColumn": 33,
+	"endLineNumber": 1144,
+	"endColumn": 41
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_display\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1145,
+	"startColumn": 41,
+	"endLineNumber": 1145,
+	"endColumn": 52
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"schedule\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1146,
+	"startColumn": 26,
+	"endLineNumber": 1146,
+	"endColumn": 34
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_name\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1146,
+	"startColumn": 35,
+	"endLineNumber": 1146,
+	"endColumn": 43
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_display\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1147,
+	"startColumn": 41,
+	"endLineNumber": 1147,
+	"endColumn": 52
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_display\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1149,
+	"startColumn": 41,
+	"endLineNumber": 1149,
+	"endColumn": 52
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"schedule\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1149,
+	"startColumn": 64,
+	"endLineNumber": 1149,
+	"endColumn": 72
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_name\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1149,
+	"startColumn": 73,
+	"endLineNumber": 1149,
+	"endColumn": 81
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"day_display\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1151,
+	"startColumn": 37,
+	"endLineNumber": 1151,
+	"endColumn": 48
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"days_set\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1153,
+	"startColumn": 46,
+	"endLineNumber": 1153,
+	"endColumn": 54
+},{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"code": {
+		"value": "reportUndefinedVariable",
+		"target": {
+			"$mid": 1,
+			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+			"scheme": "https",
+			"authority": "github.com"
+		}
+	},
+	"severity": 4,
+	"message": "\"view\" is not defined",
+	"source": "Pylance",
+	"startLineNumber": 1156,
+	"startColumn": 53,
+	"endLineNumber": 1156,
+	"endColumn": 57
+}]

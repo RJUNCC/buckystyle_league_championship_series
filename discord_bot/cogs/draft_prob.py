@@ -397,19 +397,24 @@ class ConfirmationView(discord.ui.View):
     async def confirm_game(self, button: discord.ui.Button, interaction: discord.Interaction):
         user_id = str(interaction.user.id)
 
-        if user_id not in self.session.player_schedules:
+        session = load_session(self.session.channel_id)
+        if not session:
+            await interaction.response.send_message("Error: Could not find the scheduling session.", ephemeral=True)
+            return
+
+        if user_id not in session.player_schedules:
             await interaction.response.send_message("You're not part of this scheduled game!", ephemeral=True)
             return
 
-        self.session.confirmations[user_id] = True
-        save_session(self.session)
-        confirmed = sum(1 for c in self.session.confirmations.values() if c)
-        total = len(self.session.player_schedules)
+        session.confirmations[user_id] = True
+        save_session(session)
+        confirmed = sum(1 for c in session.confirmations.values() if c)
+        total = len(session.player_schedules)
 
         await interaction.response.send_message(f"✅ You confirmed the game time! ({confirmed}/{total} confirmed)", ephemeral=True)
 
-        if confirmed >= self.session.expected_players:
-            channel = self.cog.bot.get_channel(int(self.session.channel_id))
+        if confirmed >= session.expected_players:
+            channel = self.cog.bot.get_channel(int(session.channel_id))
             final_embed = discord.Embed(
                 title="🎮 Game Confirmed!",
                 description=f"**{self.game_time_info['full_date']} at {self.game_time_info['time']}**",
@@ -424,34 +429,39 @@ class ConfirmationView(discord.ui.View):
             await channel.send("@everyone")
             await channel.send(embed=final_embed)
 
-            delete_session(self.session.channel_id)
-            if int(self.session.channel_id) in self.cog.active_sessions:
-                del self.cog.active_sessions[int(self.session.channel_id)]
+            delete_session(session.channel_id)
+            if int(session.channel_id) in self.cog.active_sessions:
+                del self.cog.active_sessions[int(session.channel_id)]
 
 
     @discord.ui.button(label="❌ Can't Make It", style=discord.ButtonStyle.red)
     async def decline_game(self, button: discord.ui.Button, interaction: discord.Interaction):
         user_id = str(interaction.user.id)
 
-        if user_id not in self.session.player_schedules:
+        session = load_session(self.session.channel_id)
+        if not session:
+            await interaction.response.send_message("Error: Could not find the scheduling session.", ephemeral=True)
+            return
+
+        if user_id not in session.player_schedules:
             await interaction.response.send_message("You're not part of this scheduled game!", ephemeral=True)
             return
 
-        self.session.confirmations[user_id] = False
+        session.confirmations[user_id] = False
         
-        if user_id in self.session.player_schedules:
-            del self.session.player_schedules[user_id]
-        if user_id in self.session.players_responded:
-            self.session.players_responded.remove(user_id)
+        if user_id in session.player_schedules:
+            del session.player_schedules[user_id]
+        if user_id in session.players_responded:
+            session.players_responded.remove(user_id)
 
-        save_session(self.session)
+        save_session(session)
 
         await interaction.response.send_message(
             "❌ You declined the game time. Please update your schedule using `/my_schedule` and set more accurate times.",
             ephemeral=True
         )
 
-        channel = self.cog.bot.get_channel(int(self.session.channel_id))
+        channel = self.cog.bot.get_channel(int(session.channel_id))
         await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. An admin can use `/next_game_time` to propose an alternative.")
 
 
@@ -581,7 +591,6 @@ class DraftLotteryCog(commands.Cog):
 
             for db_session in active_sessions:
                 try:
-                    # The object from DB is already a DBSchedulingSession
                     self.active_sessions[int(db_session.channel_id)] = db_session
                     print(f"✅ Loaded scheduling session for channel {db_session.channel_id}")
                 except Exception as e:
@@ -1063,34 +1072,18 @@ class DraftLotteryCog(commands.Cog):
         embed = discord.Embed(
             title="🎮 Game Scheduling Started!",
             description=(
-                f"**Scheduling game between {team1} and {team2}**
-
-"
-                f"📋 **What Players Need to Do:**
-"
-                f"All **6 players** (3 from each team) choose an interface:
-"
-                f"• `/my_schedule` - Visual calendar interface ⭐
-
-"
-                f"• Times range from 6 PM to 12 AM (7 time slots)
-"
-                f"• Easy buttons for 'Not Available' and 'All Day'
-
-"
-                f"🎯 **Process:**
-"
-                f"1️⃣ All 6 players set their weekly availability
-"
-                f"2️⃣ Bot finds common times and proposes game time
-"
-                f"3️⃣ All players confirm with ✅/❌ buttons
-"
-                f"4️⃣ If anyone declines, they update schedule and repeat
-
-"
-                f"⏳ **Progress:** Waiting for {session.expected_players} players...
-"
+                f"**Scheduling game between {team1} and {team2}**\n\n"
+                f"📋 **What Players Need to Do:**\n"
+                f"All **6 players** (3 from each team) choose an interface:\n"
+                f"• `/my_schedule` - Visual calendar interface ⭐\n\n"
+                f"• Times range from 6 PM to 12 AM (7 time slots)\n"
+                f"• Easy buttons for 'Not Available' and 'All Day'\n\n"
+                f"🎯 **Process:**\n"
+                f"1️⃣ All 6 players set their weekly availability\n"
+                f"2️⃣ Bot finds common times and proposes game time\n"
+                f"3️⃣ All players confirm with ✅/❌ buttons\n"
+                f"4️⃣ If anyone declines, they update schedule and repeat\n\n"
+                f"⏳ **Progress:** Waiting for {session.expected_players} players...\n"
             ),
             color=0x00ff00
         )
@@ -1348,14 +1341,13 @@ class DraftLotteryCog(commands.Cog):
     async def schedule_status(self, ctx):
         channel_id = ctx.channel.id
         
-        if channel_id not in self.active_sessions:
+        session = self.active_sessions.get(channel_id)
+        if not session:
             session = load_session(channel_id)
             if not session:
                 await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
                 return
             self.active_sessions[channel_id] = session
-        else:
-            session = self.active_sessions[channel_id]
 
         remaining = session.expected_players - len(session.players_responded)
         
@@ -1422,14 +1414,13 @@ class DraftLotteryCog(commands.Cog):
     async def view_all_availability(self, ctx):
         channel_id = ctx.channel.id
 
-        if channel_id not in self.active_sessions:
+        session = self.active_sessions.get(channel_id)
+        if not session:
             session = load_session(channel_id)
             if not session:
                 await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
                 return
             self.active_sessions[channel_id] = session
-        else:
-            session = self.active_sessions[channel_id]
 
         if not session.players_responded:
             await ctx.respond("No players have submitted their availability yet.", ephemeral=True)
@@ -1442,11 +1433,8 @@ class DraftLotteryCog(commands.Cog):
         )
 
         unique_player_ids = set(session.players_responded)
-
         all_player_ids = set(session.player_schedules.keys())
-        
         all_known_players = unique_player_ids.union(all_player_ids)
-
 
         for user_id_str in all_known_players:
             user_id = int(user_id_str)
