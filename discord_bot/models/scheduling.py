@@ -205,23 +205,35 @@ def save_session(session_obj):
         channel_id = str(getattr(session_obj, 'channel_id', None))
         if not channel_id:
             print("[DB ERROR] session_obj missing channel_id")
-            return
+            return None
 
-        persistent_session = db.query(SchedulingSession).filter_by(channel_id=channel_id).first()
+        # Check if a session with this channel_id already exists
+        existing_session_in_db = db.query(SchedulingSession).filter_by(channel_id=channel_id).first()
 
-        if persistent_session:
-            # Update existing session
-            persistent_session.player_schedules = session_obj.player_schedules
-            persistent_session.players_responded = session_obj.players_responded
-            persistent_session.confirmations = session_obj.confirmations
-            persistent_session.proposed_times = session_obj.proposed_times
-            persistent_session.is_active = session_obj.is_active
+        if existing_session_in_db:
+            # Update existing session's attributes explicitly
+            existing_session_in_db.team1 = session_obj.team1
+            existing_session_in_db.team2 = session_obj.team2
+            existing_session_in_db.player_schedules = session_obj.player_schedules
+            existing_session_in_db.players_responded = session_obj.players_responded
+            existing_session_in_db.expected_players = session_obj.expected_players
+            existing_session_in_db.schedule_dates = session_obj.schedule_dates
+            existing_session_in_db.confirmations = session_obj.confirmations
+            existing_session_in_db.is_active = session_obj.is_active
+            existing_session_in_db.proposed_times = session_obj.proposed_times
+            db.add(existing_session_in_db) # Re-add to session to mark as dirty
+            print(f"[DB INFO] Updating existing session for channel {channel_id}")
+            merged_session = existing_session_in_db
         else:
-            # Create new session
+            # Add new session
             db.add(session_obj)
-        
+            print(f"[DB INFO] Creating new session for channel {channel_id}")
+            merged_session = session_obj # Use the new object for expunging
+
         db.commit()
-        print(f"[DB SUCCESS] Session saved for channel {channel_id}")
+        db.expunge(merged_session) # Detach the object from the session
+        print(f"[DB SUCCESS] Session saved and detached for channel {channel_id}")
+        return merged_session
 
     except Exception as e:
         db.rollback()

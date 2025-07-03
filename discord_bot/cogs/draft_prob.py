@@ -1474,13 +1474,19 @@ class CalendarScheduleView(discord.ui.View):
                 session.players_responded.append(str(self.user_id))
 
             save_session(session)
-            self.cog.active_sessions[int(session.channel_id)] = session
+            # Reload the session from the database to ensure the cache is updated with the latest data
+            updated_session = load_session(session.channel_id)
+            if updated_session:
+                self.cog.active_sessions[int(updated_session.channel_id)] = updated_session
+                session = updated_session # Use the reloaded session for subsequent operations
 
             channel = self.cog.bot.get_channel(int(session.channel_id))
             remaining = session.expected_players - len(session.players_responded)
 
             if remaining > 0:
                 await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
+            else:
+                await channel.send(f"🎉 All players have submitted their schedules!")
 
             await interaction.response.edit_message(
                 content="✅ **Schedule finalized!** Thank you for submitting your availability.",
