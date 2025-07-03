@@ -119,6 +119,9 @@ class ConfirmationView(discord.ui.View):
 
         channel = self.cog.bot.get_channel(int(session.channel_id))
         await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. An admin can use `/next_game_time` to propose an alternative.")
+        
+        # Automatically propose the next game time
+        await self.cog.finalize_scheduling(channel, session)
 
 class DraftLottery:
     def __init__(self):
@@ -919,8 +922,8 @@ class DraftLotteryCog(commands.Cog):
                 return
             self.active_sessions[channel_id] = session
 
-        if len(session.players_responded) < session.expected_players:
-            await ctx.respond(f"Still waiting for {session.expected_players - len(session.players_responded)} players to submit their availability.", ephemeral=True)
+        if len(session.player_schedules) < session.expected_players:
+            await ctx.respond(f"Still waiting for {session.expected_players - len(session.player_schedules)} players to submit their availability.", ephemeral=True)
             return
 
         await self.finalize_scheduling(ctx.channel, session)
@@ -1124,7 +1127,12 @@ class DraftLotteryCog(commands.Cog):
                     date_info = session.get_date_info(day_name)
                     day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
 
-                    time_display = [time_slots_display.get(t, t) for t in times]
+                    # Custom sorting for display: move '00:00' to the end
+                    sorted_times = sorted([t for t in times if t != '00:00'])
+                    if '00:00' in times:
+                        sorted_times.append('00:00')
+
+                    time_display = [time_slots_display.get(t, t) for t in sorted_times]
 
                     common_text += f"**{day_display}:** {', '.join(time_display)}\n"
 
@@ -1151,7 +1159,12 @@ class DraftLotteryCog(commands.Cog):
                     date_info = session.get_date_info(day_name)
                     day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
 
-                    time_display = [time_slots_display.get(t, t) for t in times]
+                    # Custom sorting for display: move '00:00' to the end
+                    sorted_times = sorted([t for t in times if t != '00:00'])
+                    if '00:00' in times:
+                        sorted_times.append('00:00')
+
+                    time_display = [time_slots_display.get(t, t) for t in sorted_times]
 
                     common_text += f"**{day_display}:** {', '.join(time_display)}\n"
 
