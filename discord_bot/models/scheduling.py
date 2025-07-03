@@ -199,69 +199,33 @@ except Exception as e:
     print("[DB WARNING] Using in-memory database as fallback")
 
 def save_session(session_obj):
-    """Save or update a scheduling session with better error handling and logging"""
+    """Save or update a scheduling session, detaching the object before returning."""
     db = Session()
     try:
-        # Use getattr to safely access attributes
         channel_id = str(getattr(session_obj, 'channel_id', None))
         if not channel_id:
             print("[DB ERROR] session_obj missing channel_id")
             return None
 
-        # Prepare data for serialization
-        players_responded_list = list(getattr(session_obj, 'players_responded', []))
-        player_schedules_str = {str(k): v for k, v in getattr(session_obj, 'player_schedules', {}).items()}
-        confirmations_str = {str(k): v for k, v in getattr(session_obj, 'confirmations', {}).items()}
-        proposed_times_list = getattr(session_obj, 'proposed_times', [])
-        schedule_dates_list = getattr(session_obj, 'schedule_dates', [])
-        teams = getattr(session_obj, 'teams', [None, None])
-        team1, team2 = teams[0], teams[1]
-        expected_players = getattr(session_obj, 'expected_players', 6)
-
-        # Find existing session or create a new one
-        existing = db.query(SchedulingSession).filter_by(channel_id=channel_id).first()
-        
-        if existing:
-            # Update existing session
-            existing.player_schedules = player_schedules_str
-            existing.players_responded = players_responded_list
-            existing.confirmations = confirmations_str
-            existing.proposed_times = proposed_times_list
-            existing.schedule_dates = schedule_dates_list
-            if team1: existing.team1 = team1
-            if team2: existing.team2 = team2
-            existing.expected_players = expected_players
-            print(f"[DB INFO] Updating session for channel {channel_id}")
-        else:
-            # Create new session
-            existing = SchedulingSession(
-                channel_id=channel_id,
-                team1=team1,
-                team2=team2,
-                player_schedules=player_schedules_str,
-                players_responded=players_responded_list,
-                expected_players=expected_players,
-                schedule_dates=schedule_dates_list,
-                confirmations=confirmations_str,
-                proposed_times=proposed_times_list
-            )
-            db.add(existing)
-            print(f"[DB INFO] Creating new session for channel {channel_id}")
-        
+        # Merge the provided session object into the current database session
+        # This will update an existing record or insert a new one
+        merged_session = db.merge(session_obj)
         db.commit()
-        print(f"[DB SUCCESS] Session saved for channel {channel_id}")
-        return existing
+        
+        # Expunge the object from the session to detach it
+        db.expunge(merged_session)
+        print(f"[DB SUCCESS] Session saved and detached for channel {channel_id}")
+        return merged_session
 
     except Exception as e:
         db.rollback()
         print(f"[DB CRITICAL] CRITICAL: Error saving session for channel {getattr(session_obj, 'channel_id', 'UNKNOWN')}: {e}")
-        # Consider more robust error handling here, like logging to a file
         raise
     finally:
         db.close()
 
 def load_session(channel_id):
-    """Load a scheduling session from database with improved error handling and logging"""
+    """Load a scheduling session and detach it before returning."""
     db = Session()
     try:
         print(f"[DB INFO] Attempting to load session for channel {channel_id}")
@@ -271,8 +235,9 @@ def load_session(channel_id):
         ).first()
         
         if session_data:
-            print(f"[DB SUCCESS] Loaded session for channel {channel_id}")
-            # Eagerly load related data if needed, though not necessary with this schema
+            # Detach the object from the session before returning
+            db.expunge(session_data)
+            print(f"[DB SUCCESS] Loaded and detached session for channel {channel_id}")
             return session_data
         else:
             print(f"[DB WARNING] No active session found for channel {channel_id}")
