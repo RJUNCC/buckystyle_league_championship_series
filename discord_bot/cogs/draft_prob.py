@@ -1051,8 +1051,9 @@ class DraftLotteryCog(commands.Cog):
         
         new_session_obj = DBSchedulingSession(channel_id=str(channel_id), team1=team1, team2=team2)
         
-        saved_db_session = save_session(new_session_obj)
-        
+        save_session(new_session_obj)
+        saved_db_session = load_session(channel_id)
+
         if not saved_db_session:
             await ctx.respond("❌ **Error:** Could not save the new scheduling session to the database. Please check the logs.", ephemeral=True)
             return
