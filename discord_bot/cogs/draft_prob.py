@@ -34,11 +34,12 @@ class DraftResult(NamedTuple):
     eliminated: List[Tuple[str, int]]
 
 class ConfirmationView(discord.ui.View):
-    def __init__(self, session, game_time_info, cog):
+    def __init__(self, session, game_time_info, cog, message=None):
         super().__init__(timeout=600)
         self.session = session
         self.game_time_info = game_time_info
         self.cog = cog
+        self.message = message
 
     @discord.ui.button(label="✅ Confirm", style=discord.ButtonStyle.green)
     async def confirm_game(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -59,6 +60,9 @@ class ConfirmationView(discord.ui.View):
         total = len(session.player_schedules)
 
         await interaction.response.send_message(f"✅ You confirmed the game time! ({confirmed}/{total} confirmed)", ephemeral=True)
+
+        if self.message:
+            await self.message.edit(content=f"@here Game Time: {self.game_time_info['full_date']} @ {self.game_time_info['time']} ({confirmed}/{total} confirmed)")
 
         if confirmed >= session.expected_players:
             channel = self.cog.bot.get_channel(int(session.channel_id))
@@ -99,12 +103,19 @@ class ConfirmationView(discord.ui.View):
         if user_id in session.player_schedules:
             del session.player_schedules[user_id]
 
+        # Reset all confirmations
+        for user_id in session.confirmations:
+            session.confirmations[user_id] = False
+
         save_session(session)
 
         await interaction.response.send_message(
-            "❌ You declined the game time. Please update your schedule using `/my_schedule` and set more accurate times.",
+            "❌ You declined the game time. All confirmations have been reset. Please update your schedule using `/my_schedule` and set more accurate times.",
             ephemeral=True
         )
+
+        if self.message:
+            await self.message.edit(content=f"@here Game Time: {self.game_time_info['full_date']} @ {self.game_time_info['time']} (0/{len(session.player_schedules)} confirmed) - Scheduling restarted due to a decline.")
 
         channel = self.cog.bot.get_channel(int(session.channel_id))
         await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. An admin can use `/next_game_time` to propose an alternative.")
@@ -849,7 +860,7 @@ class DraftLotteryCog(commands.Cog):
                 start_time=event_datetime,
                 end_time=event_end_time,
                 description=event_description,
-                entity_type=discord.ScheduledEvent.external,
+                entity_type=discord.ScheduledEventType.external,
                 location=f"Discord Channel: #{channel.name}"
             )
             
@@ -884,7 +895,8 @@ class DraftLotteryCog(commands.Cog):
         )
         
         view = ConfirmationView(session, game_info, self)
-        await channel.send(f"@everyone Game Time: {display_time}?", embed=embed, view=view)
+        message = await channel.send(f"@here Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        view.message = message
 
     @discord.slash_command(name="next_game_time", description="Propose the next available game time.")
     @commands.has_permissions(administrator=True)
@@ -1040,25 +1052,36 @@ class DraftLotteryCog(commands.Cog):
             color=0x0099ff
         )
 
+        team1_schedules = []
+        team2_schedules = []
+        other_schedules = []
+
         today = datetime.now().date()
 
         for user_id_str, schedule in session.player_schedules.items():
             user_id = int(user_id_str)
             user = self.bot.get_user(user_id)
             player_name = user.display_name if user else f"User ID: {user_id}"
-            
+
+            team_name = None
+            if "|" in player_name:
+                try:
+                    team_name = player_name.split("|")[1].strip()
+                except IndexError:
+                    pass
+
             schedule_text = ""
             for date_info in session.schedule_dates:
                 day_name = date_info['day_name']
                 date_str = date_info['date']
                 full_date_str = date_info['full_date']
-                
+
                 try:
                     schedule_date = datetime.strptime(f"{full_date_str}, {today.year}", "%A, %B %d, %Y").date()
                     if schedule_date < today:
                         continue
                 except ValueError:
-                    pass # Ignore dates that can't be parsed
+                    pass
 
                 times = schedule.get(day_name)
                 if times is not None:
@@ -1081,7 +1104,19 @@ class DraftLotteryCog(commands.Cog):
             if not schedule_text:
                 schedule_text = "No availability set for upcoming dates."
 
-            embed.add_field(name=player_name, value=schedule_text, inline=False)
+            if team_name and team_name == session.team1:
+                team1_schedules.append((player_name, schedule_text))
+            elif team_name and team_name == session.team2:
+                team2_schedules.append((player_name, schedule_text))
+            else:
+                other_schedules.append((player_name, schedule_text))
+
+        if team1_schedules:
+            embed.add_field(name=f"**{session.team1}**", value="\n".join([f"**{name}**\n{schedule}" for name, schedule in team1_schedules]), inline=False)
+        if team2_schedules:
+            embed.add_field(name=f"**{session.team2}**", value="\n".join([f"**{name}**\n{schedule}" for name, schedule in team2_schedules]), inline=False)
+        if other_schedules:
+            embed.add_field(name="**Other**", value="\n".join([f"**{name}**\n{schedule}" for name, schedule in other_schedules]), inline=False)
 
         await ctx.respond(embed=embed)
 

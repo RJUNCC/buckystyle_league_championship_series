@@ -1,63 +1,11 @@
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,524 - discord.client - WARNING - PyNaCl is not installed, voice will NOT be supported
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,527 - __main__ - INFO - 🏥 Health check server task created
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,527 - __main__ - INFO - 🔄 Initializing database connection...
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,528 - models.database_config - INFO - ✅ Configured PostgreSQL database engine
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,596 - models.database_config - INFO - ✅ Database connection successful
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,598 - models.database_config - INFO - 📊 PostgreSQL Version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled b...
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,612 - models.database_config - INFO - ✅ Database tables created/verified
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,622 - models.database_config - INFO - 📋 Tables in database: blcs_player_mappings, blcs_player_statistics, player_profiles, scheduling_sessions
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,624 - __main__ - INFO - 🔧 Checking for database migrations...
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,639 - __main__ - INFO - ✅ Database schema is up to date
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,641 - __main__ - INFO - ✅ PostgreSQL database initialized successfully
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,641 - __main__ - INFO - 📊 Connected to PostgreSQL: discord-bot-postgresql-do-user-16248210-0.m.db.ondigitalocean.com:25060
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,641 - __main__ - INFO - ✅ BLCSX ballchasing integration initialized
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,642 - __main__ - INFO -    🎮 BLCSX Stats commands available:
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,642 - __main__ - INFO -    /blcs_profile - Comprehensive player profiles
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,642 - __main__ - INFO -    /blcs_leaderboard - Dominance quotient rankings
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,642 - __main__ - INFO -    /blcs_link - Link ballchasing.com account
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,642 - __main__ - INFO -    /blcs_update - Update stats (admin only)
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,643 - __main__ - INFO - ✅ Traditional ballchasing integration initialized
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,644 - __main__ - INFO - ✅ Loaded cog: DraftLotteryCog
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,704 - cogs.blcsx_stats - INFO - PostgreSQL database initialized for BLCS stats
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,705 - cogs.blcsx_stats - INFO - BLCSX Stats Cog initialized
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,706 - __main__ - INFO - ✅ Loaded cog: BLCSXStatsCog
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,706 - __main__ - INFO - 🚀 Starting Discord bot...
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,706 - discord.client - INFO - logging in using static token
-[bot] [2025-07-03 05:29:51] 2025-07-03 05:29:51,732 - __main__ - INFO - ✅ Health check server started on port 8080
-[bot] [2025-07-03 05:29:52] 2025-07-03 05:29:52,000 - discord.gateway - INFO - Shard ID None has sent the IDENTIFY payload.
-[bot] [2025-07-03 05:29:52] 2025-07-03 05:29:52,127 - discord.gateway - INFO - Shard ID None has connected to Gateway: ["gateway-prd-us-east1-c-w758",{"micros":102716,"calls":["id_created",{"micros":336,"calls":[]},"session_lookup_time",{"micros":248,"calls":[]},"session_lookup_finished",{"micros":12,"calls":[]},"discord-sessions-prd-2-71",{"micros":100866,"calls":["start_session",{"micros":81190,"calls":["discord-api-rpc-bdd745bbd-zkwmb",{"micros":62554,"calls":["get_user",{"micros":7955},"get_guilds",{"micros":5974},"send_scheduled_deletion_message",{"micros":15},"guild_join_requests",{"micros":323},"authorized_ip_coro",{"micros":12},"pending_payments",{"micros":4368},"apex_experiments",{"micros":4596},"user_activities",{"micros":11},"played_application_ids",{"micros":3}]}]},"starting_guild_connect",{"micros":43,"calls":[]},"presence_started",{"micros":2728,"calls":[]},"guilds_started",{"micros":127,"calls":[]},"lobbies_started",{"micros":1,"calls":[]},"guilds_connect",{"micros":2,"calls":[]},"presence_connect",{"micros":16760,"calls":[]},"connect_finished",{"micros":16764,"calls":[]},"build_ready",{"micros":11,"calls":[]},"clean_ready",{"micros":1,"calls":[]},"optimize_ready",{"micros":0,"calls":[]},"split_ready",{"micros":0,"calls":[]}]}]}] (Session ID: 636fe66e88b1c73ce91898923cdd9399).
-[bot] [2025-07-03 05:29:54] 2025-07-03 05:29:54,145 - __main__ - INFO - ✅ BLCS Bot#6695 has connected to Discord!
-[bot] [2025-07-03 05:29:54] 2025-07-03 05:29:54,145 - __main__ - INFO - 📊 Connected to 2 servers
-[bot] [2025-07-03 05:29:54] 2025-07-03 05:29:54,146 - __main__ - INFO - ✅ Slash commands auto-synced by py-cord
-[bot] [2025-07-03 06:07:21] 2025-07-03 06:07:21,504 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 06:07:21] 2025-07-03 06:07:21,601 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 06:07:21] 2025-07-03 06:07:21,625 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-c-vh15",{"micros":2244,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":812,"calls":[]},"session_lookup_finished",{"micros":13,"calls":[]},"discord-sessions-prd-2-71",{"micros":15}]}].
-[bot] [2025-07-03 08:46:00] 2025-07-03 08:46:00,828 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 08:46:00] 2025-07-03 08:46:00,955 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 08:46:00] 2025-07-03 08:46:00,977 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-c-271b",{"micros":475,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":242,"calls":[]},"session_lookup_finished",{"micros":12,"calls":[]},"discord-sessions-prd-2-71",{"micros":16}]}].
-[bot] [2025-07-03 09:17:22] 2025-07-03 09:17:22,267 - discord.gateway - INFO - Websocket closed with 1006, attempting a reconnect.
-[bot] [2025-07-03 09:17:22] 2025-07-03 09:17:22,269 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 09:17:22] 2025-07-03 09:17:22,374 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 09:17:22] 2025-07-03 09:17:22,398 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-d-2lr1",{"micros":470,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":245,"calls":[]},"session_lookup_finished",{"micros":11,"calls":[]},"discord-sessions-prd-2-71",{"micros":14}]}].
-[bot] [2025-07-03 11:09:08] 2025-07-03 11:09:08,190 - discord.gateway - INFO - Websocket closed with 1006, attempting a reconnect.
-[bot] [2025-07-03 11:09:08] 2025-07-03 11:09:08,190 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 11:09:08] 2025-07-03 11:09:08,286 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 11:09:08] 2025-07-03 11:09:08,307 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-b-944v",{"micros":465,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":249,"calls":[]},"session_lookup_finished",{"micros":11,"calls":[]},"discord-sessions-prd-2-71",{"micros":13}]}].
-[bot] [2025-07-03 11:27:03] 2025-07-03 11:27:03,876 - discord.gateway - INFO - Websocket closed with 1006, attempting a reconnect.
-[bot] [2025-07-03 11:27:03] 2025-07-03 11:27:03,877 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 11:27:03] 2025-07-03 11:27:03,978 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 11:27:03] 2025-07-03 11:27:03,999 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-d-2m1k",{"micros":539,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":278,"calls":[]},"session_lookup_finished",{"micros":17,"calls":[]},"discord-sessions-prd-2-71",{"micros":15}]}].
-[bot] [2025-07-03 13:12:13] 2025-07-03 13:12:13,420 - discord.gateway - INFO - Websocket closed with 1006, attempting a reconnect.
-[bot] [2025-07-03 13:12:13] 2025-07-03 13:12:13,421 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 13:12:13] 2025-07-03 13:12:13,534 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 13:12:13] 2025-07-03 13:12:13,557 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-b-lqsl",{"micros":547,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":290,"calls":[]},"session_lookup_finished",{"micros":26,"calls":[]},"discord-sessions-prd-2-71",{"micros":15}]}].
-[bot] [2025-07-03 13:40:02] 2025-07-03 13:40:02,047 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 13:40:02] 2025-07-03 13:40:02,175 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 13:40:02] 2025-07-03 13:40:02,202 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-d-d0qj",{"micros":580,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":288,"calls":[]},"session_lookup_finished",{"micros":13,"calls":[]},"discord-sessions-prd-2-71",{"micros":17}]}].
-[bot] [2025-07-03 16:36:30] 2025-07-03 16:36:30,364 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 16:36:30] 2025-07-03 16:36:30,544 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 16:36:30] 2025-07-03 16:36:30,566 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-c-ltvw",{"micros":1494,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":1017,"calls":[]},"session_lookup_finished",{"micros":13,"calls":[]},"discord-sessions-prd-2-71",{"micros":16}]}].
-[bot] [2025-07-03 17:20:25] 2025-07-03 17:20:25,324 - discord.gateway - INFO - Websocket closed with 1006, attempting a reconnect.
-[bot] [2025-07-03 17:20:25] 2025-07-03 17:20:25,324 - discord.client - INFO - Got a request to RESUME the websocket.
-[bot] [2025-07-03 17:20:25] 2025-07-03 17:20:25,434 - discord.gateway - INFO - Shard ID None has sent the RESUME payload.
-[bot] [2025-07-03 17:20:25] 2025-07-03 17:20:25,457 - discord.gateway - INFO - Shard ID None has successfully RESUMED session 636fe66e88b1c73ce91898923cdd9399 under trace ["gateway-prd-us-east1-c-9pzf",{"micros":1676,"calls":["id_created",{"micros":0,"calls":[]},"session_lookup_time",{"micros":1426,"calls":[]},"session_lookup_finished",{"micros":15,"calls":[]},"discord-sessions-prd-2-71",{"micros":21}]}].
+[{
+	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
+	"owner": "pylance",
+	"severity": 8,
+	"message": "Unexpected indentation",
+	"source": "Pylance",
+	"startLineNumber": 1035,
+	"startColumn": 1,
+	"endLineNumber": 1035,
+	"endColumn": 17
+}]
