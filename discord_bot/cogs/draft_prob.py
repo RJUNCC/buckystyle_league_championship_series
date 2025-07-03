@@ -1009,39 +1009,114 @@ class DraftLotteryCog(commands.Cog):
             inline=False
         )
 
-        common_times = session.find_common_times()
-        if common_times:
-            common_text = ""
-            time_slots_display = {
-                '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM',
-                '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
-            }
-            for day_name, times in common_times.items():
-                date_info = session.get_date_info(day_name)
-                day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
+        # Check for proposed game time
+        proposed_game_time = None
+        if session.proposed_times:
+            # Get the last proposed time
+            last_proposed = session.proposed_times[-1]
+            # Convert 24-hour to 12-hour format for display
+            hour = int(last_proposed['time'].split(':')[0])
+            minute = last_proposed['time'].split(':')[1]
+            if hour == 0:
+                display_time = f"12:{minute} AM"
+            elif hour < 12:
+                display_time = f"{hour}:{minute} AM"
+            elif hour == 12:
+                display_time = f"12:{minute} PM"
+            else:
+                display_time = f"{hour-12}:{minute} PM"
+            
+            # Get full date info for the proposed day
+            proposed_date_info = next((d for d in session.schedule_dates if d['day_name'] == last_proposed['day']), None)
+            if proposed_date_info:
+                proposed_game_time = f"**{proposed_date_info['full_date']} at {display_time}**"
 
-                time_display = [time_slots_display.get(t, t) for t in times]
+        if proposed_game_time:
+            confirmed_count = sum(1 for c in session.confirmations.values() if c)
+            total_players_in_session = len(session.player_schedules) # Use player_schedules for total players
+            
+            if confirmed_count >= total_players_in_session and total_players_in_session > 0:
+                embed.add_field(
+                    name="✅ Confirmed Game Time",
+                    value=proposed_game_time,
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="🎮 Proposed Game Time",
+                    value=f"{proposed_game_time} ({confirmed_count}/{total_players_in_session} confirmed)",
+                    inline=False
+                )
+            
+            # Filter out the proposed time from common_times if it exists
+            common_times = session.find_common_times()
+            if common_times:
+                proposed_day = last_proposed['day']
+                proposed_time_24hr = last_proposed['time']
+                if proposed_day in common_times and proposed_time_24hr in common_times[proposed_day]:
+                    common_times[proposed_day] = [t for t in common_times[proposed_day] if t != proposed_time_24hr]
+                    if not common_times[proposed_day]: # If no more times for that day, remove the day
+                        del common_times[proposed_day]
 
-                common_text += f"**{day_display}:** {', '.join(time_display)}\n"
+            if common_times:
+                common_text = ""
+                time_slots_display = {
+                    '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM',
+                    '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
+                }
+                for day_name, times in common_times.items():
+                    date_info = session.get_date_info(day_name)
+                    day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
 
-            embed.add_field(
-                name="🎯 Possible Game Times",
-                value=common_text,
-                inline=False
-            )
-        else:
-            embed.add_field(
-                name="⚠️ No Common Times",
-                value="No times work for all players yet.",
-                inline=False
-            )
+                    time_display = [time_slots_display.get(t, t) for t in times]
+
+                    common_text += f"**{day_display}:** {', '.join(time_display)}\n"
+
+                embed.add_field(
+                    name="🎯 Other Possible Game Times",
+                    value=common_text,
+                    inline=False
+                )
+            elif not proposed_game_time: # Only show "No Common Times" if no game is proposed
+                embed.add_field(
+                    name="⚠️ No Common Times",
+                    value="No times work for all players yet.",
+                    inline=False
+                )
+        else: # No proposed game time, show all common times
+            common_times = session.find_common_times()
+            if common_times:
+                common_text = ""
+                time_slots_display = {
+                    '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM',
+                    '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
+                }
+                for day_name, times in common_times.items():
+                    date_info = session.get_date_info(day_name)
+                    day_display = f"{date_info['day_name']}, {date_info['date']}" if date_info else day_name
+
+                    time_display = [time_slots_display.get(t, t) for t in times]
+
+                    common_text += f"**{day_display}:** {', '.join(time_display)}\n"
+
+                embed.add_field(
+                    name="🎯 Possible Game Times",
+                    value=common_text,
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="⚠️ No Common Times",
+                    value="No times work for all players yet.",
+                    inline=False
+                )
         
         await ctx.respond(embed=embed)
     
     @discord.slash_command(name="view_all_availability", description="View all submitted schedules for the current session")
     @commands.has_permissions(administrator=True)
     async def view_all_availability(self, ctx):
-        await ctx.defer(ephemeral=True)
+        await ctx.defer()
 
         try:
             from models.scheduling import get_all_active_sessions
@@ -1049,7 +1124,7 @@ class DraftLotteryCog(commands.Cog):
             active_sessions = get_all_active_sessions()
             
             if not active_sessions:
-                await ctx.followup.send("No active scheduling sessions found.", ephemeral=True)
+                await ctx.followup.send("No active scheduling sessions found.")
                 return
 
             # For simplicity, let's assume we're interested in the session for the current channel first
@@ -1069,13 +1144,13 @@ class DraftLotteryCog(commands.Cog):
                         value=f"Teams: {session.team1} vs {session.team2}\nPlayers: {len(session.player_schedules)}/{session.expected_players}",
                         inline=False
                     )
-                await ctx.followup.send(embed=embed, ephemeral=True)
+                await ctx.followup.send(embed=embed)
                 return
 
             session = current_channel_session
             
             if not session.player_schedules:
-                await ctx.followup.send(f"No schedules submitted yet for {session.team1} vs {session.team2} in this channel.", ephemeral=True)
+                await ctx.followup.send(f"No schedules submitted yet for {session.team1} vs {session.team2} in this channel.")
                 return
 
             embed = discord.Embed(
@@ -1114,12 +1189,79 @@ class DraftLotteryCog(commands.Cog):
                     inline=False
                 )
             
-            await ctx.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed)
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             await ctx.followup.send(f"An error occurred while fetching schedules: {str(e)}", ephemeral=True)
+
+    @discord.slash_command(name="current_game_proposal", description="Show the currently proposed game time and confirmation status.")
+    async def current_game_proposal(self, ctx):
+        channel_id = ctx.channel.id
+        session = self.active_sessions.get(channel_id)
+        if not session:
+            session = load_session(channel_id)
+            if not session:
+                await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+                return
+            self.active_sessions[channel_id] = session
+
+        if not session.proposed_times:
+            await ctx.respond("No game time has been proposed yet for this session.", ephemeral=True)
+            return
+
+        last_proposed = session.proposed_times[-1]
+        
+        # Convert 24-hour to 12-hour format for display
+        hour = int(last_proposed['time'].split(':')[0])
+        minute = last_proposed['time'].split(':')[1]
+        if hour == 0:
+            display_time = f"12:{minute} AM"
+        elif hour < 12:
+            display_time = f"{hour}:{minute} AM"
+        elif hour == 12:
+            display_time = f"12:{minute} PM"
+        else:
+            display_time = f"{hour-12}:{minute} PM"
+        
+        # Get full date info for the proposed day
+        proposed_date_info = next((d for d in session.schedule_dates if d['day_name'] == last_proposed['day']), None)
+        
+        if not proposed_date_info:
+            await ctx.respond("Error: Could not retrieve full date information for the proposed time.", ephemeral=True)
+            return
+
+        game_info = {
+            'day': last_proposed['day'], 
+            'time': display_time,
+            'full_date': proposed_date_info['full_date'],
+            'date': proposed_date_info['date']
+        }
+
+        embed = discord.Embed(
+            title="🎮 Proposed Game Time",
+            description=f"**{proposed_date_info['full_date']} at {display_time}**",
+            color=0xffa500
+        )
+        embed.add_field(
+            name="⚠️ Confirmation Required",
+            value="All players must confirm this time works for them using the buttons below.",
+            inline=False
+        )
+        
+        # Add confirmation status to the embed
+        confirmed_count = sum(1 for c in session.confirmations.values() if c)
+        total_players_in_session = len(session.player_schedules)
+        embed.add_field(
+            name="Current Confirmation Status",
+            value=f"{confirmed_count}/{total_players_in_session} confirmed",
+            inline=False
+        )
+
+        view = ConfirmationView(session, game_info, self)
+        message = await ctx.respond(f"@here Game Time: {proposed_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        view.message = message
 
     @discord.slash_command(name="db_health", description="Check database health and connection")
     @commands.has_permissions(administrator=True)
