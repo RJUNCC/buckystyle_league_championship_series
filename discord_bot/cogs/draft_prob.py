@@ -962,7 +962,7 @@ class DraftLotteryCog(commands.Cog):
                 return
             self.active_sessions[channel_id] = session
 
-        remaining = session.expected_players - len(session.players_responded)
+        remaining = session.expected_players - len(session.player_schedules)
         
         embed = discord.Embed(
             title="📊 Scheduling Status",
@@ -970,7 +970,7 @@ class DraftLotteryCog(commands.Cog):
         )
         embed.add_field(
             name="Progress",
-            value=f"{len(session.players_responded)}/{session.expected_players} players completed their schedules",
+            value=f"{len(session.player_schedules)}/{session.expected_players} players completed their schedules",
             inline=False
         )
         
@@ -1035,7 +1035,7 @@ class DraftLotteryCog(commands.Cog):
                 return
             self.active_sessions[channel_id] = session
 
-        if not session.players_responded:
+        if not session.player_schedules:
             await ctx.respond("No players have submitted their availability yet.", ephemeral=True)
             return
 
@@ -1045,23 +1045,26 @@ class DraftLotteryCog(commands.Cog):
             color=0x0099ff
         )
 
-        unique_player_ids = set(session.players_responded)
-        all_player_ids = set(session.player_schedules.keys())
-        all_known_players = unique_player_ids.union(all_player_ids)
+        today = datetime.now().date()
 
-        for user_id_str in all_known_players:
+        for user_id_str, schedule in session.player_schedules.items():
             user_id = int(user_id_str)
             user = self.bot.get_user(user_id)
             player_name = user.display_name if user else f"User ID: {user_id}"
             
-            schedule = session.player_schedules.get(user_id_str)
-            
-            if not schedule:
-                embed.add_field(name=player_name, value="No schedule data found.", inline=False)
-                continue
-
             schedule_text = ""
-            for day_name in [di['day_name'] for di in session.schedule_dates]:
+            for date_info in session.schedule_dates:
+                day_name = date_info['day_name']
+                date_str = date_info['date']
+                full_date_str = date_info['full_date']
+                
+                try:
+                    schedule_date = datetime.strptime(f"{full_date_str} {today.year}", "%A, %B %d %Y").date()
+                    if schedule_date < today:
+                        continue
+                except ValueError:
+                    pass # Ignore dates that can't be parsed
+
                 times = schedule.get(day_name)
                 if times is not None:
                     if times:
@@ -1076,9 +1079,9 @@ class DraftLotteryCog(commands.Cog):
                                 formatted_times.append(f"{hour-12}PM")
                             else:
                                 formatted_times.append(f"{hour}AM")
-                        schedule_text += f"**{day_name}:** {', '.join(formatted_times)}\n"
+                        schedule_text += f"**{day_name} ({date_str}):** {', '.join(formatted_times)}\n"
                     else:
-                        schedule_text += f"**{day_name}:** Not Available\n"
+                        schedule_text += f"**{day_name} ({date_str}):** Not Available\n"
 
             if not schedule_text:
                 schedule_text = "Not available this week."
