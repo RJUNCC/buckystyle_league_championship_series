@@ -19,7 +19,6 @@ class SchedulingSession(Base):
     team1 = Column(String)
     team2 = Column(String)
     player_schedules = Column(JSON)  # Store as JSON
-    players_responded = Column(JSON)  # List of user IDs
     expected_players = Column(Integer, default=6)
     created_at = Column(DateTime, default=datetime.now)
     schedule_dates = Column(JSON)  # Store the date info
@@ -27,12 +26,11 @@ class SchedulingSession(Base):
     is_active = Column(Boolean, default=True)
     proposed_times = Column(JSON, default=[]) # New column to store proposed times
 
-    def __init__(self, channel_id, team1, team2, player_schedules=None, players_responded=None, expected_players=6, schedule_dates=None, confirmations=None, proposed_times=None):
+    def __init__(self, channel_id, team1, team2, player_schedules=None, expected_players=6, schedule_dates=None, confirmations=None, proposed_times=None):
         self.channel_id = str(channel_id)
         self.team1 = team1
         self.team2 = team2
         self.player_schedules = player_schedules if player_schedules is not None else {}
-        self.players_responded = players_responded if players_responded is not None else []
         self.expected_players = expected_players
         self.schedule_dates = schedule_dates if schedule_dates is not None else self.generate_next_week()
         self.confirmations = confirmations if confirmations is not None else {}
@@ -66,19 +64,8 @@ class SchedulingSession(Base):
                 return date_info
         return None
 
-    def add_player_schedule(self, user_id, schedule):
-        self.player_schedules[str(user_id)] = schedule
-        if str(user_id) not in self.players_responded:
-            self.players_responded.append(str(user_id))
-
-    def reset_player_schedule(self, user_id):
-        if str(user_id) in self.player_schedules:
-            del self.player_schedules[str(user_id)]
-        if str(user_id) in self.players_responded:
-            self.players_responded.remove(str(user_id))
-
     def is_complete(self):
-        return len(self.players_responded) >= self.expected_players
+        return len(self.player_schedules) >= self.expected_players
 
     def find_common_times(self):
         if not self.player_schedules:
@@ -115,7 +102,6 @@ class SchedulingSession(Base):
             team1=db_session.team1,
             team2=db_session.team2,
             player_schedules=db_session.player_schedules or {},
-            players_responded=db_session.players_responded or [],
             expected_players=db_session.expected_players,
             schedule_dates=db_session.schedule_dates or [],
             confirmations=db_session.confirmations or {},
@@ -215,7 +201,6 @@ def save_session(session_obj):
             existing_session_in_db.team1 = session_obj.team1
             existing_session_in_db.team2 = session_obj.team2
             existing_session_in_db.player_schedules = session_obj.player_schedules
-            existing_session_in_db.players_responded = session_obj.players_responded
             existing_session_in_db.expected_players = session_obj.expected_players
             existing_session_in_db.schedule_dates = session_obj.schedule_dates
             existing_session_in_db.confirmations = session_obj.confirmations

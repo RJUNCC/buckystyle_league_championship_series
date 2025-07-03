@@ -98,8 +98,6 @@ class ConfirmationView(discord.ui.View):
         
         if user_id in session.player_schedules:
             del session.player_schedules[user_id]
-        if user_id in session.players_responded:
-            session.players_responded.remove(user_id)
 
         save_session(session)
 
@@ -738,20 +736,16 @@ class DraftLotteryCog(commands.Cog):
     async def my_schedule(self, ctx):
         user_id = ctx.author.id
         
-        session_to_use = None
-        if self.active_sessions:
-            session_to_use = list(self.active_sessions.values())[0]
-
-        if not session_to_use:
-            await ctx.respond("No active scheduling session found for you. Please ask an admin to start one with `/schedule_game`.", ephemeral=True)
+        session = load_session(ctx.channel.id)
+        if not session:
+            await ctx.respond("No active scheduling session found in this channel. Please ask an admin to start one with `/schedule_game`.", ephemeral=True)
             return
-
-        session = load_session(session_to_use.channel_id)
+        self.active_sessions[ctx.channel.id] = session
         if not session:
             await ctx.respond("Could not load session data from the database.", ephemeral=True)
             return
         
-        view = CalendarScheduleView(user_id, session, self)
+        view = CalendarScheduleView(user_id, session, self, ctx.channel.id)
         
         embed = discord.Embed(
             title="📅 Set Your Weekly Availability",
@@ -855,7 +849,7 @@ class DraftLotteryCog(commands.Cog):
                 start_time=event_datetime,
                 end_time=event_end_time,
                 description=event_description,
-                entity_type=discord.EntityType.external,
+                entity_type=discord.ScheduledEvent.external,
                 location=f"Discord Channel: #{channel.name}"
             )
             
@@ -962,7 +956,8 @@ class DraftLotteryCog(commands.Cog):
                 return
             self.active_sessions[channel_id] = session
 
-        remaining = session.expected_players - len(session.player_schedules)
+        submitted_players_count = len(session.player_schedules)
+        remaining = session.expected_players - submitted_players_count
         
         embed = discord.Embed(
             title="📊 Scheduling Status",
@@ -970,7 +965,7 @@ class DraftLotteryCog(commands.Cog):
         )
         embed.add_field(
             name="Progress",
-            value=f"{len(session.player_schedules)}/{session.expected_players} players completed their schedules",
+            value=f"{submitted_players_count}/{session.expected_players} players completed their schedules",
             inline=False
         )
         
@@ -1059,7 +1054,7 @@ class DraftLotteryCog(commands.Cog):
                 full_date_str = date_info['full_date']
                 
                 try:
-                    schedule_date = datetime.strptime(f"{full_date_str} {today.year}", "%A, %B %d %Y").date()
+                    schedule_date = datetime.strptime(f"{full_date_str}, {today.year}", "%A, %B %d, %Y").date()
                     if schedule_date < today:
                         continue
                 except ValueError:
@@ -1084,7 +1079,7 @@ class DraftLotteryCog(commands.Cog):
                         schedule_text += f"**{day_name} ({date_str}):** Not Available\n"
 
             if not schedule_text:
-                schedule_text = "Not available this week."
+                schedule_text = "No availability set for upcoming dates."
 
             embed.add_field(name=player_name, value=schedule_text, inline=False)
 
@@ -1280,15 +1275,12 @@ class DraftLotteryCog(commands.Cog):
         cleaned_sessions = 0
         
         for session in active_sessions:
-            original_count = len(session.players_responded)
-            unique_players = list(set(session.players_responded))
-            
-            if len(unique_players) < original_count:
-                session.players_responded = unique_players
-                save_session(session)
-                cleaned_sessions += 1
+            # No longer need to clean up players_responded as it's derived from player_schedules
+            # This command can now be used to ensure data integrity if player_schedules somehow gets duplicates
+            # For now, it will just report on sessions.
+            pass # No action needed here as player_schedules should inherently handle uniqueness
                 
-        await ctx.followup.send(f"✅ Database cleanup complete. Scanned {len(active_sessions)} active sessions and cleaned {cleaned_sessions} of them.", ephemeral=True)
+        await ctx.followup.send(f"✅ Database cleanup complete. Scanned {len(active_sessions)} active sessions. No duplicate player entries to clean up based on current logic.", ephemeral=True)
 
     @discord.slash_command(name="export_schedules", description="Export all schedules for the current session to a JSON file")
     @commands.has_permissions(administrator=True)
@@ -1353,12 +1345,34 @@ class DraftLotteryCog(commands.Cog):
         except Exception as e:
             await ctx.respond(f"Error exporting schedules: {str(e)}", ephemeral=True)
 
+    @discord.slash_command(name="remove_player_schedule", description="Remove a player's schedule from the current session.")
+    @commands.has_permissions(administrator=True)
+    async def remove_player_schedule(self, ctx, user_id: str):
+        channel_id = ctx.channel.id
+        session = self.active_sessions.get(channel_id)
+        if not session:
+            session = load_session(channel_id)
+            if not session:
+                await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+                return
+            self.active_sessions[channel_id] = session
+
+        if user_id in session.player_schedules:
+            del session.player_schedules[user_id]
+            save_session(session)
+            await ctx.respond(f"✅ Schedule for user ID {user_id} removed from this session.", ephemeral=True)
+        else:
+            await ctx.respond(f"User ID {user_id} does not have a submitted schedule in this session.", ephemeral=True)
+
 class CalendarScheduleView(discord.ui.View):
-    def __init__(self, user_id, session, cog):
+    def __init__(self, user_id, session, cog, channel_id):
         super().__init__(timeout=600)
         self.user_id = user_id
         self.session = session
         self.cog = cog
+        self.channel_id = channel_id
+        self.channel_id = channel_id
+        self.channel_id = channel_id
         self.schedule_state = {}
         self.current_day_index = 0
 
@@ -1448,7 +1462,7 @@ class CalendarScheduleView(discord.ui.View):
                 await interaction.response.send_message("This is not your schedule!", ephemeral=True)
                 return
 
-            session = load_session(self.session.channel_id)
+            session = load_session(self.channel_id)
             if not session:
                 await interaction.response.send_message("Error: Could not find the scheduling session.", ephemeral=True)
                 return
@@ -1469,9 +1483,6 @@ class CalendarScheduleView(discord.ui.View):
                 return
 
             session.player_schedules[str(self.user_id)] = player_schedule_for_db
-            
-            if str(self.user_id) not in session.players_responded:
-                session.players_responded.append(str(self.user_id))
 
             save_session(session)
             # Reload the session from the database to ensure the cache is updated with the latest data
@@ -1481,12 +1492,12 @@ class CalendarScheduleView(discord.ui.View):
                 session = updated_session # Use the reloaded session for subsequent operations
 
             channel = self.cog.bot.get_channel(int(session.channel_id))
-            remaining = session.expected_players - len(session.players_responded)
+            remaining = session.expected_players - len(session.player_schedules)
 
             if remaining > 0:
                 await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
             else:
-                await channel.send(f"🎉 All players have submitted their schedules!")
+                await channel.send(f"🎉 All players have submitted their schedules! Initiating game time proposal...")
 
             await interaction.response.edit_message(
                 content="✅ **Schedule finalized!** Thank you for submitting your availability.",
@@ -1494,7 +1505,7 @@ class CalendarScheduleView(discord.ui.View):
                 view=None
             )
 
-            if len(session.players_responded) >= session.expected_players:
+            if len(session.player_schedules) >= session.expected_players:
                 await self.cog.finalize_scheduling(channel, session)
 
         except Exception as e:
