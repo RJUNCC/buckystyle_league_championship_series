@@ -33,359 +33,6 @@ class DraftResult(NamedTuple):
     draft_order: List[Tuple[int, str, int]]
     eliminated: List[Tuple[str, int]]
 
-class DaySelect(discord.ui.Select):
-    def __init__(self, options, user_id, session, parent_view):
-        super().__init__(
-            placeholder="Select a day to set your availability",
-            options=options
-        )
-        self.user_id = user_id
-        self.session = session
-        self.parent_view = parent_view
-
-    async def callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            selected_day = self.values[0]
-            date_info = self.session.get_date_info(selected_day)
-            time_view = TimeSelectionView(self.user_id, selected_day, self.session, self.parent_view)
-
-            embed = discord.Embed(
-                title=f"📅 Setting Availability for {date_info['full_date']}",
-                description=f"Select all times you're available on **{date_info['full_date']}**:",
-                color=0x0099ff
-            )
-
-            await interaction.response.edit_message(
-                embed=embed,
-                view=time_view
-            )
-        except Exception as e:
-            print(f"Error in day_select: {e}")
-            try:
-                await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
-            except:
-                pass
-
-class TimeSelectionView(discord.ui.View):
-    def __init__(self, user_id, day, session, parent_view):
-        super().__init__(timeout=300)
-        self.user_id = user_id
-        self.day = day
-        self.session = session
-        self.parent_view = parent_view
-        self.selected_times = set()
-
-    @discord.ui.select(
-        placeholder="Select available times (you can select multiple)",
-        options=[
-            discord.SelectOption(label="6:00 PM", value="18:00"),
-            discord.SelectOption(label="7:00 PM", value="19:00"),
-            discord.SelectOption(label="8:00 PM", value="20:00"),
-            discord.SelectOption(label="9:00 PM", value="21:00"),
-            discord.SelectOption(label="10:00 PM", value="22:00"),
-            discord.SelectOption(label="11:00 PM", value="23:00"),
-            discord.SelectOption(label="12:00 AM", value="00:00"),
-        ],
-        max_values=7,
-        min_values=0
-    )
-    async def time_select(self, select: discord.ui.Select, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            self.selected_times = set(select.values)
-
-            embed = discord.Embed(
-                title=f"📅 {self.day} Availability",
-                color=0x0099ff
-            )
-
-            if self.selected_times:
-                times_display = ", ".join([self.format_time_display(t) for t in sorted(self.selected_times)])
-                embed.description = f"**Selected times:** {times_display}\n\nClick 'Confirm Times' to save these times or select different ones."
-            else:
-                embed.description = f"**No times selected** (not available)\n\nClick 'Not Available' to confirm or select times above."
-
-            await interaction.response.edit_message(
-                embed=embed,
-                view=self
-            )
-        except Exception as e:
-            print(f"Error in time_select: {e}")
-            try:
-                await interaction.response.send_message("Error selecting times", ephemeral=True)
-            except:
-                pass
-
-    def format_time_display(self, time_24h):
-        try:
-            hour = int(time_24h.split(':')[0])
-            minute = time_24h.split(':')[1]
-
-            if hour == 0:
-                return f"12:{minute} AM"
-            elif hour < 12:
-                return f"{hour}:{minute} AM"
-            elif hour == 12:
-                return f"12:{minute} PM"
-            else:
-                return f"{hour-12}:{minute} PM"
-        except:
-            return time_24h
-
-    @discord.ui.button(label="Confirm Times", style=discord.ButtonStyle.green)
-    async def confirm_times(self, button: discord.ui.Button, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            if str(self.user_id) not in self.session.player_schedules:
-                self.session.player_schedules[str(self.user_id)] = {}
-
-            self.session.player_schedules[str(self.user_id)][self.day] = list(self.selected_times)
-            save_session(self.session)
-
-            await self.return_to_day_selection(interaction, f"✅ **{self.day}** times saved!")
-
-        except Exception as e:
-            print(f"Error in confirm_times: {e}")
-            try:
-                await interaction.response.send_message("Error confirming times", ephemeral=True)
-            except:
-                pass
-
-    @discord.ui.button(label="Not Available", style=discord.ButtonStyle.red)
-    async def not_available(self, button: discord.ui.Button, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            if str(self.user_id) not in self.session.player_schedules:
-                self.session.player_schedules[str(self.user_id)] = {}
-
-            self.session.player_schedules[str(self.user_id)][self.day] = []
-            save_session(self.session)
-
-            await self.return_to_day_selection(interaction, f"✅ **{self.day}** marked as not available!")
-
-        except Exception as e:
-            print(f"Error in not_available: {e}")
-            try:
-                await interaction.response.send_message("Error setting unavailable", ephemeral=True)
-            except:
-                pass
-
-    @discord.ui.button(label="Available All Day", style=discord.ButtonStyle.blurple)
-    async def all_day(self, button: discord.ui.Button, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            all_times = ["18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00"]
-
-            if str(self.user_id) not in self.session.player_schedules:
-                self.session.player_schedules[str(self.user_id)] = {}
-
-            self.session.player_schedules[str(self.user_id)][self.day] = all_times
-            save_session(self.session)
-
-            await self.return_to_day_selection(interaction, f"✅ **{self.day}** set to all day available!")
-
-        except Exception as e:
-            print(f"Error in all_day: {e}")
-            try:
-                await interaction.response.send_message("Error setting all day", ephemeral=True)
-            except:
-                pass
-
-    @discord.ui.button(label="← Back to Day Selection", style=discord.ButtonStyle.secondary)
-    async def back_to_days(self, button: discord.ui.Button, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            await self.return_to_day_selection(interaction, "Select another day to set your availability:")
-
-        except Exception as e:
-            print(f"Error in back_to_days: {e}")
-            try:
-                await interaction.response.send_message("Error going back", ephemeral=True)
-            except:
-                pass
-
-    async def return_to_day_selection(self, interaction, message):
-        schedule = self.session.player_schedules.get(str(self.user_id), {})
-        days_set = len(schedule)
-
-        embed = discord.Embed(
-            title="📅 Set Your Weekly Availability",
-            description=f"{message}\n\n**Progress: {days_set}/7 days completed**\n\nSelect another day to continue or finalize when all 7 days are set.",
-            color=0x0099ff if days_set < 7 else 0x00ff00
-        )
-
-        status_text = ""
-        for date_info in self.session.schedule_dates:
-            day_name = date_info['day_name']
-            day_display = f"{date_info['day_name']}, {date_info['date']}"
-
-            if day_name in schedule:
-                if not schedule[day_name]:
-                    status_text += f"**{day_display}:** ❌ Not available\n"
-                elif len(schedule[day_name]) >= 6:
-                    status_text += f"**{day_display}:** ✅ All day\n"
-                else:
-                    status_text += f"**{day_display}:** ✅ {len(schedule[day_name])} time slots\n"
-            else:
-                status_text += f"**{day_display}:** ⏳ Not set\n"
-
-        embed.add_field(name="📋 Current Schedule", value=status_text, inline=False)
-
-        await interaction.response.edit_message(
-            embed=embed,
-            view=self.parent_view
-        )
-
-class DaySelectionView(discord.ui.View):
-    def __init__(self, user_id, session, cog):
-        super().__init__(timeout=600)
-        self.user_id = user_id
-        self.session = session
-        self.cog = cog
-        self.create_day_options()
-
-    def create_day_options(self):
-        options = []
-        for date_info in self.session.schedule_dates:
-            label = f"{date_info['day_name']}, {date_info['date']}"
-            options.append(
-                discord.SelectOption(
-                    label=label,
-                    value=date_info['day_name'],
-                    description=date_info['full_date'],
-                    emoji="📅"
-                )
-            )
-        self.add_item(DaySelect(options, self.user_id, self.session, self))
-
-    @discord.ui.button(label="View My Schedule", style=discord.ButtonStyle.secondary)
-    async def view_schedule(self, button: discord.ui.Button, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            if str(self.user_id) not in self.session.player_schedules:
-                await interaction.response.send_message("You haven't set any times yet!", ephemeral=True)
-                return
-
-            schedule = self.session.player_schedules[str(self.user_id)]
-            schedule_text = "**Your Schedule for the Next Week:**\n\n"
-
-            days_set = 0
-            for date_info in self.session.schedule_dates:
-                day_name = date_info['day_name']
-                day_display = f"{date_info['day_name']}, {date_info['date']}"
-
-                if day_name in schedule:
-                    days_set += 1
-                    if not schedule[day_name]:
-                        schedule_text += f"**{day_display}:** ❌ Not available\n"
-                    elif len(schedule[day_name]) >= 6:
-                        schedule_text += f"**{day_display}:** ✅ All day available\n"
-                    else:
-                        times = [self.format_time_display(t) for t in sorted(schedule[day_name])]
-                        schedule_text += f"**{day_display}:** ✅ {', '.join(times)}\n"
-                else:
-                    schedule_text += f"**{day_display}:** ⏳ Not set\n"
-
-            schedule_text += f"\n**Progress:** {days_set}/7 days completed"
-
-            if days_set == 7:
-                schedule_text += "\n🎉 **Ready to finalize!** Use the 'Finalize Schedule' button."
-
-            embed = discord.Embed(
-                title="📋 Your Weekly Schedule",
-                description=schedule_text,
-                color=0x0099ff
-            )
-
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-        except Exception as e:
-            print(f"Error in view_schedule: {e}")
-            try:
-                await interaction.response.send_message("Error viewing schedule", ephemeral=True)
-            except:
-                pass
-
-    def format_time_display(self, time_24h):
-        try:
-            hour = int(time_24h.split(':')[0])
-            minute = time_24h.split(':')[1]
-
-            if hour == 0:
-                return f"12:{minute} AM"
-            elif hour < 12:
-                return f"{hour}:{minute} AM"
-            elif hour == 12:
-                return f"12:{minute} PM"
-            else:
-                return f"{hour-12}:{minute} PM"
-        except:
-            return time_24h
-
-    @discord.ui.button(label="✅ Finalize Schedule", style=discord.ButtonStyle.green)
-    async def finalize_schedule_callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user.id != self.user_id:
-                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
-                return
-
-            session = load_session(self.session.channel_id)
-            if not session:
-                await interaction.response.send_message("Error: Could not find the scheduling session.", ephemeral=True)
-                return
-
-            player_schedule = session.player_schedules.get(str(self.user_id), {})
-            if len(player_schedule) < 7:
-                await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {len(player_schedule)}/7 days set.", ephemeral=True)
-                return
-
-            if str(self.user_id) not in session.players_responded:
-                session.players_responded.append(str(self.user_id))
-
-            save_session(session)
-
-            channel = self.cog.bot.get_channel(int(session.channel_id))
-            remaining = session.expected_players - len(session.players_responded)
-
-            if remaining > 0:
-                await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
-
-            await interaction.response.edit_message(
-                content="✅ **Schedule finalized!** Thank you for submitting your availability.",
-                embed=None,
-                view=None
-            )
-
-            if len(session.players_responded) >= session.expected_players:
-                await self.cog.finalize_scheduling(channel, session)
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            await interaction.response.send_message(f"An unexpected error occurred during finalization: {e}", ephemeral=True)
-
-
 class ConfirmationView(discord.ui.View):
     def __init__(self, session, game_time_info, cog):
         super().__init__(timeout=600)
@@ -463,7 +110,6 @@ class ConfirmationView(discord.ui.View):
 
         channel = self.cog.bot.get_channel(int(session.channel_id))
         await channel.send(f"⚠️ {interaction.user.display_name} can't make the proposed time. They need to update their schedule. An admin can use `/next_game_time` to propose an alternative.")
-
 
 class DraftLottery:
     def __init__(self):
@@ -1074,10 +720,7 @@ class DraftLotteryCog(commands.Cog):
             description=(
                 f"**Scheduling game between {team1} and {team2}**\n\n"
                 f"📋 **What Players Need to Do:**\n"
-                f"All **6 players** (3 from each team) choose an interface:\n"
-                f"• `/my_schedule` - Visual calendar interface ⭐\n\n"
-                f"• Times range from 6 PM to 12 AM (7 time slots)\n"
-                f"• Easy buttons for 'Not Available' and 'All Day'\n\n"
+                f"All **6 players** (3 from each team) must use the `/my_schedule` command to set their availability.\n\n"
                 f"🎯 **Process:**\n"
                 f"1️⃣ All 6 players set their weekly availability\n"
                 f"2️⃣ Bot finds common times and proposes game time\n"
@@ -1091,13 +734,11 @@ class DraftLotteryCog(commands.Cog):
         
         await ctx.respond(embed=embed)
 
-    @discord.slash_command(name="my_schedule", description="Set your weekly availability using visual calendar interface")
+    @discord.slash_command(name="my_schedule", description="Set your weekly availability using a visual calendar interface")
     async def my_schedule(self, ctx):
         user_id = ctx.author.id
         
         session_to_use = None
-        # This is a simplification. In a real bot, you'd have a better way
-        # to map a user to their teams and games.
         if self.active_sessions:
             session_to_use = list(self.active_sessions.values())[0]
 
@@ -1110,40 +751,13 @@ class DraftLotteryCog(commands.Cog):
             await ctx.respond("Could not load session data from the database.", ephemeral=True)
             return
         
-        view = DaySelectionView(user_id, session, self)
+        view = CalendarScheduleView(user_id, session, self)
         
-        if str(user_id) in session.players_responded:
-            embed = discord.Embed(
-                title="🔄 Update Your Schedule",
-                description="Use the dropdown below to update your availability.",
-                color=0xffa500
-            )
-        else:
-            embed = discord.Embed(
-                title="📅 Set Your Weekly Availability",
-                description="Use the dropdown below to set your available times.",
-                color=0x0099ff
-            )
-        
-        schedule = session.player_schedules.get(str(user_id), {})
-        days_set = len(schedule)
-        
-        status_text = ""
-        for date_info in session.schedule_dates:
-            day_name = date_info['day_name']
-            day_display = f"{date_info['day_name']}, {date_info['date']}"
-
-            if day_name in schedule:
-                if not schedule[day_name]:
-                    status_text += f"**{day_display}:** ❌ Not available\n"
-                elif len(schedule[day_name]) >= 6:
-                    status_text += f"**{day_display}:** ✅ All day\n"
-                else:
-                    status_text += f"**{day_display}:** ✅ {len(schedule[day_name])} time slots\n"
-            else:
-                status_text += f"**{day_display}:** ⏳ Not set\n"
-
-        embed.add_field(name=f"📋 Progress: {days_set}/7 days completed", value=status_text, inline=False)
+        embed = discord.Embed(
+            title="📅 Set Your Weekly Availability",
+            description="Use the buttons below to set your availability for each day.",
+            color=0x0099ff
+        )
         
         try:
             await ctx.author.send(embed=embed, view=view)
@@ -1282,14 +896,13 @@ class DraftLotteryCog(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def next_game_time(self, ctx):
         channel_id = ctx.channel.id
-        if channel_id not in self.active_sessions:
-            await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
-            return
-
-        session = load_session(channel_id)
+        session = self.active_sessions.get(channel_id)
         if not session:
-            await ctx.respond("Could not load session data from the database.", ephemeral=True)
-            return
+            session = load_session(channel_id)
+            if not session:
+                await ctx.respond("No active scheduling session in this channel.", ephemeral=True)
+                return
+            self.active_sessions[channel_id] = session
 
         if len(session.players_responded) < session.expected_players:
             await ctx.respond(f"Still waiting for {session.expected_players - len(session.players_responded)} players to submit their availability.", ephemeral=True)
@@ -1736,6 +1349,182 @@ class DraftLotteryCog(commands.Cog):
             
         except Exception as e:
             await ctx.respond(f"Error exporting schedules: {str(e)}", ephemeral=True)
+
+class CalendarScheduleView(discord.ui.View):
+    def __init__(self, user_id, session, cog):
+        super().__init__(timeout=600)
+        self.user_id = user_id
+        self.session = session
+        self.cog = cog
+        self.schedule_state = {}
+        self.current_day_index = 0
+
+        existing_schedule = self.session.player_schedules.get(str(self.user_id), {})
+        for date_info in self.session.schedule_dates:
+            day_name = date_info['day_name']
+            self.schedule_state[day_name] = {}
+            
+            if day_name in existing_schedule:
+                existing_times = existing_schedule[day_name]
+                if not existing_times:
+                    self.schedule_state[day_name]['status'] = 'not_available'
+                elif len(existing_times) >= 6:
+                    self.schedule_state[day_name]['status'] = 'all_day'
+                else:
+                    self.schedule_state[day_name]['status'] = 'partial'
+                    for time_slot in ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']:
+                        self.schedule_state[day_name][time_slot] = time_slot in existing_times
+            else:
+                self.schedule_state[day_name]['status'] = None
+        
+        self.create_calendar_buttons()
+
+    def create_calendar_buttons(self):
+        self.clear_items()
+        current_date_info = self.session.schedule_dates[self.current_day_index]
+        current_day_name = current_date_info['day_name']
+
+        prev_button = discord.ui.Button(label="◀ Prev Day", style=discord.ButtonStyle.secondary, row=0)
+        prev_button.callback = self.prev_day_callback
+        self.add_item(prev_button)
+
+        day_display_button = discord.ui.Button(
+            label=f"{current_date_info['day_name']}, {current_date_info['date']}",
+            style=discord.ButtonStyle.primary,
+            disabled=True,
+            row=0
+        )
+        self.add_item(day_display_button)
+
+        next_button = discord.ui.Button(label="Next Day ▶", style=discord.ButtonStyle.secondary, row=0)
+        next_button.callback = self.next_day_callback
+        self.add_item(next_button)
+
+        time_slots = ['6PM', '7PM', '8PM', '9PM', '10PM', '11PM', '12AM']
+        time_values = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
+
+        for i, (time_label, time_value) in enumerate(zip(time_slots, time_values)):
+            is_selected = self.schedule_state[current_day_name].get(time_value, False)
+            day_status = self.schedule_state[current_day_name].get('status')
+
+            style = discord.ButtonStyle.gray
+            if day_status == 'all_day':
+                style = discord.ButtonStyle.green
+            elif day_status == 'not_available':
+                style = discord.ButtonStyle.red
+            elif is_selected:
+                style = discord.ButtonStyle.green
+
+            row = 1 if i < 4 else 2
+            time_button = TimeSlotButton(label=time_label, time_value=time_value, day_name=current_day_name, style=style, row=row)
+            self.add_item(time_button)
+
+        all_day_button = DayActionButton(label="All Day Available", action="all_day", style=discord.ButtonStyle.blurple, row=3)
+        self.add_item(all_day_button)
+
+        not_available_button = DayActionButton(label="Not Available", action="not_available", style=discord.ButtonStyle.red, row=3)
+        self.add_item(not_available_button)
+
+        finalize_button = discord.ui.Button(label="✅ Finalize Schedule", style=discord.ButtonStyle.green, row=4)
+        finalize_button.callback = self.finalize_schedule_callback
+        self.add_item(finalize_button)
+
+    async def prev_day_callback(self, interaction: discord.Interaction):
+        self.current_day_index = (self.current_day_index - 1) % 7
+        self.create_calendar_buttons()
+        await interaction.response.edit_message(view=self)
+
+    async def next_day_callback(self, interaction: discord.Interaction):
+        self.current_day_index = (self.current_day_index + 1) % 7
+        self.create_calendar_buttons()
+        await interaction.response.edit_message(view=self)
+
+    async def finalize_schedule_callback(self, interaction: discord.Interaction):
+        try:
+            if interaction.user.id != self.user_id:
+                await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+                return
+
+            session = load_session(self.session.channel_id)
+            if not session:
+                await interaction.response.send_message("Error: Could not find the scheduling session.", ephemeral=True)
+                return
+
+            player_schedule_for_db = {}
+            for day_name, day_data in self.schedule_state.items():
+                status = day_data.get('status')
+                if status == 'not_available':
+                    player_schedule_for_db[day_name] = []
+                elif status == 'all_day':
+                    player_schedule_for_db[day_name] = ['18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00']
+                elif status == 'partial':
+                    selected_times = [time for time, selected in day_data.items() if time != 'status' and selected]
+                    player_schedule_for_db[day_name] = selected_times
+
+            if len(player_schedule_for_db) < 7:
+                await interaction.response.send_message(f"Please set all 7 days before finalizing! You have {len(player_schedule_for_db)}/7 days set.", ephemeral=True)
+                return
+
+            session.player_schedules[str(self.user_id)] = player_schedule_for_db
+            
+            if str(self.user_id) not in session.players_responded:
+                session.players_responded.append(str(self.user_id))
+
+            save_session(session)
+
+            channel = self.cog.bot.get_channel(int(session.channel_id))
+            remaining = session.expected_players - len(session.players_responded)
+
+            if remaining > 0:
+                await channel.send(f"📝 {interaction.user.display_name} finalized their schedule. Waiting for {remaining} more players...")
+
+            await interaction.response.edit_message(
+                content="✅ **Schedule finalized!** Thank you for submitting your availability.",
+                embed=None,
+                view=None
+            )
+
+            if len(session.players_responded) >= session.expected_players:
+                await self.cog.finalize_scheduling(channel, session)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message(f"An unexpected error occurred during finalization: {e}", ephemeral=True)
+
+class TimeSlotButton(discord.ui.Button):
+    def __init__(self, label, time_value, day_name, style, row):
+        super().__init__(label=label, style=style, row=row)
+        self.time_value = time_value
+        self.day_name = day_name
+
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        if interaction.user.id != view.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+
+        current_state = view.schedule_state[self.day_name].get(self.time_value, False)
+        view.schedule_state[self.day_name][self.time_value] = not current_state
+        view.schedule_state[self.day_name]['status'] = 'partial'
+        view.create_calendar_buttons()
+        await interaction.response.edit_message(view=view)
+
+class DayActionButton(discord.ui.Button):
+    def __init__(self, label, action, style, row):
+        super().__init__(label=label, style=style, row=row)
+        self.action = action
+
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        if interaction.user.id != view.user_id:
+            await interaction.response.send_message("This is not your schedule!", ephemeral=True)
+            return
+
+        day_name = view.session.schedule_dates[view.current_day_index]['day_name']
+        view.schedule_state[day_name]['status'] = self.action
+        view.create_calendar_buttons()
+        await interaction.response.edit_message(view=view)
 
 def setup(bot):
     bot.add_cog(DraftLotteryCog(bot))
