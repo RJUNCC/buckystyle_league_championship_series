@@ -62,7 +62,11 @@ class ConfirmationView(discord.ui.View):
         await interaction.response.send_message(f"✅ You confirmed the game time! ({confirmed}/{total} confirmed)", ephemeral=True)
 
         if self.message:
-            await self.message.edit(content=f"@here Game Time: {self.game_time_info['full_date']} @ {self.game_time_info['time']} ({confirmed}/{total} confirmed)")
+            team1_role = discord.utils.get(self.message.guild.roles, name=session.team1)
+            team2_role = discord.utils.get(self.message.guild.roles, name=session.team2)
+            team1_mention = f"<@&{team1_role.id}>" if team1_role else session.team1
+            team2_mention = f"<@&{team2_role.id}>" if team2_role else session.team2
+            await self.message.edit(content=f"{team1_mention} {team2_mention} Game Time: {self.game_time_info['full_date']} @ {self.game_time_info['time']} ({confirmed}/{total} confirmed)")
 
         if confirmed >= session.expected_players:
             channel = self.cog.bot.get_channel(int(session.channel_id))
@@ -824,7 +828,7 @@ class DraftLotteryCog(commands.Cog):
         minute = best_time.split(':')[1]
         
         if hour == 0:
-            display_time = f"12:{minute} AM"
+            display_time = f"11:59 PM"
         elif hour < 12:
             display_time = f"{hour}:{minute} AM"
         elif hour == 12:
@@ -899,8 +903,13 @@ class DraftLotteryCog(commands.Cog):
             inline=False
         )
         
+        team1_role = discord.utils.get(channel.guild.roles, name=session.team1)
+        team2_role = discord.utils.get(channel.guild.roles, name=session.team2)
+        team1_mention = f"<@&{team1_role.id}>" if team1_role else session.team1
+        team2_mention = f"<@&{team2_role.id}>" if team2_role else session.team2
+
         view = ConfirmationView(session, game_info, self)
-        message = await channel.send(f"@{session.team1} @{session.team2} Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        message = await channel.send(f"{team1_mention} {team2_mention} Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
         view.message = message
 
     @discord.slash_command(name="next_game_time", description="Propose the next available game time.")
@@ -933,7 +942,7 @@ class DraftLotteryCog(commands.Cog):
                     hour = int(time.split(':')[0])
                     minute = time.split(':')[1]
                     if hour == 0:
-                        display_times.append(f"12:{minute} AM")
+                        display_times.append(f"11:59 PM")
                     elif hour < 12:
                         display_times.append(f"{hour}:{minute} AM")
                     elif hour == 12:
@@ -1114,7 +1123,7 @@ class DraftLotteryCog(commands.Cog):
                 common_text = ""
                 time_slots_display = {
                     '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM',
-                    '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
+                    '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '11:59 PM'
                 }
                 for day_name, times in common_times.items():
                     date_info = session.get_date_info(day_name)
@@ -1146,7 +1155,7 @@ class DraftLotteryCog(commands.Cog):
                 common_text = ""
                 time_slots_display = {
                     '18:00': '6 PM', '19:00': '7 PM', '20:00': '8 PM',
-                    '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '12 AM'
+                    '21:00': '9 PM', '22:00': '10 PM', '23:00': '11 PM', '00:00': '11:59 PM'
                 }
                 for day_name, times in common_times.items():
                     date_info = session.get_date_info(day_name)
@@ -1279,7 +1288,7 @@ class DraftLotteryCog(commands.Cog):
         hour = int(last_proposed['time'].split(':')[0])
         minute = last_proposed['time'].split(':')[1]
         if hour == 0:
-            display_time = f"12:{minute} AM"
+            display_time = f"11:59 PM"
         elif hour < 12:
             display_time = f"{hour}:{minute} AM"
         elif hour == 12:
@@ -1357,8 +1366,13 @@ class DraftLotteryCog(commands.Cog):
                 inline=False
             )
 
+        team1_role = discord.utils.get(ctx.guild.roles, name=session.team1)
+        team2_role = discord.utils.get(ctx.guild.roles, name=session.team2)
+        team1_mention = f"<@&{team1_role.id}>" if team1_role else session.team1
+        team2_mention = f"<@&{team2_role.id}>" if team2_role else session.team2
+
         view = ConfirmationView(session, game_info, self)
-        message = await ctx.respond(f"@{session.team1} @{session.team2} Game Time: {proposed_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+        message = await ctx.respond(f"{team1_mention} {team2_mention} Game Time: {proposed_date_info['full_date']} @ {display_time}", embed=embed, view=view)
         view.message = message
 
     @discord.slash_command(name="db_health", description="Check database health and connection")

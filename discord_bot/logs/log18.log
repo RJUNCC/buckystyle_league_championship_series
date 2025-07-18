@@ -1,49 +1,7 @@
-[{
-	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
-	"owner": "pylance",
-	"severity": 8,
-	"message": "\"await\" allowed only within async function",
-	"source": "Pylance",
-	"startLineNumber": 1046,
-	"startColumn": 5,
-	"endLineNumber": 1046,
-	"endColumn": 10
-},{
-	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
-	"owner": "pylance",
-	"code": {
-		"value": "reportUndefinedVariable",
-		"target": {
-			"$mid": 1,
-			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
-			"scheme": "https",
-			"authority": "github.com"
-		}
-	},
-	"severity": 4,
-	"message": "\"ctx\" is not defined",
-	"source": "Pylance",
-	"startLineNumber": 1046,
-	"startColumn": 11,
-	"endLineNumber": 1046,
-	"endColumn": 14
-},{
-	"resource": "/d:/ANNACONDA/projects/buckystyle_league_championship_series/buckystyle_league_championship_series/discord_bot/cogs/draft_prob.py",
-	"owner": "pylance",
-	"code": {
-		"value": "reportUndefinedVariable",
-		"target": {
-			"$mid": 1,
-			"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
-			"scheme": "https",
-			"authority": "github.com"
-		}
-	},
-	"severity": 4,
-	"message": "\"embed\" is not defined",
-	"source": "Pylance",
-	"startLineNumber": 1046,
-	"startColumn": 29,
-	"endLineNumber": 1046,
-	"endColumn": 34
-}]
+BOT IDEAS & FIXES
+Automatically send message to current scheduling session for each channel that needs to play a game every Sunday
+Change 12:00 AM to 11:59 PM because it's confsing
+If no gametimes are possible, find a time where 5 of 6 players can play and DM the person who doesn't have a matched time and ask if they can play, if not then find next 5 of 6 matched times, and so on.
+Bot doesn't send @'s correctly on Confirmation session.
+Confirming on confirmation stage is not working: Does not respond error
+DM People who haven't confirmed the gametime.
