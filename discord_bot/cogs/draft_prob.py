@@ -1,7 +1,7 @@
 # cogs/draft_prob.py
 import discord
 import json
-from discord.ext import commands
+from discord.ext import commands, tasks
 import asyncio
 import random
 from collections import defaultdict
@@ -224,6 +224,7 @@ class DraftLotteryCog(commands.Cog):
         self.last_result = None
         self.active_sessions: Dict[int, DBSchedulingSession] = {}
         self.background_task = None
+        self.weekly_schedule_reminder.start()
     
     async def cog_load(self):
         try:
@@ -265,6 +266,21 @@ class DraftLotteryCog(commands.Cog):
             print(f"CRITICAL: Error loading sessions from database: {e}")
             import traceback
             traceback.print_exc()
+
+    @tasks.loop(hours=1)
+    async def weekly_schedule_reminder(self):
+        now = datetime.now()
+        # Sunday at 12:00 PM
+        if now.weekday() == 6 and now.hour == 12:
+            active_sessions = get_all_active_sessions()
+            for session in active_sessions:
+                channel = self.bot.get_channel(int(session.channel_id))
+                if channel:
+                    team1_role = discord.utils.get(channel.guild.roles, name=session.team1)
+                    team2_role = discord.utils.get(channel.guild.roles, name=session.team2)
+                    team1_mention = f"<@&{team1_role.id}>" if team1_role else session.team1
+                    team2_mention = f"<@&{team2_role.id}>" if team2_role else session.team2
+                    await channel.send(f"{team1_mention} {team2_mention} it's time to schedule your game for this week! Please use `/my_schedule` to set your availability.")
 
     def get_pick_emoji(self, pick: int) -> str:
         if pick <= 2:
