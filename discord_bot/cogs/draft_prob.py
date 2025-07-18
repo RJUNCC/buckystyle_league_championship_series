@@ -55,7 +55,11 @@ class ConfirmationView(discord.ui.View):
             return
 
         session.confirmations[user_id] = True
-        save_session(session)
+        updated_session = save_session(session)
+        if updated_session:
+            self.cog.active_sessions[int(updated_session.channel_id)] = updated_session
+            session = updated_session # Use the updated session for the rest of the logic
+
         confirmed = sum(1 for c in session.confirmations.values() if c)
         total = len(session.player_schedules)
 
@@ -103,7 +107,10 @@ class ConfirmationView(discord.ui.View):
             return
 
         session.confirmations[user_id] = False
-        save_session(session)
+        updated_session = save_session(session)
+        if updated_session:
+            self.cog.active_sessions[int(updated_session.channel_id)] = updated_session
+            session = updated_session
 
         await interaction.response.send_message(
             "❌ You declined the game time. The system will now attempt to find the next suitable time.",
