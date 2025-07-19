@@ -1,15 +1,22 @@
 name: blcs-app
+ingress:
+  rules:
+  - match:
+      path:
+        prefix: /
+    component:
+      name: dashboard
 services:
 - name: bot
   dockerfile_path: discord_bot/Dockerfile
-  source_dir: /  # Use the entire repository as context
+  source_dir: /
   github:
     repo: RJUNCC/buckystyle_league_championship_series
     branch: main
     deploy_on_push: true
   instance_count: 1
   instance_size_slug: basic-xxs
-  # Remove http_port for Discord bot - it's not a web service
+  # No http_port for bot service
   envs:
   - key: DISCORD_TOKEN
     scope: RUN_TIME
@@ -20,14 +27,14 @@ services:
 
 - name: dashboard
   dockerfile_path: dashboard/Dockerfile
-  source_dir: /  # Use the entire repository as context
+  source_dir: /
   github:
     repo: RJUNCC/buckystyle_league_championship_series
     branch: main
     deploy_on_push: true
   instance_count: 1
   instance_size_slug: basic-xxs
-  http_port: 8080  # Only the dashboard needs HTTP access
+  http_port: 8080
   envs:
   - key: PORT
     value: "8080"
