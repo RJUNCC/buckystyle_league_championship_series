@@ -1,0 +1,19 @@
+name: blcs-dashboard
+services:
+- name: dashboard
+  dockerfile_path: dashboard/Dockerfile
+  source_dir: /
+  github:
+    repo: RJUNCC/buckystyle_league_championship_series
+    branch: main
+    deploy_on_push: true
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 8080
+  envs:
+  - key: PORT
+    value: "8080"
+    scope: RUN_TIME
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    type: SECRET

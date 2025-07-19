@@ -1,0 +1,20 @@
+name: discord-bot
+services:
+- name: bot
+  dockerfile_path: discord_bot/Dockerfile
+  source_dir: /  # Use the entire repository as context
+  github:
+    repo: RJUNCC/buckystyle_league_championship_series
+    branch: main
+    deploy_on_push: true
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  # Removed http_port since Discord bots don't need web access
+  envs:
+  # Removed PORT since no HTTP service
+  - key: DISCORD_TOKEN
+    scope: RUN_TIME
+    type: SECRET
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    type: SECRET
