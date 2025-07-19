@@ -1,0 +1,96 @@
+Tables in database:
+               table_name
+0    blcs_player_mappings
+1  blcs_player_statistics
+2         player_profiles
+3     scheduling_sessions
+
+Columns in blcs_player_mappings:
+             column_name                    data_type
+0             discord_id                       bigint
+1             created_at  timestamp without time zone
+2             updated_at  timestamp without time zone
+3       discord_username            character varying
+4  ballchasing_player_id            character varying
+5   ballchasing_platform            character varying
+
+Columns in blcs_player_statistics:
+                 column_name                    data_type
+0               last_updated  timestamp without time zone
+1         dominance_quotient             double precision
+2            percentile_rank             double precision
+3               games_played                      integer
+4                       wins                      integer
+5                     losses                      integer
+6                  avg_score             double precision
+7             goals_per_game             double precision
+8           assists_per_game             double precision
+9             saves_per_game             double precision
+10            shots_per_game             double precision
+11           shot_percentage             double precision
+12  demos_inflicted_per_game             double precision
+13      demos_taken_per_game             double precision
+14                 avg_speed             double precision
+15                 season_id            character varying
+16                 player_id            character varying
+
+Columns in player_profiles:
+              column_name                    data_type
+0          last_sync_date     timestamp with time zone
+1              discord_id                       bigint
+2            season_games                      integer
+3              created_at  timestamp without time zone
+4            last_updated  timestamp without time zone
+5          last_game_date  timestamp without time zone
+6               is_active                      boolean
+7               is_public                      boolean
+8              extra_data                         json
+9               avg_speed                         real
+10     dominance_quotient                         real
+11        percentile_rank                         real
+12                     id                      integer
+13                    mmr                      integer
+14                    age                      integer
+15            total_goals                      integer
+16            total_saves                      integer
+17            total_shots                      integer
+18            total_score                      integer
+19          total_assists                      integer
+20           games_played                      integer
+21                   wins                      integer
+22                 losses                      integer
+23        goal_percentage             double precision
+24        save_percentage             double precision
+25         win_percentage             double precision
+26              mvp_count                      integer
+27        demos_inflicted                      integer
+28            demos_taken                      integer
+29           season_goals                      integer
+30           season_saves                      integer
+31            season_wins                      integer
+32       discord_username            character varying
+33                rl_name            character varying
+34               steam_id            character varying
+35                epic_id            character varying
+36  ballchasing_player_id            character varying
+37           custom_title            character varying
+38           favorite_car            character varying
+39              rank_name            character varying
+40          rank_division            character varying
+41         current_season            character varying
+42   ballchasing_platform            character varying
+
+Columns in scheduling_sessions:
+          column_name                    data_type
+0      proposed_times                         json
+1       confirmations                         json
+2           is_active                      boolean
+3                  id                      integer
+4    player_schedules                         json
+5   players_responded                         json
+6    expected_players                      integer
+7          created_at  timestamp without time zone
+8      schedule_dates                         json
+9          channel_id            character varying
+10              team1            character varying
+11              team2            character varying

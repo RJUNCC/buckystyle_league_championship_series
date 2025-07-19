@@ -1,7 +1,12 @@
-BOT IDEAS & FIXES
-Automatically send message to current scheduling session for each channel that needs to play a game every Sunday
-Change 12:00 AM to 11:59 PM because it's confsing
-If no gametimes are possible, find a time where 5 of 6 players can play and DM the person who doesn't have a matched time and ask if they can play, if not then find next 5 of 6 matched times, and so on.
-Bot doesn't send @'s correctly on Confirmation session.
-Confirming on confirmation stage is not working: Does not respond error
-DM People who haven't confirmed the gametime.
+--- 7 warning(s) were found for page '/'  ---
+ - Warning 1: Variable 'selected_player' is not available in either the '__main__' or '__main__' modules.
+ - Warning 2: Variable 'selected_player' is not defined (in expression '{selected_player}'):
+'types.SimpleNamespace' object has no attribute 'selected_player'
+ - Warning 3: Variable 'player_list' is not available in either the '__main__' or '__main__' modules.
+ - Warning 4: Variable 'player_list' is not defined (in expression '{player_list}'):
+'types.SimpleNamespace' object has no attribute 'player_list'
+ - Warning 5: selector.on_change: on_change_player is not a function.
+ - Warning 6: Variable 'player_data' is not available in either the '__main__' or '__main__' modules.
+ - Warning 7: Variable 'player_data' is not defined (in expression '{player_data}'):
+'types.SimpleNamespace' object has no attribute 'player_data'
+----------------------------------------------

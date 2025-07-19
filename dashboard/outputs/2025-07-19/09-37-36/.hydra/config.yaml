@@ -1,0 +1,19 @@
+stats_table_name: blcs_player_statistics
+player_mapping_table_name: blcs_player_mappings
+columns:
+- p.discord_username
+- s.player_id
+- s.games_played
+- s.wins
+- s.losses
+- s.avg_score
+- s.goals_per_game
+- s.assists_per_game
+- s.saves_per_game
+- s.shots_per_game
+- s.shot_percentage
+- s.demos_inflicted_per_game
+- s.demos_taken_per_game
+- s.avg_speed
+- s.dominance_quotient
+- s.percentile_rank

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import json
 import os
 from pathlib import Path
+import itertools
 
 Base = declarative_base()
 
@@ -67,32 +68,65 @@ class SchedulingSession(Base):
     def is_complete(self):
         return len(self.player_schedules) >= self.expected_players
 
-    def find_common_times(self):
-        if not self.player_schedules:
+    def find_common_times(self, min_players=None):
+        if min_players is None:
+            min_players = self.expected_players
+
+        if not self.player_schedules or len(self.player_schedules) < min_players:
             return None
-            
-        common_times = defaultdict(list)
-        
+
+        common_times_result = defaultdict(list)
+        player_ids = list(self.player_schedules.keys())
+
         # For each day of the week
         for date_info in self.schedule_dates:
             day_name = date_info['day_name']
-            day_schedules = []
-            for user_id, schedule in self.player_schedules.items():
-                if day_name in schedule:
-                    day_schedules.append(set(schedule[day_name]))
             
-            if len(day_schedules) >= self.expected_players:
-                if day_schedules:
-                    all_possible_slots = set.intersection(*day_schedules[:self.expected_players])
+            # Filter out players who have no availability on this day
+            schedules_for_day = {
+                uid: set(schedule.get(day_name, []))
+                for uid, schedule in self.player_schedules.items()
+                if schedule.get(day_name) # Ensure the list is not empty
+            }
+
+            if len(schedules_for_day) < min_players:
+                continue
+
+            # Generate combinations of players of the required size
+            player_combinations = itertools.combinations(schedules_for_day.keys(), min_players)
+
+            for combo in player_combinations:
+                combo_schedules = [schedules_for_day[uid] for uid in combo]
+                
+                if not all(combo_schedules): # Skip if any player in combo has no times for the day
+                    continue
+
+                # Find intersection of times for the current combination
+                intersection_of_times = set.intersection(*combo_schedules)
+                
+                # Filter out already proposed times for this day
+                proposed_slots_for_day = {p['time'] for p in self.proposed_times if p['day'] == day_name}
+                available_slots = sorted(list(intersection_of_times - proposed_slots_for_day))
+
+                if available_slots:
+                    # Identify the players NOT in this combination
+                    odd_ones_out = list(set(player_ids) - set(combo))
                     
-                    # Filter out already proposed times for this day
-                    proposed_slots_for_day = {p['time'] for p in self.proposed_times if p['day'] == day_name}
-                    available_slots = sorted(list(all_possible_slots - proposed_slots_for_day))
-                    
-                    if available_slots:
-                        common_times[day_name] = available_slots
+                    for time_slot in available_slots:
+                        # Avoid proposing the same combination for the same time slot
+                        is_duplicate = False
+                        for existing_entry in common_times_result[day_name]:
+                            if existing_entry['time'] == time_slot and set(existing_entry['players']) == set(combo):
+                                is_duplicate = True
+                                break
+                        if not is_duplicate:
+                            common_times_result[day_name].append({
+                                'time': time_slot,
+                                'players': list(combo),
+                                'excluded_players': odd_ones_out
+                            })
         
-        return dict(common_times) if common_times else None
+        return dict(common_times_result) if common_times_result else None
 
     @classmethod
     def from_db(cls, db_session):

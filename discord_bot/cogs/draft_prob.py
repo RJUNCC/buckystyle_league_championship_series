@@ -33,6 +33,38 @@ class DraftResult(NamedTuple):
     draft_order: List[Tuple[int, str, int]]
     eliminated: List[Tuple[str, int]]
 
+
+class AskPlayerView(discord.ui.View):
+    def __init__(self, session, game_time_info, cog):
+        super().__init__(timeout=86400) # 24-hour timeout for the player to respond
+        self.session = session
+        self.game_time_info = game_time_info
+        self.cog = cog
+
+    @discord.ui.button(label="✅ Yes, I can make it!", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        user_id = str(interaction.user.id)
+        self.session.confirmations[user_id] = True
+        save_session(self.session)
+
+        await interaction.response.send_message("Thanks for confirming! The other players will now be asked to confirm this time.")
+
+        # Now, propose the time to the main channel
+        channel = self.cog.bot.get_channel(int(self.session.channel_id))
+        if channel:
+            # This will re-trigger the confirmation process for the other 5 players
+            await self.cog.finalize_scheduling(channel, self.session)
+
+    @discord.ui.button(label="❌ No, I can't make it", style=discord.ButtonStyle.red)
+    async def decline(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_message("No problem. The bot will continue searching for other possible times.")
+        # The bot will automatically try the next 5/6 time when finalize_scheduling is called again.
+        # No need to do anything here as the previously proposed time is already logged.
+        channel = self.cog.bot.get_channel(int(self.session.channel_id))
+        if channel:
+            await self.cog.finalize_scheduling(channel, self.session)
+
+
 class ConfirmationView(discord.ui.View):
     def __init__(self, session, game_time_info, cog, message=None):
         super().__init__(timeout=600)
@@ -809,131 +841,144 @@ class DraftLotteryCog(commands.Cog):
             print(f"Error: session is not DBSchedulingSession, it is {type(session)}")
             return
 
-        common_times = session.find_common_times()
+        # Try to find a time for all players first
+        common_times_all = session.find_common_times(min_players=session.expected_players)
         
-        if not common_times:
-            embed = discord.Embed(
-                title="❌ No Common Times Found",
-                description="Unfortunately, no times work for all players. Players should use `/my_schedule` to adjust their availability.",
-                color=0xff0000
-            )
-            await channel.send(embed=embed)
-            return
-        
-        best_day = None
-        best_time = None
-        best_date_info = None
-        
-        for date_info in session.schedule_dates:
-            day_name = date_info['day_name']
-            if day_name in common_times and common_times[day_name]:
-                best_day = day_name
-                best_date_info = date_info
-                for time in common_times[day_name]:
-                    hour = int(time.split(':')[0])
-                    if 18 <= hour <= 22:
-                        best_time = time
-                        break
-                if not best_time:
-                    best_time = common_times[day_name][0]
-                break
-        
-        if not best_day or not best_time or not best_date_info:
-            embed = discord.Embed(
-                title="❌ No Suitable Time Found",
-                description="Could not determine a good game time. Please adjust schedules.",
-                color=0xff0000
-            )
-            await channel.send(embed=embed)
-            return
-        
-        hour = int(best_time.split(':')[0])
-        minute = best_time.split(':')[1]
-        
-        if hour == 0:
-            display_time = f"11:59 PM"
-        elif hour < 12:
-            display_time = f"{hour}:{minute} AM"
-        elif hour == 12:
-            display_time = f"12:{minute} PM"
-        else:
-            display_time = f"{hour-12}:{minute} PM"
-        
-        game_info = {
-            'day': best_day, 
-            'time': display_time,
-            'full_date': best_date_info['full_date'],
-            'date': best_date_info['date']
-        }
-        
-        session.proposed_times.append({
-            'day': best_day,
-            'time': best_time
-        })
-        save_session(session)
-        
-        try:
-            date_str = best_date_info['full_date']
-            time_str = display_time
+        if common_times_all:
+            # Logic for 6/6 players (existing logic)
+            best_day = None
+            best_time = None
+            best_date_info = None
             
-            current_year = datetime.now().year
-            try:
-                event_datetime = datetime.strptime(f"{date_str}, {current_year} {time_str}", "%A, %B %d, %Y %I:%M %p")
-            except ValueError:
-                event_datetime = datetime.strptime(f"{date_str}, {current_year+1} {time_str}", "%A, %B %d, %Y %I:%M %p")
-
-            event_name = f"{session.team1} vs {session.team2} Game"
-            event_description = f"Scheduled game between {session.team1} and {session.team2} based on player availability."
+            for date_info in session.schedule_dates:
+                day_name = date_info['day_name']
+                if day_name in common_times_all and common_times_all[day_name]:
+                    best_day = day_name
+                    best_date_info = date_info
+                    # In 6/6 case, the structure is simpler: list of times
+                    for time in common_times_all[day_name]:
+                        hour = int(time.split(':')[0])
+                        if 18 <= hour <= 22:
+                            best_time = time
+                            break
+                    if not best_time:
+                        best_time = common_times_all[day_name][0]
+                    break
             
-            event_end_time = event_datetime + timedelta(hours=1)
+            if best_day and best_time and best_date_info:
+                # Propose this time to the channel
+                # (This is the existing logic for proposing a time)
+                hour = int(best_time.split(':')[0])
+                minute = best_time.split(':')[1]
+                
+                if hour == 0:
+                    display_time = f"11:59 PM"
+                elif hour < 12:
+                    display_time = f"{hour}:{minute} AM"
+                elif hour == 12:
+                    display_time = f"12:{minute} PM"
+                else:
+                    display_time = f"{hour-12}:{minute} PM"
+                
+                game_info = {
+                    'day': best_day, 
+                    'time': display_time,
+                    'full_date': best_date_info['full_date'],
+                    'date': best_date_info['date']
+                }
+                
+                session.proposed_times.append({
+                    'day': best_day,
+                    'time': best_time
+                })
+                save_session(session)
+                
+                embed = discord.Embed(
+                    title="��� Proposed Game Time (6/6 Match!)",
+                    description=f"**{best_date_info['full_date']} at {display_time}**",
+                    color=0x00ff00
+                )
+                embed.add_field(
+                    name="⚠️ Confirmation Required",
+                    value="All players must confirm this time works for them using the buttons below.",
+                    inline=False
+                )
+                
+                team1_role = discord.utils.get(channel.guild.roles, name=session.team1)
+                team2_role = discord.utils.get(channel.guild.roles, name=session.team2)
+                team1_mention = f"<@&{team1_role.id}>" if team1_role else session.team1
+                team2_mention = f"<@&{team2_role.id}>" if team2_role else session.team2
 
-            scheduled_event = await channel.guild.create_scheduled_event(
-                name=event_name,
-                start_time=event_datetime,
-                end_time=event_end_time,
-                description=event_description,
-                entity_type=discord.ScheduledEventType.external,
-                location=f"Discord Channel: #{channel.name}"
-            )
+                view = ConfirmationView(session, game_info, self)
+                message = await channel.send(f"{team1_mention} {team2_mention} Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
+                view.message = message
+                return # Stop after proposing a 6/6 time
+
+        # If no 6/6 time, try for 5/6
+        common_times_5_of_6 = session.find_common_times(min_players=session.expected_players - 1)
+
+        if common_times_5_of_6:
+            best_day_5_of_6 = None
+            best_time_info_5_of_6 = None
+            best_date_info_5_of_6 = None
+
+            for date_info in session.schedule_dates:
+                day_name = date_info['day_name']
+                if day_name in common_times_5_of_6 and common_times_5_of_6[day_name]:
+                    best_day_5_of_6 = day_name
+                    best_date_info_5_of_6 = date_info
+                    best_time_info_5_of_6 = common_times_5_of_6[day_name][0] # Get the first available 5/6 slot
+                    break
             
-            embed_event_success = discord.Embed(
-                title="🎉 Discord Event Created!",
-                description=f"A Discord event has been created for the game: [{event_name}]({scheduled_event.url})",
-                color=0x7289da
-            )
-            await channel.send(embed=embed_event_success)
+            if best_day_5_of_6 and best_time_info_5_of_6 and best_date_info_5_of_6:
+                excluded_player_id = best_time_info_5_of_6['excluded_players'][0]
+                user_to_dm = self.bot.get_user(int(excluded_player_id))
 
-        except discord.Forbidden:
-            print(f"ERROR: Bot does not have permissions to create scheduled events in channel {channel.name} ({channel.id}).")
-            await channel.send("⚠️ I don't have permission to create Discord events. Please grant me 'Manage Events' permission.")
-        except Exception as e:
-            print(f"ERROR: Failed to create Discord event: {e}")
-            await channel.send(f"❌ An error occurred while trying to create the Discord event: {e}")
+                if user_to_dm:
+                    best_time = best_time_info_5_of_6['time']
+                    hour = int(best_time.split(':')[0])
+                    minute = best_time.split(':')[1]
 
+                    if hour == 0:
+                        display_time = f"11:59 PM"
+                    elif hour < 12:
+                        display_time = f"{hour}:{minute} AM"
+                    elif hour == 12:
+                        display_time = f"12:{minute} PM"
+                    else:
+                        display_time = f"{hour-12}:{minute} PM"
+                    
+                    game_info = {
+                        'day': best_day_5_of_6, 
+                        'time': display_time,
+                        'full_date': best_date_info_5_of_6['full_date'],
+                        'date': best_date_info_5_of_6['date']
+                    }
+
+                    session.proposed_times.append({
+                        'day': best_day_5_of_6,
+                        'time': best_time
+                    })
+                    save_session(session)
+
+                    embed = discord.Embed(
+                        title="Flexible Game Time Proposal",
+                        description=f"We found a time that works for 5/6 players: **{game_info['full_date']} at {game_info['time']}**. Would you be able to make this time?",
+                        color=0xffa500
+                    )
+                    
+                    view = AskPlayerView(session, game_info, self)
+                    await user_to_dm.send(embed=embed, view=view)
+                    await channel.send(f"We couldn't find a time for all 6 players. A DM has been sent to {user_to_dm.mention} to ask if they can make a time that works for the other 5 players.")
+                return
+
+        # If no 6/6 or 5/6 times are found
         embed = discord.Embed(
-            title="🎮 Proposed Game Time",
-            description=f"**{best_date_info['full_date']} at {display_time}**",
-            color=0xffa500
+            title="❌ No Common Times Found",
+            description="Unfortunately, no times work for even 5 out of 6 players. Players should use `/my_schedule` to adjust their availability.",
+            color=0xff0000
         )
-        embed.add_field(
-            name="⚠️ Confirmation Required",
-            value="All players must confirm this time works for them using the buttons below.",
-            inline=False
-        )
-        embed.add_field(
-            name="Available Times Found",
-            value=self.format_available_times_interactive(common_times, session),
-            inline=False
-        )
-        
-        team1_role = discord.utils.get(channel.guild.roles, name=session.team1)
-        team2_role = discord.utils.get(channel.guild.roles, name=session.team2)
-        team1_mention = f"<@&{team1_role.id}>" if team1_role else session.team1
-        team2_mention = f"<@&{team2_role.id}>" if team2_role else session.team2
-
-        view = ConfirmationView(session, game_info, self)
-        message = await channel.send(f"{team1_mention} {team2_mention} Game Time: {best_date_info['full_date']} @ {display_time}", embed=embed, view=view)
-        view.message = message
+        await channel.send(embed=embed)
 
     @discord.slash_command(name="next_game_time", description="Propose the next available game time.")
     @commands.has_permissions(administrator=True)

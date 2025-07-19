@@ -1,0 +1,14 @@
+table_name: player_profiles
+columns:
+- rl_name
+- discord_username
+- total_goals
+- total_assists
+- total_saves
+- total_shots
+- games_played
+- wins
+- losses
+- win_percentage
+- rank_name
+- rank_division

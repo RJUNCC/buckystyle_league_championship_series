@@ -1,0 +1,57 @@
+[2025-07-19 09:51:24,651][Taipy][INFO] -  * Server starting on http://127.0.0.1:5000
+[2025-07-19 09:51:24,839][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET / HTTP/1.1" 200 2297 0.003999
+[2025-07-19 09:51:24,872][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /taipy-gui-deps.dll.js?2e5e009c67dfd8a6d450 HTTP/1.1" 304 231 0.001000
+[2025-07-19 09:51:24,874][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /taipy-gui.js?2e5e009c67dfd8a6d450 HTTP/1.1" 304 221 0.000717
+[2025-07-19 09:51:24,875][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/stylekit.css HTTP/1.1" 304 219 0.000000
+[2025-07-19 09:51:24,876][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /taipy-gui-dom.js?2e5e009c67dfd8a6d450 HTTP/1.1" 304 222 0.000000
+[2025-07-19 09:51:24,880][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /taipy-extension/taipy_gui_core/lib/taipy-gui-core.js?v=4.1.0 HTTP/1.1" 304 225 0.000998
+[2025-07-19 09:51:24,916][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/variables/colors.css HTTP/1.1" 304 217 0.001000
+[2025-07-19 09:51:24,917][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/base/typography.css HTTP/1.1" 304 221 0.001000
+[2025-07-19 09:51:24,918][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/base/base.css HTTP/1.1" 304 215 0.001000
+[2025-07-19 09:51:24,919][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/base/fontfaces.css HTTP/1.1" 304 218 0.001000
+[2025-07-19 09:51:24,920][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/variables/spacing.css HTTP/1.1" 304 216 0.001002
+[2025-07-19 09:51:24,921][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/elements/header.css HTTP/1.1" 200 1248 0.000999
+[2025-07-19 09:51:24,923][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/elements/card.css HTTP/1.1" 200 1237 0.001463
+[2025-07-19 09:51:24,923][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/variables/typography.css HTTP/1.1" 304 220 0.000000
+[2025-07-19 09:51:24,924][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/utilities/colors.css HTTP/1.1" 200 3411 0.000000
+[2025-07-19 09:51:24,925][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/utilities/typography.css HTTP/1.1" 200 1875 0.001006
+[2025-07-19 09:51:24,926][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/variables/shapes.css HTTP/1.1" 304 216 0.001000
+[2025-07-19 09:51:24,927][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/table.css HTTP/1.1" 304 215 0.001004
+[2025-07-19 09:51:24,928][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/chart.css HTTP/1.1" 304 215 0.000996
+[2025-07-19 09:51:24,930][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/date.css HTTP/1.1" 304 215 0.001001
+[2025-07-19 09:51:24,931][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/expandable.css HTTP/1.1" 304 220 0.001000
+[2025-07-19 09:51:24,932][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/image.css HTTP/1.1" 304 215 0.000998
+[2025-07-19 09:51:24,934][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/input.css HTTP/1.1" 304 215 0.001001
+[2025-07-19 09:51:24,935][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/metric.css HTTP/1.1" 304 216 0.000593
+[2025-07-19 09:51:24,936][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/navbar.css HTTP/1.1" 304 217 0.001131
+[2025-07-19 09:51:24,937][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/number.css HTTP/1.1" 304 217 0.000504
+[2025-07-19 09:51:24,937][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/slider.css HTTP/1.1" 304 217 0.000000
+[2025-07-19 09:51:24,938][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/selector.css HTTP/1.1" 304 218 0.000000
+[2025-07-19 09:51:24,939][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/status.css HTTP/1.1" 304 217 0.000000
+[2025-07-19 09:51:24,940][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/toggle.css HTTP/1.1" 304 217 0.000000
+[2025-07-19 09:51:24,941][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/file_download.css HTTP/1.1" 304 224 0.000000
+[2025-07-19 09:51:24,942][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/file_selector.css HTTP/1.1" 304 224 0.000000
+[2025-07-19 09:51:24,943][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/blocks/layout.css HTTP/1.1" 304 217 0.000000
+[2025-07-19 09:51:24,944][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/elements/container.css HTTP/1.1" 304 219 0.000000
+[2025-07-19 09:51:24,945][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/utilities/misc.css HTTP/1.1" 200 1660 0.000999
+[2025-07-19 09:51:24,946][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/variables/elements.css HTTP/1.1" 304 218 0.000000
+[2025-07-19 09:51:24,947][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/variables/misc.css HTTP/1.1" 304 213 0.000998
+[2025-07-19 09:51:24,948][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/controls/button.css HTTP/1.1" 304 217 0.001000
+[2025-07-19 09:51:24,949][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/elements/sidebar.css HTTP/1.1" 200 1408 0.001004
+[2025-07-19 09:51:24,950][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:24] "GET /stylekit/utilities/spacing.css HTTP/1.1" 200 5893 0.000998
+[2025-07-19 09:51:25,042][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /677.taipy-gui.js HTTP/1.1" 200 1639 0.000999
+[2025-07-19 09:51:25,046][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /socket.io/?EIO=4&transport=polling&t=b3kvirwn HTTP/1.1" 200 275 0.000998
+[2025-07-19 09:51:25,054][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /favicon.png HTTP/1.1" 200 299 0.001000
+[2025-07-19 09:51:25,055][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /favicon.png HTTP/1.1" 200 299 0.001178
+[2025-07-19 09:51:25,099][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "POST /socket.io/?EIO=4&transport=polling&t=b3kwt3h7&sid=ZDIbbxR80xSwV7HFAAAA HTTP/1.1" 200 195 0.001000
+[2025-07-19 09:51:25,099][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /socket.io/?EIO=4&transport=polling&t=b3kwubfv&sid=ZDIbbxR80xSwV7HFAAAA HTTP/1.1" 200 189 0.000000
+[2025-07-19 09:51:25,108][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /socket.io/?EIO=4&transport=polling&t=b3kxeumj&sid=ZDIbbxR80xSwV7HFAAAA HTTP/1.1" 200 157 0.000000
+[2025-07-19 09:51:25,109][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "POST /socket.io/?EIO=4&transport=polling&t=b3kxednx&sid=ZDIbbxR80xSwV7HFAAAA HTTP/1.1" 200 195 0.000999
+[2025-07-19 09:51:25,119][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /taipy-init?client_id=20250718115233783764-0.2817689709975558&v=4.1.0 HTTP/1.1" 200 195 0.003001
+[2025-07-19 09:51:25,126][root][WARNING] - [1;31m
+--- 1 warning(s) were found for page '/'  ---
+ - Warning 1: selector.on_change: on_change_player is not a function.
+----------------------------------------------[0m
+
+[2025-07-19 09:51:25,127][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /taipy-jsx/TaiPy_root_page?client_id=20250718115233783764-0.2817689709975558&v=4.1.0 HTTP/1.1" 200 6182 0.003001
+[2025-07-19 09:51:25,166][geventwebsocket.handler][INFO] - 127.0.0.1 - - [2025-07-19 09:51:25] "GET /236.taipy-gui.js HTTP/1.1" 304 225 0.000000

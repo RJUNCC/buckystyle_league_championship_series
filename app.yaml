@@ -1,4 +1,4 @@
-name: discord-bot
+name: blcs-app
 services:
 - name: bot
   dockerfile_path: discord_bot/Dockerfile
@@ -17,6 +17,24 @@ services:
   - key: DISCORD_TOKEN
     scope: RUN_TIME
     type: SECRET
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    type: SECRET
+
+- name: dashboard
+  dockerfile_path: dashboard/Dockerfile
+  source_dir: /  # Use the entire repository as context
+  github:
+    repo: RJUNCC/buckystyle_league_championship_series
+    branch: main
+    deploy_on_push: true
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 8080
+  envs:
+  - key: PORT
+    value: "8080"
+    scope: RUN_TIME
   - key: DATABASE_URL
     scope: RUN_TIME
     type: SECRET
