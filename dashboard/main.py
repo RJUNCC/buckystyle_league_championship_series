@@ -8,8 +8,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 # --- Path setup for Docker ---
-# In Docker, the working directory is /app, and shared is copied to /app/shared
-PROJECT_ROOT = Path(__file__).resolve().parent  # /app
+PROJECT_ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = PROJECT_ROOT / "shared" / "config" / "conf"
 
 # --- Database Connection ---
@@ -112,16 +111,26 @@ def create_app(cfg: DictConfig):
 @hydra.main(version_base=None, config_path="shared/config/conf", config_name="dashboard_config")
 def main(cfg: DictConfig):
     """Main function to set up and run the Taipy GUI."""
+    
+    # DEBUG: Print environment info
+    print("=== ENVIRONMENT DEBUG ===")
+    print(f"PORT: {os.environ.get('PORT', 'NOT SET')}")
+    print(f"DATABASE_URL: {'SET' if os.environ.get('DATABASE_URL') else 'NOT SET'}")
+    
     gui, context = create_app(cfg)
     
-    # Production settings for DigitalOcean
+    # CRITICAL FIX: Force host to 0.0.0.0
     port = int(os.environ.get('PORT', 8080))
-    host = '0.0.0.0'
+    host = '0.0.0.0'  # This MUST be 0.0.0.0, not localhost
+    
+    print(f"=== STARTING SERVER ===")
+    print(f"Host: {host}")
+    print(f"Port: {port}")
     
     # Run the GUI with the context variables
     gui.run(
         title="BLCS Player Dashboard",
-        host=host,
+        host=host,  # CRITICAL: This must be 0.0.0.0
         port=port,
         debug=False,
         **context
