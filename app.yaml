@@ -9,11 +9,8 @@ services:
     deploy_on_push: true
   instance_count: 1
   instance_size_slug: basic-xxs
-  http_port: 8080
+  # Remove http_port for Discord bot - it's not a web service
   envs:
-  - key: PORT
-    value: "8080"
-    scope: RUN_TIME
   - key: DISCORD_TOKEN
     scope: RUN_TIME
     type: SECRET
@@ -30,7 +27,7 @@ services:
     deploy_on_push: true
   instance_count: 1
   instance_size_slug: basic-xxs
-  http_port: 8080
+  http_port: 8080  # Only the dashboard needs HTTP access
   envs:
   - key: PORT
     value: "8080"
