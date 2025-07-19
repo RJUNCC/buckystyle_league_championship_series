@@ -7,8 +7,9 @@ from omegaconf import DictConfig
 from dotenv import load_dotenv
 from pathlib import Path
 
-# --- Path setup ---
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# --- Path setup for Docker ---
+# In Docker, the working directory is /app, and shared is copied to /app/shared
+PROJECT_ROOT = Path(__file__).resolve().parent  # /app
 CONFIG_PATH = PROJECT_ROOT / "shared" / "config" / "conf"
 
 # --- Database Connection ---
@@ -59,8 +60,10 @@ def get_data_from_db(cfg: DictConfig):
 
 def create_app(cfg: DictConfig):
     """Create and return the Taipy app with all variables in proper scope."""
-    # Load environment variables from .env file
-    load_dotenv(PROJECT_ROOT / ".env")
+    # Load environment variables from .env file (if it exists)
+    env_file = PROJECT_ROOT / ".env"
+    if env_file.exists():
+        load_dotenv(env_file)
 
     # Fetch initial data
     initial_data = get_data_from_db(cfg)
@@ -106,21 +109,21 @@ def create_app(cfg: DictConfig):
         'on_change_player': on_change_player
     }
 
-@hydra.main(version_base=None, config_path=CONFIG_PATH.as_posix(), config_name="dashboard_config")
+@hydra.main(version_base=None, config_path="shared/config/conf", config_name="dashboard_config")
 def main(cfg: DictConfig):
     """Main function to set up and run the Taipy GUI."""
     gui, context = create_app(cfg)
     
-    # Get port from environment (DigitalOcean will set this)
+    # Production settings for DigitalOcean
     port = int(os.environ.get('PORT', 5000))
-    host = '0.0.0.0'  # Important for DigitalOcean
+    host = '0.0.0.0'
     
     # Run the GUI with the context variables
     gui.run(
         title="BLCS Player Dashboard",
         host=host,
         port=port,
-        debug=False,  # Set to False for production
+        debug=False,
         **context
     )
 
