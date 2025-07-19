@@ -115,7 +115,7 @@ def main(cfg: DictConfig):
     gui, context = create_app(cfg)
     
     # Production settings for DigitalOcean
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8080))
     host = '0.0.0.0'
     
     # Run the GUI with the context variables
