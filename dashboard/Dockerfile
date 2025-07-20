@@ -1,23 +1,28 @@
-FROM python:3.12-slim
+# Use a consistent Python version
+FROM python:3.11-slim
+
+# Install uv
+RUN pip install uv
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first to leverage Docker caching
-COPY dashboard/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy only the files needed for dependency installation first to leverage caching
+COPY dashboard/pyproject.toml dashboard/uv.lock ./dashboard/
+COPY shared/config/conf/dashboard_config.yaml ./shared/config/conf/
 
-# Copy the dashboard and shared code into the container
-COPY ./dashboard /app
+# Install dependencies using uv
+RUN uv pip sync dashboard/pyproject.toml --no-cache
+
+# Copy the rest of the application code
+COPY ./dashboard /app/dashboard
 COPY ./shared /app/shared
 
-# Create data directory
-RUN mkdir -p /app/data
+# Set the host to 0.0.0.0 so it's accessible outside the container
+ENV TAIPY_GUI_HOST=0.0.0.0
 
-# 192.9.200(network) .23(host) :22(port [22 is standrd service port for ssh]) for v4 IP address
-# tels docker that container should listen to traffic on this port
-# so docker will listen for on port 8080 for TCP connections since TCP is default
-EXPOSE 8080 
+# Expose the port the app will run on
+EXPOSE 8080
 
-# Run the dashboard
-CMD ["python", "main.py"]
+# Run the dashboard using the correct entrypoint
+CMD ["python", "dashboard/main.py"]

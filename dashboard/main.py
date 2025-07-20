@@ -7,8 +7,9 @@ from omegaconf import DictConfig
 from dotenv import load_dotenv
 from pathlib import Path
 
-# --- Path setup for Docker ---
-PROJECT_ROOT = Path(__file__).resolve().parent
+# --- Path setup ---
+# This will be /app in Docker, and the project root locally
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = PROJECT_ROOT / "shared" / "config" / "conf"
 
 # --- Database Connection ---
