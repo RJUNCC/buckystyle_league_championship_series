@@ -129,11 +129,11 @@ def main(cfg: DictConfig):
     print(f"Port: {port}")
     
     # Run the GUI with the context variables
+    port = int(os.environ.get("PORT", 8080))
     gui.run(
         title="BLCS Player Dashboard",
-        host=host,  # CRITICAL: This must be 0.0.0.0
+        host="0.0.0.0",
         port=port,
-        debug=False,
         **context
     )
 
