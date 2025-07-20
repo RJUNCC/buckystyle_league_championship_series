@@ -1,4 +1,3 @@
-# Use a consistent Python version
 FROM python:3.11-slim
 
 # Install uv
@@ -7,18 +6,21 @@ RUN pip install --no-cache-dir uv
 # Set working directory
 WORKDIR /app
 
-# Copy dependency definition files first
+# Copy dependency files
 COPY dashboard/pyproject.toml ./
 COPY dashboard/uv.lock ./
 
-# Install dependencies using uv. This layer is cached as long as the lockfile doesn't change.
-RUN uv pip sync pyproject.toml --no-cache
+# Install dependencies using --system flag for Docker
+RUN uv pip sync pyproject.toml --no-cache --system
 
-# Copy the rest of the application code
-COPY . .
+# Copy the dashboard and shared code into the container
+COPY ./dashboard /app
+COPY ./shared /app/shared
 
-# Expose the port the app will run on
+# Create data directory
+RUN mkdir -p /app/data
+
 EXPOSE 8080
 
-# Run the dashboard. The script is now at /app/dashboard/main.py
-CMD ["python", "dashboard/main.py"]
+# Run the dashboard
+CMD ["python", "main.py"]
