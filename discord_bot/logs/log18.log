@@ -1,7 +1,67 @@
-Component Issues
-
-    dashboard deploy failed because your container did not respond to health checks. If a health check is failing, that means that external traffic is not reaching your service at the expected HTTP route.
-
-Runtime logs:
-   [2025-07-19 16:23:28] ERROR failed health checks after 14 attempts with error Readiness probe failed: dial tcp 10.244.16.18:8080: connect: connection refused
-[] 
+[2025-07-20 15:04:57] ╭──────────── git repo clone ───────────╼
+[2025-07-20 15:04:57] │  › fetching app source code
+[2025-07-20 15:04:57] │ => Selecting branch "main"
+[2025-07-20 15:04:57] │ => Checking out commit "f1a019140e5d9d1997e196efb4c26276919feb36"
+[2025-07-20 15:04:57] │ 
+[2025-07-20 15:04:57] │  ✔ cloned repo to /.app_platform_workspace
+[2025-07-20 15:04:57] ╰────────────────────────────────────────╼
+[2025-07-20 15:04:57] 
+[2025-07-20 15:04:58]  › configuring build-time app environment variables:
+[2025-07-20 15:04:58]      DATABASE_URL
+[2025-07-20 15:04:58] ╭──────────── dockerfile build ───────────╼
+[2025-07-20 15:04:58] │  › using dockerfile /.app_platform_workspace/dashboard/Dockerfile
+[2025-07-20 15:04:58] │  › using build context /.app_platform_workspace//
+[2025-07-20 15:04:58] │ 
+[2025-07-20 15:04:58] │ INFO[0000] Retrieving image manifest python:3.11-slim   
+[2025-07-20 15:04:58] │ INFO[0000] Retrieving image library/python:3.11-slim from registry mirror <registry-uri-0> 
+[2025-07-20 15:04:58] │ INFO[0000] Retrieving image manifest python:3.11-slim   
+[2025-07-20 15:04:58] │ INFO[0000] Returning cached image manifest              
+[2025-07-20 15:04:58] │ INFO[0000] Built cross stage deps: map[]                
+[2025-07-20 15:04:58] │ INFO[0000] Retrieving image manifest python:3.11-slim   
+[2025-07-20 15:04:58] │ INFO[0000] Returning cached image manifest              
+[2025-07-20 15:04:58] │ INFO[0000] Retrieving image manifest python:3.11-slim   
+[2025-07-20 15:04:58] │ INFO[0000] Returning cached image manifest              
+[2025-07-20 15:04:58] │ INFO[0000] Executing 0 build triggers                   
+[2025-07-20 15:04:58] │ INFO[0000] Building stage 'python:3.11-slim' [idx: '0', base-idx: '-1'] 
+[2025-07-20 15:04:58] │ INFO[0000] Checking for cached layer <registry-uri-1> 
+[2025-07-20 15:04:59] │ INFO[0000] No cached layer found for cmd RUN pip install uv 
+[2025-07-20 15:04:59] │ INFO[0000] Cmd: EXPOSE                                  
+[2025-07-20 15:04:59] │ INFO[0000] Adding exposed port: 8080/tcp                
+[2025-07-20 15:04:59] │ INFO[0000] Unpacking rootfs as cmd RUN pip install uv requires it. 
+[2025-07-20 15:05:01] │ INFO[0002] Initializing snapshotter ...                 
+[2025-07-20 15:05:01] │ INFO[0002] Taking snapshot of full filesystem...        
+[2025-07-20 15:05:02] │ INFO[0003] RUN pip install uv                           
+[2025-07-20 15:05:02] │ INFO[0003] Cmd: /bin/sh                                 
+[2025-07-20 15:05:02] │ INFO[0003] Args: [-c pip install uv]                    
+[2025-07-20 15:05:02] │ INFO[0003] Running: [/bin/sh -c pip install uv]         
+[2025-07-20 15:05:04] │ Collecting uv
+[2025-07-20 15:05:04] │   Downloading uv-0.8.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (11 kB)
+[2025-07-20 15:05:04] │ Downloading uv-0.8.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.7 MB)
+[2025-07-20 15:05:04] │    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.7/18.7 MB 29.0 MB/s eta 0:00:00
+[2025-07-20 15:05:05] │ Installing collected packages: uv
+[2025-07-20 15:05:05] │ Successfully installed uv-0.8.0
+[2025-07-20 15:05:05] │ WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+[2025-07-20 15:05:05] │ 
+[2025-07-20 15:05:05] │ [notice] A new release of pip is available: 24.0 -> 25.1.1
+[2025-07-20 15:05:05] │ [notice] To update, run: pip install --upgrade pip
+[2025-07-20 15:05:05] │ INFO[0006] Taking snapshot of files...                  
+[2025-07-20 15:05:08] │ INFO[0009] WORKDIR /app                                 
+[2025-07-20 15:05:08] │ INFO[0009] Cmd: workdir                                 
+[2025-07-20 15:05:08] │ INFO[0009] Changed working directory to /app            
+[2025-07-20 15:05:08] │ INFO[0009] Creating directory /app with uid -1 and gid -1 
+[2025-07-20 15:05:08] │ INFO[0009] Taking snapshot of files...                  
+[2025-07-20 15:05:08] │ INFO[0009] COPY dashboard/pyproject.toml dashboard/uv.lock ./dashboard/ 
+[2025-07-20 15:05:08] │ INFO[0009] Taking snapshot of files...                  
+[2025-07-20 15:05:08] │ INFO[0009] COPY shared/config/conf/dashboard_config.yaml ./shared/config/conf/ 
+[2025-07-20 15:05:08] │ INFO[0009] Taking snapshot of files...                  
+[2025-07-20 15:05:08] │ INFO[0009] RUN uv pip sync dashboard/pyproject.toml --no-cache 
+[2025-07-20 15:05:08] │ INFO[0009] Cmd: /bin/sh                                 
+[2025-07-20 15:05:08] │ INFO[0009] Args: [-c uv pip sync dashboard/pyproject.toml --no-cache] 
+[2025-07-20 15:05:08] │ INFO[0009] Running: [/bin/sh -c uv pip sync dashboard/pyproject.toml --no-cache] 
+[2025-07-20 15:05:08] │ error: No virtual environment found; run `uv venv` to create an environment, or pass `--system` to install into a non-virtual environment
+[2025-07-20 15:05:08] │ error building image: error building stage: failed to execute command: waiting for process to exit: exit status 2
+[2025-07-20 15:05:08] │ 
+[2025-07-20 15:05:08] │ command exited with code 2
+[2025-07-20 15:05:08] │ 
+[2025-07-20 15:05:08] │  ✘ build failed
+[]

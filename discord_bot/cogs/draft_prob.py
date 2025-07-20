@@ -257,6 +257,7 @@ class DraftLotteryCog(commands.Cog):
         self.active_sessions: Dict[int, DBSchedulingSession] = {}
         self.background_task = None
         self.weekly_schedule_reminder.start()
+        self.dm_unconfirmed_players.start()
     
     async def cog_load(self):
         try:
@@ -306,6 +307,13 @@ class DraftLotteryCog(commands.Cog):
         if now.weekday() == 6 and now.hour == 12:
             active_sessions = get_all_active_sessions()
             for session in active_sessions:
+                # --- FIX: Update session for the new week ---
+                session.schedule_dates = session.generate_next_week()  # Generate new dates
+                session.proposed_times = []  # Clear old proposals
+                session.confirmations = {}   # Clear old confirmations
+                save_session(session)        # Save changes to the database
+                # --- END FIX ---
+
                 channel = self.bot.get_channel(int(session.channel_id))
                 if channel:
                     team1_role = discord.utils.get(channel.guild.roles, name=session.team1)
@@ -313,6 +321,45 @@ class DraftLotteryCog(commands.Cog):
                     team1_mention = f"<@&{team1_role.id}>" if team1_role else session.team1
                     team2_mention = f"<@&{team2_role.id}>" if team2_role else session.team2
                     await channel.send(f"{team1_mention} {team2_mention} it's time to schedule your game for this week! Please use `/my_schedule` to set your availability.")
+
+    @tasks.loop(hours=4)
+    async def dm_unconfirmed_players(self):
+        """Periodically sends a DM reminder to players who haven't confirmed a proposed game time."""
+        active_sessions = get_all_active_sessions()
+        for session in active_sessions:
+            if not session.proposed_times:
+                continue  # Skip if no time has been proposed yet
+
+            all_player_ids = set(session.player_schedules.keys())
+            confirmed_player_ids = {uid for uid, confirmed in session.confirmations.items() if confirmed}
+            unconfirmed_player_ids = all_player_ids - confirmed_player_ids
+
+            if not unconfirmed_player_ids:
+                continue # All players have confirmed
+
+            channel = self.bot.get_channel(int(session.channel_id))
+            if not channel:
+                continue
+
+            for user_id in unconfirmed_player_ids:
+                try:
+                    user = await self.bot.fetch_user(int(user_id))
+                    if user:
+                        embed = discord.Embed(
+                            title="🗓️ Game Confirmation Reminder",
+                            description=f"Hi {user.display_name}! Just a friendly reminder to confirm the proposed game time for **{session.team1} vs {session.team2}** in the #{channel.name} channel.",
+                            color=0xffa500
+                        )
+                        embed.add_field(name="Action Needed", value=f"Please go to the #{channel.name} channel to click '✅ Confirm' or '❌ Can't Make It'.")
+                        await user.send(embed=embed)
+                except discord.Forbidden:
+                    print(f"Could not send DM to user {user_id} - DMs are likely disabled.")
+                except Exception as e:
+                    print(f"Error sending DM to user {user_id}: {e}")
+    
+    @dm_unconfirmed_players.before_loop
+    async def before_dm_unconfirmed_players(self):
+        await self.bot.wait_until_ready()
 
     def get_pick_emoji(self, pick: int) -> str:
         if pick <= 2:

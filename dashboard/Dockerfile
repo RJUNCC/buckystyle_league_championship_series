@@ -2,27 +2,23 @@
 FROM python:3.11-slim
 
 # Install uv
-RUN pip install uv
+RUN pip install --no-cache-dir uv
 
 # Set working directory
 WORKDIR /app
 
-# Copy only the files needed for dependency installation first to leverage caching
-COPY dashboard/pyproject.toml dashboard/uv.lock ./dashboard/
-COPY shared/config/conf/dashboard_config.yaml ./shared/config/conf/
+# Copy dependency definition files first
+COPY dashboard/pyproject.toml ./
+COPY dashboard/uv.lock ./
 
-# Install dependencies using uv
-RUN uv pip sync dashboard/pyproject.toml --no-cache
+# Install dependencies using uv. This layer is cached as long as the lockfile doesn't change.
+RUN uv pip sync pyproject.toml --no-cache
 
 # Copy the rest of the application code
-COPY ./dashboard /app/dashboard
-COPY ./shared /app/shared
-
-# Set the host to 0.0.0.0 so it's accessible outside the container
-ENV TAIPY_GUI_HOST=0.0.0.0
+COPY . .
 
 # Expose the port the app will run on
 EXPOSE 8080
 
-# Run the dashboard using the correct entrypoint
+# Run the dashboard. The script is now at /app/dashboard/main.py
 CMD ["python", "dashboard/main.py"]
