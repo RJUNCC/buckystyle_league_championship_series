@@ -1,5 +1,5 @@
 taipy==4.1.0
 sqlalchemy
 psycopg2-binary
-hydra-core
 omegaconf
+pyyaml

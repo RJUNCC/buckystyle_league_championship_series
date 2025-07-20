@@ -1,44 +1,21 @@
 import os
 import sys
 import traceback
+import yaml
 
 print("=== APP STARTING ===")
 print(f"Python version: {sys.version}")
-print(f"Working directory: {os.getcwd()}")
-print(f"Files in current directory: {os.listdir('.')}")
 
 try:
     import pandas as pd
-    print("✅ pandas imported successfully")
-except ImportError as e:
-    print(f"❌ pandas import failed: {e}")
-
-try:
     from sqlalchemy import create_engine
-    print("✅ sqlalchemy imported successfully")
-except ImportError as e:
-    print(f"❌ sqlalchemy import failed: {e}")
-
-try:
     from taipy.gui import Gui, Markdown
-    print("✅ taipy imported successfully")
-except ImportError as e:
-    print(f"❌ taipy import failed: {e}")
-
-try:
-    import hydra
-    from omegaconf import DictConfig
-    print("✅ hydra imported successfully")
-except ImportError as e:
-    print(f"❌ hydra import failed: {e}")
-
-try:
     from dotenv import load_dotenv
-    print("✅ dotenv imported successfully")
+    from pathlib import Path
+    print("✅ All imports successful")
 except ImportError as e:
-    print(f"❌ dotenv import failed: {e}")
-
-from pathlib import Path
+    print(f"❌ Import failed: {e}")
+    sys.exit(1)
 
 # --- Path setup for Docker ---
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -46,10 +23,25 @@ CONFIG_PATH = PROJECT_ROOT / "shared" / "config" / "conf"
 
 print(f"PROJECT_ROOT: {PROJECT_ROOT}")
 print(f"CONFIG_PATH: {CONFIG_PATH}")
-print(f"Config path exists: {CONFIG_PATH.exists()}")
 
-if CONFIG_PATH.exists():
-    print(f"Files in config dir: {list(CONFIG_PATH.iterdir())}")
+# Load config manually instead of using Hydra
+def load_config():
+    """Load configuration from YAML file manually."""
+    config_file = CONFIG_PATH / "dashboard_config.yaml"
+    print(f"Loading config from: {config_file}")
+    
+    if not config_file.exists():
+        print(f"❌ Config file not found: {config_file}")
+        return None
+    
+    try:
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+        print(f"✅ Config loaded: {config}")
+        return config
+    except Exception as e:
+        print(f"❌ Error loading config: {e}")
+        return None
 
 # --- Database Connection ---
 def get_database_url():
@@ -59,7 +51,7 @@ def get_database_url():
         db_url = db_url.replace('postgres://', 'postgresql://', 1)
     return db_url
 
-def get_data_from_db(cfg: DictConfig):
+def get_data_from_db(config):
     """Fetches player statistics from the database using a JOIN."""
     db_url = get_database_url()
     if not db_url:
@@ -68,10 +60,10 @@ def get_data_from_db(cfg: DictConfig):
 
     try:
         engine = create_engine(db_url)
-        stats_table = cfg.stats_table_name
-        player_mappings = cfg.player_mapping_table_name
-        columns = ", ".join([f"{col}" for col in cfg.columns])
-        print(columns)
+        stats_table = config['stats_table_name']
+        player_mappings = config['player_mapping_table_name']
+        columns = ", ".join([f"{col}" for col in config['columns']])
+        print(f"Columns: {columns}")
         
         query = f"""
         SELECT
@@ -97,7 +89,7 @@ def get_data_from_db(cfg: DictConfig):
         print(f"Error fetching data from database: {e}")
         return pd.DataFrame()
 
-def create_app(cfg: DictConfig):
+def create_app(config):
     """Create and return the Taipy app with all variables in proper scope."""
     print("=== CREATE APP STARTING ===")
     
@@ -107,7 +99,7 @@ def create_app(cfg: DictConfig):
         load_dotenv(env_file)
 
     # Fetch initial data
-    initial_data = get_data_from_db(cfg)
+    initial_data = get_data_from_db(config)
     player_data = initial_data.copy()
     
     # Populate the player list for the dropdown using cleaned names
@@ -151,8 +143,7 @@ def create_app(cfg: DictConfig):
         'on_change_player': on_change_player
     }
 
-@hydra.main(version_base=None, config_path="shared/config/conf", config_name="dashboard_config")
-def main(cfg: DictConfig):
+def main():
     """Main function to set up and run the Taipy GUI."""
     
     print("=== MAIN FUNCTION STARTING ===")
@@ -163,8 +154,14 @@ def main(cfg: DictConfig):
     print(f"DATABASE_URL: {'SET' if os.environ.get('DATABASE_URL') else 'NOT SET'}")
     
     try:
+        print("=== LOADING CONFIG ===")
+        config = load_config()
+        if not config:
+            print("❌ Failed to load config")
+            sys.exit(1)
+            
         print("=== CREATING APP ===")
-        gui, context = create_app(cfg)
+        gui, context = create_app(config)
         
         # CRITICAL FIX: Force host to 0.0.0.0
         port = int(os.environ.get('PORT', 8080))
