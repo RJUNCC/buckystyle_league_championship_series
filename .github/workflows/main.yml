@@ -10,47 +10,34 @@ on:
         required: false
 
 jobs:
-  run-scripts:
+  run-daily-task:
+    name: Run Daily Data Processing
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          # - "3.9"
-          # - "3.10"
-          - "3.11"
-          # - "3.12"
-
-    permissions: write-all
-
+    # Ensure this job only runs on the schedule, not on every push
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install astral uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v1
         with:
-          python-version: ${{ matrix.python-version}}
+          python-version: '3.11'
 
-      - name: Install project
-        run: uv sync --all-extras --dev
+      - name: Install project dependencies
+        run: uv pip sync --all-extras
 
-      - name: Setup python
-        run: uv python install
-
-      - name: Fetch data, filter data, and create images and stats
+      - name: Fetch, process data, and create images
         env:
           TOKEN: ${{ secrets.TOKEN }}
           CURRENT_GROUP_ID: ${{ secrets.CURRENT_GROUP_ID }}
-          TRIGGER_TYPE: ${{ github.event.inputs.trigger-type }}
-
         run: |
-          uv run --with 'matplotlib' scripts/process.py
-
-      - name: Send images to discord channel
+          uv run python scripts/process.py
+      
+      - name: Send images to Discord
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          TOKEN: ${{ secrets.TOKEN }}
-          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }} # Use your Discord token secret here
-          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }} # Use your Discord token secret here
+          PLAYER_CHANNEL_ID: ${{ secrets.PLAYER_CHANNEL_ID }}
+          TEAM_CHANNEL_ID: ${{ secrets.TEAM_CHANNEL_ID }}
         run: |
-          uv run discord_bot/cogs/send_images.py
+          uv run python discord_bot/cogs/send_images.py

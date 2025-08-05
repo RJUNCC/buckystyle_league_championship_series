@@ -309,9 +309,10 @@ class DraftLotteryCog(commands.Cog):
             for session in active_sessions:
                 # --- FIX: Update session for the new week ---
                 session.schedule_dates = session.generate_next_week()  # Generate new dates
-                session.proposed_times = []  # Clear old proposals
-                session.confirmations = {}   # Clear old confirmations
-                save_session(session)        # Save changes to the database
+                session.player_schedules = {} # Clear all submitted schedules
+                session.proposed_times = []   # Clear old proposals
+                session.confirmations = {}    # Clear old confirmations
+                save_session(session)         # Save changes to the database
                 # --- END FIX ---
 
                 channel = self.bot.get_channel(int(session.channel_id))

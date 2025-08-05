@@ -10,19 +10,14 @@ import random
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from omegaconf import OmegaConf
+import numpy as np
+import pandas as pd
+from omegaconf import DictConfig, OmegaConf
+import hydra
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Try to import optional dependencies
-try:
-    import numpy as np
-    import pandas as pd
-    PANDAS_AVAILABLE = True
-except ImportError:
-    PANDAS_AVAILABLE = False
-    logger.warning("pandas/numpy not available - some features disabled")
 
 try:
     from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, BigInteger
@@ -599,8 +594,6 @@ class BLCSXStatsCog(commands.Cog):
             if percentile >= data['threshold']:
                 return data
         return self.performance_indicators['terrible']
-
-    
 
     @discord.slash_command(name="blcs_profile", description="Show comprehensive BLCSX player profile with rankings")
     async def profile_command(self, ctx, player: discord.Member = None):
@@ -1387,6 +1380,59 @@ class BLCSXStatsCog(commands.Cog):
                 color=discord.Color.red()
             )
             await ctx.followup.send(embed=embed, ephemeral=True)
+
+    @discord.slash_command(name="all_player_stats", description="Show all the stats for players")
+    @commands.has_permissions(administrator=True)
+    async def all_player_stats(self, ctx):
+        await ctx.response.defer()
+
+        try:
+            import matplotlib.pyplot as plt
+            import matplotlib.patches as patches
+            from io import BytesIO
+            cfg = OmegaConf.load("../../shared/config/conf/main.yaml")
+            all_players = self.db.get_all_player_statistics()
+            df = pd.DataFrame(all_players)
+            channel_id = cfg.channel.player_stats_id
+            stats_channel = self.bot.get_channel(channel_id)
+            fig, ax = plt.subplots(figsize=(16, max(8, df.shape[0]) * 0.4))
+            ax.axis('tight')
+            
+            table = ax.table(cellText=df.values,
+                             colLabels=df.columns,
+                             cellLoc='center',
+                             loc='center',
+                             bbox=[0,0,1,1])
+            
+            table.auto_set_font_size(False)
+            table.set_fontsize(10)
+            table.scale(1, 2)
+
+            for i in range(1, len(df) + 1):
+                color = '#f0f0f0' if i % 2 == 0 else 'white'
+            for j in range(len(df.columns)):
+                table[(i, j)].set_facecolor(color)
+
+            plt.title("BLCSX Player Statistics", fontsize=16, fontweight='bold', pad=20)
+
+            img_buffer = BytesIO()
+            plt.savefig(img_buffer, format="png", dpi=300, bbox_inches='tight')
+            img_buffer.seek(0)
+            plt.close()
+
+            file = discord.File(img_buffer, filename='blcsx_player_stats.png')
+
+            embed = discord.Embed(
+                title="BLCSX Player Statistics",
+                description=f"Complete statistics for all {len(df)} players",
+                color=discord.Color.yellow()
+            )
+
+            await stats_channel.send(embed=embed, file=file)
+            await ctx.followup.send("Player stats table sent")
+        except Exception as e:
+            logger.error(f"Error in all_player_stats command: {e}")
+            await ctx.followup.send(f"Error: {str(e)}")
 
     @discord.slash_command(name="blcs_leaderboard", description="Show the performance score leaderboard")
     async def leaderboard_command(self, ctx, limit: int = 10):

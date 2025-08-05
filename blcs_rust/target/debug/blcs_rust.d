@@ -1,0 +1,1 @@
+D:\ANNACONDA\projects\buckystyle_league_championship_series\buckystyle_league_championship_series\blcs_rust\target\debug\blcs_rust.exe: D:\ANNACONDA\projects\buckystyle_league_championship_series\buckystyle_league_championship_series\blcs_rust\src\main.rs

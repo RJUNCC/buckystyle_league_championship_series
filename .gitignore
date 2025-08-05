@@ -46,3 +46,4 @@ rust_predictions/target/
 /.github/workflows/send_updates.yml
 # /images\"secrets.yaml\" 
 /secrets.yaml
+/cpp/include

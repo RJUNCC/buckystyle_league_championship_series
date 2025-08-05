@@ -49,3 +49,6 @@ data_files:
 group_paths:
   all_blcs_season_2_matches_link: "all-blcs-2-matches-reg-playoffs-ajmebwvz3b"
   blcs_season_5: blcsx-1-yp2y1hqpvg
+
+channel:
+  player_stats_id: 1344902861904937072
