@@ -1384,6 +1384,10 @@ class BLCSXStatsCog(commands.Cog):
     @discord.slash_command(name="all_player_stats", description="Show all the stats for players")
     @commands.has_permissions(administrator=True)
     async def all_player_stats(self, ctx):
+        @hydra.main(version_base=None, config_path="../../shared/config/conf", config_name="main")
+        def get_config(cfg: DictConfig):
+            return cfg
+        
         await ctx.response.defer()
 
         try:
@@ -1394,9 +1398,10 @@ class BLCSXStatsCog(commands.Cog):
 
             WORKSPACE_PATH = Path().cwd().parent.parent.absolute()
             try:
-                cfg = OmegaConf.load(WORKSPACE_PATH / "shared" / "config" / "conf" / "main.yaml")
+                cfg = get_config()
             except Exception as e:
                 logger.error("Can not find config yaml file for channel id")
+                logger.error(f"Error: {e}")
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
             channel_id = cfg.channel.player_stats_id
