@@ -1415,8 +1415,12 @@ class BLCSXStatsCog(commands.Cog):
             ]]
 
             df["discord_username"] = df['discord_username'].str.split("|")[0]
-            for col in df.select_dtypes(include="number").columns:
-                df[col] = df[col].round(2)
+
+            try:
+                for col in df.select_dtypes(include="number").columns:
+                    df[col] = df[col].round(2)
+            except Exception as e:
+                logger.error(f"Error rounding values: {e}")
 
 
             channel_id = cfg.channel.player_stats_id
