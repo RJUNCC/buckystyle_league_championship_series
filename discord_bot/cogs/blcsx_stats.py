@@ -1414,7 +1414,7 @@ class BLCSXStatsCog(commands.Cog):
                 "demos_taken_per_game",
             ]]
             try:
-                df["discord_username"] = df['discord_username'].str.split("|")[0]
+                df["discord_username"] = df['discord_username'].apply(lambda x: x.split("|")[0])
             except Exception as e:
                 logger.error(f"Error splitting and getting first index: {e}")
 
@@ -1435,6 +1435,9 @@ class BLCSXStatsCog(commands.Cog):
                              cellLoc='center',
                              loc='center',
                              bbox=[0,0,1,1])
+            
+            ax.tick_params(axis='x', which='both', bottom=False, top=False, labelBottom=False)
+            ax.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
             
             table.auto_set_font_size(False)
             table.set_fontsize(10)
