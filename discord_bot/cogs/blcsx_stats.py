@@ -1390,7 +1390,13 @@ class BLCSXStatsCog(commands.Cog):
             import matplotlib.pyplot as plt
             import matplotlib.patches as patches
             from io import BytesIO
-            cfg = OmegaConf.load("../../shared/config/conf/main.yaml")
+            from pathlib import Path
+
+            WORKSPACE_PATH = Path().cwd().parent.parent
+            try:
+                cfg = OmegaConf.load(WORKSPACE_PATH / "shared" / "config" / "conf" / "main.yaml")
+            except Exception as e:
+                logger.error("Can not find config yaml file for channel id")
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
             channel_id = cfg.channel.player_stats_id
