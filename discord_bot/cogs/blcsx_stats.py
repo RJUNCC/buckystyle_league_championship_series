@@ -1392,7 +1392,7 @@ class BLCSXStatsCog(commands.Cog):
             from io import BytesIO
             from pathlib import Path
 
-            WORKSPACE_PATH = Path().cwd().parent.parent
+            WORKSPACE_PATH = Path().cwd().parent.parent.absolute()
             try:
                 cfg = OmegaConf.load(WORKSPACE_PATH / "shared" / "config" / "conf" / "main.yaml")
             except Exception as e:
