@@ -60,6 +60,10 @@ class RocketLeagueBot(commands.Bot):
         # Note: py-cord automatically syncs slash commands, no manual sync needed
         logger.info('✅ Slash commands auto-synced by py-cord')
         logger.info(Path.cwd())
+        target_directory = Path.cwd()
+        for entry in target_directory.iterdir():
+            logger.info(entry.name)
+            # logger.info(entry)
     
     async def on_guild_join(self, guild):
         """Called when bot joins a new server"""
