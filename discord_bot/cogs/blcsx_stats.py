@@ -1413,8 +1413,10 @@ class BLCSXStatsCog(commands.Cog):
                 "demos_inflicted_per_game",
                 "demos_taken_per_game",
             ]]
-
-            df["discord_username"] = df['discord_username'].str.split("|")[0]
+            try:
+                df["discord_username"] = df['discord_username'].str.split("|")[0]
+            except Exception as e:
+                logger.error(f"Error splitting and getting first index: {e}")
 
             try:
                 for col in df.select_dtypes(include="number").columns:
