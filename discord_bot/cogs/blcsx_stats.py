@@ -1399,7 +1399,7 @@ class BLCSXStatsCog(commands.Cog):
                 logger.error(f"Error: {e}")
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
-            logger.info(df.head())
+            logger.info(df.columns)
             df = df[
                 "discord_username",
                 "games_played",
