@@ -1391,15 +1391,18 @@ class BLCSXStatsCog(commands.Cog):
             import matplotlib.patches as patches
             from io import BytesIO
             from pathlib import Path
+            import numpy as np
 
             try:
                 cfg = OmegaConf.load("conf/config.yaml")
             except Exception as e:
                 logger.error("Can not find config yaml file for channel id")
                 logger.error(f"Error: {e}")
+            
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
             logger.info(df.columns)
+            
             df = df[[
                 "discord_username",
                 "games_played",
@@ -1410,46 +1413,117 @@ class BLCSXStatsCog(commands.Cog):
                 "saves_per_game",
                 "shots_per_game",
                 "shot_percentage",
+                "dominance_quotient",
                 "demos_inflicted_per_game",
                 "demos_taken_per_game",
             ]]
+            
             try:
                 df["discord_username"] = df['discord_username'].str.split("|").str[0]
             except Exception as e:
                 logger.error(f"Error splitting and getting first index: {e}")
 
+            df = df.sort_values(by="dominance_quotient", ascending=False)  # Fixed typo: asending -> ascending
+            
+            # Store original values before rounding for min/max calculations
+            numeric_cols = df.select_dtypes(include="number").columns
+            original_df = df[numeric_cols].copy()
+            
             try:
-                for col in df.select_dtypes(include="number").columns:
+                for col in numeric_cols:
                     df[col] = df[col].round(2)
             except Exception as e:
                 logger.error(f"Error rounding values: {e}")
 
-            df.columns = ["Player", "GP", "W", "L", "Avg Score", "Avg Goals", "Avg Saves", "Avg Shots", "Shot %", "Demos Inf.", "Demos Taken"]
+            # Rename columns AFTER calculating min/max
+            column_mapping = {
+                "discord_username": "Player",
+                "games_played": "GP", 
+                "wins": "W",
+                "losses": "L",
+                "avg_score": "Avg Score",
+                "goals_per_game": "Avg Goals",
+                "saves_per_game": "Avg Saves", 
+                "shots_per_game": "Avg Shots",
+                "shot_percentage": "Shot %",
+                "dominance_quotient": "DQ",
+                "demos_inflicted_per_game": "Demos Inf.",
+                "demos_taken_per_game": "Demos Taken"
+            }
+            
+            df = df.rename(columns=column_mapping)
 
             channel_id = cfg.channel.player_stats_id
             stats_channel = self.bot.get_channel(channel_id)
-            fig, ax = plt.subplots(figsize=(16, max(8, df.shape[0]) * 0.4))
+            
+            fig, ax = plt.subplots(figsize=(18, max(8, df.shape[0] * 0.4)))
             ax.axis('tight')
+            ax.axis('off')
             
             table = ax.table(cellText=df.values,
-                             colLabels=df.columns,
-                             cellLoc='center',
-                             loc='center',
-                             bbox=[0,0,1,1])
-            
-            ax.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
-            ax.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
+                            colLabels=df.columns,
+                            cellLoc='center',
+                            loc='center',
+                            bbox=[0,0,1,1])
             
             table.auto_set_font_size(False)
-            table.set_fontsize(10)
+            table.set_fontsize(9)
             table.scale(1, 2)
 
-            for i in range(1, len(df) + 1):
-                color = '#f0f0f0' if i % 2 == 0 else 'white'
-            for j in range(len(df.columns)):
-                table[(i, j)].set_facecolor(color)
+            # Define colors
+            blue_light = '#E3F2FD'  # Light blue
+            blue_dark = '#BBDEFB'   # Darker blue
+            header_blue = '#1976D2'  # Header blue
+            green_highlight = '#C8E6C9'  # Light green for best
+            red_highlight = '#FFCDD2'    # Light red for worst
 
-            plt.title("BLCSX Player Statistics", fontsize=16, fontweight='bold', pad=20)
+            # Style header row
+            for j in range(len(df.columns)):
+                table[(0, j)].set_facecolor(header_blue)
+                table[(0, j)].set_text_props(weight='bold', color='white')
+
+            # Find min/max for each numeric column (using original values)
+            stat_columns = ['GP', 'W', 'L', 'Avg Score', 'Avg Goals', 'Avg Saves', 
+                        'Avg Shots', 'Shot %', 'DQ', 'Demos Inf.', 'Demos Taken']
+            
+            # Columns where higher is better
+            higher_is_better = ['W', 'Avg Score', 'Avg Goals', 'Avg Saves', 'Avg Shots', 'Shot %', 'DQ', 'Demos Inf.']
+            # Columns where lower is better  
+            lower_is_better = ['L', 'Demos Taken']
+            # Neutral columns (just alternate colors)
+            neutral_cols = ['GP']
+
+            # Color each cell
+            for i in range(1, len(df) + 1):  # Skip header row
+                # Base alternating color
+                base_color = blue_light if i % 2 == 1 else blue_dark
+                
+                for j, col_name in enumerate(df.columns):
+                    cell_color = base_color
+                    
+                    if col_name in stat_columns and col_name not in neutral_cols:
+                        # Get the column data for comparison
+                        col_data = df[col_name].astype(float)
+                        current_value = float(df.iloc[i-1, j])
+                        
+                        if col_name in higher_is_better:
+                            if current_value == col_data.max():
+                                cell_color = green_highlight
+                            elif current_value == col_data.min():
+                                cell_color = red_highlight
+                        elif col_name in lower_is_better:
+                            if current_value == col_data.min():
+                                cell_color = green_highlight
+                            elif current_value == col_data.max():
+                                cell_color = red_highlight
+                    
+                    table[(i, j)].set_facecolor(cell_color)
+                    
+                    # Make text bold for highlighted cells
+                    if cell_color in [green_highlight, red_highlight]:
+                        table[(i, j)].set_text_props(weight='bold')
+
+            plt.title("BLCSX Player Statistics", fontsize=18, fontweight='bold', pad=20, color='#1976D2')
 
             img_buffer = BytesIO()
             plt.savefig(img_buffer, format="png", dpi=300, bbox_inches='tight')
@@ -1458,14 +1532,9 @@ class BLCSXStatsCog(commands.Cog):
 
             file = discord.File(img_buffer, filename='blcsx_player_stats.png')
 
-            # embed = discord.Embed(
-            #     title="BLCSX Player Statistics",
-            #     description=f"Complete statistics for all {len(df)} players",
-            #     color=discord.Color.yellow()
-            # )
-
             await stats_channel.send(file=file)
-            await ctx.followup.send("Player stats table sent")
+            await ctx.followup.send("✅ Player stats table sent with color coding!")
+            
         except Exception as e:
             logger.error(f"Error in all_player_stats command: {e}")
             await ctx.followup.send(f"Error: {str(e)}")
