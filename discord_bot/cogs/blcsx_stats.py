@@ -1414,7 +1414,7 @@ class BLCSXStatsCog(commands.Cog):
                 "demos_taken_per_game",
             ]]
             try:
-                df["discord_username"] = df['discord_username'].apply(lambda x: x.split("|")[0])
+                df["discord_username"] = df['discord_username'].str.split("|").str[0]
             except Exception as e:
                 logger.error(f"Error splitting and getting first index: {e}")
 
@@ -1424,6 +1424,7 @@ class BLCSXStatsCog(commands.Cog):
             except Exception as e:
                 logger.error(f"Error rounding values: {e}")
 
+            df.columns = ["Player", "GP", "W", "L", "Avg Score", "Avg Goals", "Avg Saves", "Avg Shots", "Shot %", "Demos Inf.", "Demos Taken"]
 
             channel_id = cfg.channel.player_stats_id
             stats_channel = self.bot.get_channel(channel_id)
@@ -1457,14 +1458,14 @@ class BLCSXStatsCog(commands.Cog):
 
             file = discord.File(img_buffer, filename='blcsx_player_stats.png')
 
-            embed = discord.Embed(
-                title="BLCSX Player Statistics",
-                description=f"Complete statistics for all {len(df)} players",
-                color=discord.Color.yellow()
-            )
+            # embed = discord.Embed(
+            #     title="BLCSX Player Statistics",
+            #     description=f"Complete statistics for all {len(df)} players",
+            #     color=discord.Color.yellow()
+            # )
 
-            await stats_channel.send(embed=embed, file=file)
-            # await ctx.followup.send("Player stats table sent")
+            await stats_channel.send(file=file)
+            await ctx.followup.send("Player stats table sent")
         except Exception as e:
             logger.error(f"Error in all_player_stats command: {e}")
             await ctx.followup.send(f"Error: {str(e)}")
