@@ -1470,12 +1470,12 @@ class BLCSXStatsCog(commands.Cog):
             table.set_fontsize(9)
             table.scale(1, 2)
 
-            # Define colors
-            blue_light = '#E3F2FD'  # Light blue
-            blue_dark = '#BBDEFB'   # Darker blue
-            header_blue = '#1976D2'  # Header blue
-            green_highlight = '#C8E6C9'  # Light green for best
-            red_highlight = '#FFCDD2'    # Light red for worst
+            # Define colors - Dark bluish-black theme
+            dark_blue_light = '#2C3E50'    # Dark blue-gray (lighter alternate)
+            dark_blue_dark = '#1B2631'     # Very dark blue-black (darker alternate)
+            header_blue = '#34495E'        # Header dark blue
+            green_highlight = '#27AE60'    # Bright green for best
+            red_highlight = '#E74C3C'      # Bright red for worst
 
             # Style header row
             for j in range(len(df.columns)):
@@ -1496,10 +1496,11 @@ class BLCSXStatsCog(commands.Cog):
             # Color each cell
             for i in range(1, len(df) + 1):  # Skip header row
                 # Base alternating color
-                base_color = blue_light if i % 2 == 1 else blue_dark
+                base_color = dark_blue_light if i % 2 == 1 else dark_blue_dark
                 
                 for j, col_name in enumerate(df.columns):
                     cell_color = base_color
+                    text_color = 'white'  # Default white text on dark background
                     
                     if col_name in stat_columns and col_name not in neutral_cols:
                         # Get the column data for comparison
@@ -1509,21 +1510,31 @@ class BLCSXStatsCog(commands.Cog):
                         if col_name in higher_is_better:
                             if current_value == col_data.max():
                                 cell_color = green_highlight
+                                text_color = 'white'
                             elif current_value == col_data.min():
                                 cell_color = red_highlight
+                                text_color = 'white'
                         elif col_name in lower_is_better:
                             if current_value == col_data.min():
                                 cell_color = green_highlight
+                                text_color = 'white'
                             elif current_value == col_data.max():
                                 cell_color = red_highlight
+                                text_color = 'white'
                     
                     table[(i, j)].set_facecolor(cell_color)
                     
-                    # Make text bold for highlighted cells
+                    # Set text color and make bold for highlighted cells
                     if cell_color in [green_highlight, red_highlight]:
-                        table[(i, j)].set_text_props(weight='bold')
+                        table[(i, j)].set_text_props(weight='bold', color=text_color)
+                    else:
+                        table[(i, j)].set_text_props(color=text_color)
 
-            plt.title("BLCSX Player Statistics", fontsize=18, fontweight='bold', pad=20, color='#1976D2')
+            plt.title("BLCSX Player Statistics", fontsize=18, fontweight='bold', pad=20, color='white')
+            
+            # Set the figure background to dark
+            fig.patch.set_facecolor('#1B2631')
+            ax.set_facecolor('#1B2631')
 
             img_buffer = BytesIO()
             plt.savefig(img_buffer, format="png", dpi=300, bbox_inches='tight')
@@ -1532,7 +1543,13 @@ class BLCSXStatsCog(commands.Cog):
 
             file = discord.File(img_buffer, filename='blcsx_player_stats.png')
 
-            await stats_channel.send(file=file)
+            embed = discord.Embed(
+                title="📊 BLCSX Player Statistics",
+                description=f"Complete statistics for all {len(df)} players\n🟢 Green = Best in category | 🔴 Red = Worst in category",
+                color=0x34495E  # Dark blue color
+            )
+
+            await stats_channel.send(embed=embed, file=file)
             await ctx.followup.send("✅ Player stats table sent with color coding!")
             
         except Exception as e:
