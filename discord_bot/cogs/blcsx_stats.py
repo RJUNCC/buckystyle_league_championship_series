@@ -1400,7 +1400,7 @@ class BLCSXStatsCog(commands.Cog):
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
             df = df[
-                "discord_username"
+                "discord_username",
                 "games_played",
                 "wins",
                 "losses",
