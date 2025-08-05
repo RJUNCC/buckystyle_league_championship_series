@@ -1476,6 +1476,7 @@ class BLCSXStatsCog(commands.Cog):
             header_blue = '#34495E'        # Header dark blue
             green_highlight = '#27AE60'    # Bright green for best
             red_highlight = '#E74C3C'      # Bright red for worst
+            gold_highlight = '#F39C12'     # Gold for first place
 
             # Style header row
             for j in range(len(df.columns)):
@@ -1483,18 +1484,21 @@ class BLCSXStatsCog(commands.Cog):
                 table[(0, j)].set_text_props(weight='bold', color='white')
 
             # Find min/max for each numeric column (using original values)
-            stat_columns = ['GP', 'W', 'L', 'Avg Score', 'Avg Goals', 'Avg Saves', 
+            stat_columns = ['Avg Score', 'Avg Goals', 'Avg Saves', 
                         'Avg Shots', 'Shot %', 'DQ', 'Demos Inf.', 'Demos Taken']
             
-            # Columns where higher is better
-            higher_is_better = ['W', 'Avg Score', 'Avg Goals', 'Avg Saves', 'Avg Shots', 'Shot %', 'DQ', 'Demos Inf.']
+            # Columns where higher is better (removed W, GP, L)
+            higher_is_better = ['Avg Score', 'Avg Goals', 'Avg Saves', 'Avg Shots', 'Shot %', 'DQ', 'Demos Inf.']
             # Columns where lower is better  
-            lower_is_better = ['L', 'Demos Taken']
-            # Neutral columns (just alternate colors)
-            neutral_cols = ['GP']
+            lower_is_better = ['Demos Taken']
+            # Neutral columns (just alternate colors) - added W, GP, L here
+            neutral_cols = ['GP', 'W', 'L']
 
             # Color each cell
             for i in range(1, len(df) + 1):  # Skip header row
+                # Check if this is the first place (highest DQ)
+                is_first_place = (i == 1)  # Since we sorted by DQ descending, first row is #1
+                
                 # Base alternating color
                 base_color = dark_blue_light if i % 2 == 1 else dark_blue_dark
                 
@@ -1502,7 +1506,11 @@ class BLCSXStatsCog(commands.Cog):
                     cell_color = base_color
                     text_color = 'white'  # Default white text on dark background
                     
-                    if col_name in stat_columns and col_name not in neutral_cols:
+                    # Special gold highlighting for first place row
+                    if is_first_place:
+                        cell_color = gold_highlight
+                        text_color = 'black'  # Black text on gold background for better readability
+                    elif col_name in stat_columns and col_name not in neutral_cols:
                         # Get the column data for comparison
                         col_data = df[col_name].astype(float)
                         current_value = float(df.iloc[i-1, j])
@@ -1525,7 +1533,7 @@ class BLCSXStatsCog(commands.Cog):
                     table[(i, j)].set_facecolor(cell_color)
                     
                     # Set text color and make bold for highlighted cells
-                    if cell_color in [green_highlight, red_highlight]:
+                    if cell_color in [green_highlight, red_highlight, gold_highlight]:
                         table[(i, j)].set_text_props(weight='bold', color=text_color)
                     else:
                         table[(i, j)].set_text_props(color=text_color)
@@ -1543,7 +1551,13 @@ class BLCSXStatsCog(commands.Cog):
 
             file = discord.File(img_buffer, filename='blcsx_player_stats.png')
 
-            await stats_channel.send(file=file)
+            embed = discord.Embed(
+                title="📊 BLCSX Player Statistics",
+                description=f"Complete statistics for all {len(df)} players\n🥇 Gold = 1st Place | 🟢 Green = Best in category | 🔴 Red = Worst in category",
+                color=0x34495E  # Dark blue color
+            )
+
+            await stats_channel.send(embed=embed, file=file)
             await ctx.followup.send("✅ Player stats table sent with color coding!")
             
         except Exception as e:
