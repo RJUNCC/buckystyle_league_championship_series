@@ -1436,7 +1436,7 @@ class BLCSXStatsCog(commands.Cog):
                              loc='center',
                              bbox=[0,0,1,1])
             
-            ax.tick_params(axis='x', which='both', bottom=False, top=False, labelBottom=False)
+            ax.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
             ax.tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
             
             table.auto_set_font_size(False)
