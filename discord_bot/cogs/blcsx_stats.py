@@ -1400,7 +1400,7 @@ class BLCSXStatsCog(commands.Cog):
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
             logger.info(df.columns)
-            df = df[
+            df = df[[
                 "discord_username",
                 "games_played",
                 "wins",
@@ -1412,7 +1412,7 @@ class BLCSXStatsCog(commands.Cog):
                 "shot_percentage",
                 "demos_inflicted_per_game",
                 "demos_taken_per_game",
-            ]
+            ]]
 
             df["discord_username"] = df['discord_username'].str.split("|")[0]
             for col in df.select_dtypes(include="number").columns:
