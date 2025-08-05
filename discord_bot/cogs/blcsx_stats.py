@@ -1384,7 +1384,7 @@ class BLCSXStatsCog(commands.Cog):
     @discord.slash_command(name="all_player_stats", description="Show all the stats for players")
     @commands.has_permissions(administrator=True)
     async def all_player_stats(self, ctx):
-        @hydra.main(version_base=None, config_path="../conf", config_name="config")
+        @hydra.main(version_base=None, config_path="conf", config_name="config")
         def get_config(cfg: DictConfig):
             return cfg
         
