@@ -1464,7 +1464,7 @@ class BLCSXStatsCog(commands.Cog):
             )
 
             await stats_channel.send(embed=embed, file=file)
-            await ctx.followup.send("Player stats table sent")
+            # await ctx.followup.send("Player stats table sent")
         except Exception as e:
             logger.error(f"Error in all_player_stats command: {e}")
             await ctx.followup.send(f"Error: {str(e)}")
