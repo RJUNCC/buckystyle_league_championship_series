@@ -1399,6 +1399,25 @@ class BLCSXStatsCog(commands.Cog):
                 logger.error(f"Error: {e}")
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
+            df = df[
+                "discord_username"
+                "games_played",
+                "wins",
+                "losses",
+                "avg_score",
+                "goals_per_game",
+                "saves_per_game",
+                "shots_per_game",
+                "shot_percentage",
+                "demos_inflicted_per_game",
+                "demos_taken_per_game",
+            ]
+
+            df["discord_username"] = df['discord_username'].str.split("|")[0]
+            for col in df.select_dtypes(include="number").columns:
+                df[col] = df[col].round(2)
+
+
             channel_id = cfg.channel.player_stats_id
             stats_channel = self.bot.get_channel(channel_id)
             fig, ax = plt.subplots(figsize=(16, max(8, df.shape[0]) * 0.4))
