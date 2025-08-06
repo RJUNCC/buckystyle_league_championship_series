@@ -1405,12 +1405,12 @@ class BLCSXStatsCog(commands.Cog):
             
             df = df[[
                 "discord_username",
+                "dominance_quotient",
                 "avg_score",
                 "goals_per_game",
                 "saves_per_game",
                 "shots_per_game",
                 "shot_percentage",
-                "dominance_quotient",
                 "demos_inflicted_per_game",
                 "demos_taken_per_game",
             ]]
