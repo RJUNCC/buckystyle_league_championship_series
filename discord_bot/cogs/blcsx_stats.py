@@ -1545,13 +1545,7 @@ class BLCSXStatsCog(commands.Cog):
 
             file = discord.File(img_buffer, filename='blcsx_player_stats.png')
 
-            embed = discord.Embed(
-                title="📊 BLCSX Player Statistics",
-                description=f"Complete statistics for all {len(df)} players\n🥇 Gold = 1st Place | 🟢 Green = Best in category | 🔴 Red = Worst in category",
-                color=0x34495E  # Dark blue color
-            )
-
-            await stats_channel.send(embed=embed, file=file)
+            await stats_channel.send(file=file)
             await ctx.followup.send("✅ Player stats table sent with color coding!")
             
         except Exception as e:
