@@ -1405,9 +1405,6 @@ class BLCSXStatsCog(commands.Cog):
             
             df = df[[
                 "discord_username",
-                "games_played",
-                "wins",
-                "losses",
                 "avg_score",
                 "goals_per_game",
                 "saves_per_game",
@@ -1438,9 +1435,6 @@ class BLCSXStatsCog(commands.Cog):
             # Rename columns AFTER calculating min/max
             column_mapping = {
                 "discord_username": "Player",
-                "games_played": "GP", 
-                "wins": "W",
-                "losses": "L",
                 "avg_score": "Avg Score",
                 "goals_per_game": "Avg Goals",
                 "saves_per_game": "Avg Saves", 
@@ -1487,12 +1481,12 @@ class BLCSXStatsCog(commands.Cog):
             stat_columns = ['Avg Score', 'Avg Goals', 'Avg Saves', 
                         'Avg Shots', 'Shot %', 'DQ', 'Demos Inf.', 'Demos Taken']
             
-            # Columns where higher is better (removed W, GP, L)
+            # Columns where higher is better
             higher_is_better = ['Avg Score', 'Avg Goals', 'Avg Saves', 'Avg Shots', 'Shot %', 'DQ', 'Demos Inf.']
             # Columns where lower is better  
             lower_is_better = ['Demos Taken']
-            # Neutral columns (just alternate colors) - added W, GP, L here
-            neutral_cols = ['GP', 'W', 'L']
+            # Neutral columns (just alternate colors)
+            neutral_cols = []
 
             # Color each cell
             for i in range(1, len(df) + 1):  # Skip header row
