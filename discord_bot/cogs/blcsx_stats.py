@@ -1381,9 +1381,9 @@ class BLCSXStatsCog(commands.Cog):
             )
             await ctx.followup.send(embed=embed, ephemeral=True)
 
-    @discord.slash_command(name="all_player_ids", description="Show all player ideas, so we can link them")
+    @discord.slash_command(name="missing_player_usernames", description="Show all player ideas, so we can link them")
     @commands.has_permissions(administrator=True)
-    async def all_player_ids(self, ctx):
+    async def missing_player_usernames(self, ctx):
         await ctx.response.defer()
 
         try:
@@ -1402,26 +1402,32 @@ class BLCSXStatsCog(commands.Cog):
 
             all_players = self.db.get_all_player_statistics()
             df = pd.DataFrame(all_players)
-            df = df[["player_id"]]
+            df = df[["player_id", "discord_username"]]
             df['player_id'] = df['player_id'].str.split(":").str[1]
+            missing_players = df[(df["discord_username"].isna()) | (df['discord_username'] == "")]
 
-            fig, ax = plt.subplots()
+            missing_list = missing_players['player_id'].tolist()
 
-            table = ax.table(cellText=df.values,
-                            colLabels=df.columns,
-                            cellLoc='center',
-                            loc='center',
-                            bbox=[0,0,1,1])
-            
-            img_buffer = BytesIO()
-            plt.savefig(img_buffer, format="png", dpi=300, bbox_inches='tight')
-            img_buffer.seek(0)
-            plt.close()
+            chunk_size = 20
+            chunks = [missing_list[i:i+chunk_size] for i in range(0, len(missing_list), chunk_size)]
+            embed = discord.Embed(
+                title="Missing Player IDs",
+                description=f"Found {len(missing_list)} unlinked players",
+                color=discord.Color.orange()
+            )
 
-            file = discord.File(img_buffer, filename="blcsx_player_ids.png")
+            for i, chunk in enumerate(chunks):
+                chunk_text = "\n".join([f" `{player_id}" for player_id in chunk])
+                embed.add_field(
+                    name=f"Missing IDs (Part {i+1}/{len(chunks)})" if len(chunks) > 1 else "Missing Player IDs",
+                    value=chunk_text,
+                    inline=False
+                )
 
-            await stats_channel.send(file=file)
-            await ctx.followup.send("Player ids sent")
+            embed.set_footer(text="Use /admin_blcs_link to connect these players")
+
+            await ctx.followup.send(embed=embed)
+
         except Exception as e:
             logger.error(f"There has been an error: {e}")
 
