@@ -1404,6 +1404,7 @@ class BLCSXStatsCog(commands.Cog):
             logger.info(df.columns)
             
             df = df[[
+                "player_id",
                 "discord_username",
                 "avg_score",
                 "goals_per_game",
