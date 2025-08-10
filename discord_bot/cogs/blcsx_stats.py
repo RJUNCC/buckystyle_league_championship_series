@@ -1414,11 +1414,14 @@ class BLCSXStatsCog(commands.Cog):
                             bbox=[0,0,1,1])
             
             img_buffer = BytesIO()
+            plt.savefig(img_buffer, format="png", dpi=300, bbox_inches='tight')
+            img_buffer.seek(0)
+            plt.close()
 
             file = discord.File(img_buffer, filename="blcsx_player_ids.png")
 
             await stats_channel.send(file=file)
-            
+            await ctx.followup.send("Player ids sent")
         except Exception as e:
             logger.error(f"There has been an error: {e}")
 
