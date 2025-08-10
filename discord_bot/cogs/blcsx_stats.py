@@ -1421,7 +1421,7 @@ class BLCSXStatsCog(commands.Cog):
             except Exception as e:
                 logger.error(f"Error splitting and getting first index: {e}")
 
-            df['player_id'] = df['player_id'].str.split(":").str[0]
+            df['player_id'] = df['player_id'].str.split(":").str[1]
 
             df = df.sort_values(by="dominance_quotient", ascending=False)  # Fixed typo: asending -> ascending
             
