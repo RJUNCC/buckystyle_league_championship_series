@@ -1381,6 +1381,47 @@ class BLCSXStatsCog(commands.Cog):
             )
             await ctx.followup.send(embed=embed, ephemeral=True)
 
+    @discord.slash_command(name="all_player_ids", description="Show all player ideas, so we can link them")
+    @commands.has_permissions(administrator=True)
+    async def all_player_ids(self, ctx):
+        await ctx.response.defer()
+
+        try:
+            import matplotlib.pyplot as plt
+            from pathlib import Path
+            from io import BytesIO
+
+            try:
+                cfg = OmegaConf.load("conf/config.yaml")
+                stats_channel = self.bot.get_channel(cfg.channel.player_stats_id)
+            except Exception as e:
+                logger.error("Can not find config yaml file")
+                logger.error(f"{e}")
+
+            
+
+            all_players = self.db.get_all_player_statistics()
+            df = pd.DataFrame(all_players)
+            df = df[["player_id"]]
+            df['player_id'] = df['player_id'].str.split(":").str[1]
+
+            fig, ax = plt.subplots()
+
+            table = ax.table(cellText=df.values,
+                            colLabels=df.columns,
+                            cellLoc='center',
+                            loc='center',
+                            bbox=[0,0,1,1])
+            
+            img_buffer = BytesIO()
+
+            file = discord.File(img_buffer, filename="blcsx_player_ids.png")
+
+            await stats_channel.send(file=file)
+            
+        except Exception as e:
+            logger.error(f"There has been an error: {e}")
+
     @discord.slash_command(name="all_player_stats", description="Show all the stats for players")
     @commands.has_permissions(administrator=True)
     async def all_player_stats(self, ctx):    
@@ -1404,7 +1445,6 @@ class BLCSXStatsCog(commands.Cog):
             logger.info(df.columns)
             
             df = df[[
-                "player_id",
                 "discord_username",
                 "avg_score",
                 "goals_per_game",
@@ -1420,8 +1460,6 @@ class BLCSXStatsCog(commands.Cog):
                 df["discord_username"] = df['discord_username'].str.split("|").str[0]
             except Exception as e:
                 logger.error(f"Error splitting and getting first index: {e}")
-
-            df['player_id'] = df['player_id'].str.split(":").str[1]
 
             df = df.sort_values(by="dominance_quotient", ascending=False)  # Fixed typo: asending -> ascending
             
