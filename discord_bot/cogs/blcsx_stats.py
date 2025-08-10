@@ -1405,12 +1405,12 @@ class BLCSXStatsCog(commands.Cog):
             
             df = df[[
                 "discord_username",
-                "dominance_quotient",
                 "avg_score",
                 "goals_per_game",
                 "saves_per_game",
                 "shots_per_game",
                 "shot_percentage",
+                "dominance_quotient",
                 "demos_inflicted_per_game",
                 "demos_taken_per_game",
             ]]
@@ -1490,9 +1490,6 @@ class BLCSXStatsCog(commands.Cog):
 
             # Color each cell
             for i in range(1, len(df) + 1):  # Skip header row
-                # Check if this is the first place (highest DQ)
-                is_first_place = (i == 1)  # Since we sorted by DQ descending, first row is #1
-                
                 # Base alternating color
                 base_color = dark_blue_light if i % 2 == 1 else dark_blue_dark
                 
@@ -1500,26 +1497,22 @@ class BLCSXStatsCog(commands.Cog):
                     cell_color = base_color
                     text_color = 'white'  # Default white text on dark background
                     
-                    # Special gold highlighting for first place row
-                    if is_first_place:
-                        cell_color = gold_highlight
-                        text_color = 'black'  # Black text on gold background for better readability
-                    elif col_name in stat_columns and col_name not in neutral_cols:
+                    if col_name in stat_columns and col_name not in neutral_cols:
                         # Get the column data for comparison
                         col_data = df[col_name].astype(float)
                         current_value = float(df.iloc[i-1, j])
                         
                         if col_name in higher_is_better:
                             if current_value == col_data.max():
-                                cell_color = green_highlight
-                                text_color = 'white'
+                                cell_color = gold_highlight  # Gold for best stats
+                                text_color = 'black'  # Black text on gold
                             elif current_value == col_data.min():
                                 cell_color = red_highlight
                                 text_color = 'white'
                         elif col_name in lower_is_better:
                             if current_value == col_data.min():
-                                cell_color = green_highlight
-                                text_color = 'white'
+                                cell_color = gold_highlight  # Gold for best (lowest) stats
+                                text_color = 'black'  # Black text on gold
                             elif current_value == col_data.max():
                                 cell_color = red_highlight
                                 text_color = 'white'
@@ -1527,7 +1520,7 @@ class BLCSXStatsCog(commands.Cog):
                     table[(i, j)].set_facecolor(cell_color)
                     
                     # Set text color and make bold for highlighted cells
-                    if cell_color in [green_highlight, red_highlight, gold_highlight]:
+                    if cell_color in [gold_highlight, red_highlight]:
                         table[(i, j)].set_text_props(weight='bold', color=text_color)
                     else:
                         table[(i, j)].set_text_props(color=text_color)
@@ -1545,7 +1538,13 @@ class BLCSXStatsCog(commands.Cog):
 
             file = discord.File(img_buffer, filename='blcsx_player_stats.png')
 
-            await stats_channel.send(file=file)
+            embed = discord.Embed(
+                title="📊 BLCSX Player Statistics",
+                description=f"Complete statistics for all {len(df)} players\n🥇 Gold = Best in category | 🔴 Red = Worst in category",
+                color=0x34495E  # Dark blue color
+            )
+
+            await stats_channel.send(embed=embed, file=file)
             await ctx.followup.send("✅ Player stats table sent with color coding!")
             
         except Exception as e:
