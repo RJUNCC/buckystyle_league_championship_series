@@ -1589,7 +1589,7 @@ class BLCSXStatsCog(commands.Cog):
             file = discord.File(img_buffer, filename='blcsx_player_stats.png')
 
             await stats_channel.send(file=file)
-            await ctx.followup.send("✅ Player stats table sent with color coding!")
+            # await ctx.followup.send("✅ Player stats table sent with color coding!")
             
         except Exception as e:
             logger.error(f"Error in all_player_stats command: {e}")
